@@ -52,6 +52,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    authorized({ auth, request }) {
+      const { pathname } = request.nextUrl
+
+      // Public routes
+      const publicRoutes = ["/", "/login", "/signup"]
+      if (publicRoutes.includes(pathname)) {
+        return true
+      }
+
+      // Require auth for all other routes
+      if (!auth?.user) {
+        return false
+      }
+
+      // Role-based access control
+      const isTrainerRoute = pathname.startsWith("/trainer")
+      const isClientRoute = pathname.startsWith("/client")
+
+      if (isTrainerRoute && auth.user.role !== "TRAINER") {
+        return false
+      }
+
+      if (isClientRoute && auth.user.role !== "CLIENT") {
+        return false
+      }
+
+      return true
+    },
     jwt({ token, user }) {
       if (user) {
         token.role = user.role
