@@ -35,44 +35,82 @@ type Appointment = {
   }
 }
 
+type BlockedTime = {
+  id: string
+  startTime: string
+  endTime: string
+  reason?: string
+  isRecurring: boolean
+}
+
+type TrainerSettings = {
+  dayStartTime: string
+  dayEndTime: string
+  timezone: string
+}
+
 type CalendarEvent = {
   id: string
   title: string
   start: Date
   end: Date
-  resource: Appointment
+  resource: Appointment | BlockedTime
+  type: "appointment" | "blocked"
 }
 
 export default function TrainerCalendarPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [blockedTimes, setBlockedTimes] = useState<BlockedTime[]>([])
+  const [settings, setSettings] = useState<TrainerSettings | null>(null)
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<View>("week")
   const [date, setDate] = useState(new Date())
 
-  const fetchAppointments = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/appointments")
-      const data = await response.json()
+      const [appointmentsRes, blockedTimesRes, settingsRes] = await Promise.all([
+        fetch("/api/appointments"),
+        fetch("/api/blocked-times"),
+        fetch("/api/trainer-settings"),
+      ])
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch appointments")
+      const [appointmentsData, blockedTimesData, settingsData] = await Promise.all([
+        appointmentsRes.json(),
+        blockedTimesRes.json(),
+        settingsRes.json(),
+      ])
+
+      if (!appointmentsRes.ok || !blockedTimesRes.ok || !settingsRes.ok) {
+        throw new Error("Failed to fetch data")
       }
 
-      setAppointments(data.appointments)
+      setAppointments(appointmentsData.appointments)
+      setBlockedTimes(blockedTimesData.blockedTimes)
+      setSettings(settingsData.settings)
 
       // Convert to calendar events
-      const calendarEvents: CalendarEvent[] = data.appointments.map((apt: Appointment) => ({
+      const appointmentEvents: CalendarEvent[] = appointmentsData.appointments.map((apt: Appointment) => ({
         id: apt.id,
         title: `${apt.client.fullName} - ${apt.status}`,
         start: new Date(apt.startTime),
         end: new Date(apt.endTime),
         resource: apt,
+        type: "appointment" as const,
       }))
 
-      setEvents(calendarEvents)
+      const blockedEvents: CalendarEvent[] = blockedTimesData.blockedTimes.map((blocked: BlockedTime) => ({
+        id: blocked.id,
+        title: blocked.reason || "Blocked",
+        start: new Date(blocked.startTime),
+        end: new Date(blocked.endTime),
+        resource: blocked,
+        type: "blocked" as const,
+      }))
+
+      setEvents([...appointmentEvents, ...blockedEvents])
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -81,21 +119,35 @@ export default function TrainerCalendarPage() {
   }, [])
 
   useEffect(() => {
-    fetchAppointments()
-  }, [fetchAppointments])
+    fetchData()
+  }, [fetchData])
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
-    // TODO: Open modal to create new appointment
+    // TODO: Open modal to create new appointment or blocked time
     console.log("Selected slot:", start, end)
   }
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    // TODO: Open modal to view/edit appointment
+    // TODO: Open modal to view/edit appointment or blocked time
     console.log("Selected event:", event)
   }
 
   const eventStyleGetter = (event: CalendarEvent) => {
-    const status = event.resource.status
+    if (event.type === "blocked") {
+      return {
+        style: {
+          backgroundColor: "#ef4444", // red for blocked
+          borderRadius: "5px",
+          opacity: 0.6,
+          color: "white",
+          border: "2px solid #dc2626",
+          display: "block",
+        },
+      }
+    }
+
+    // Appointment styling
+    const status = (event.resource as Appointment).status
     let backgroundColor = "#3174ad"
 
     switch (status) {
@@ -106,7 +158,7 @@ export default function TrainerCalendarPage() {
         backgroundColor = "#10b981" // green
         break
       case "CANCELLED":
-        backgroundColor = "#ef4444" // red
+        backgroundColor = "#9ca3af" // gray
         break
       case "RESCHEDULED":
         backgroundColor = "#f59e0b" // amber
@@ -125,6 +177,21 @@ export default function TrainerCalendarPage() {
     }
   }
 
+  // Parse trainer's custom hours
+  const getCalendarHours = () => {
+    if (!settings) return { min: new Date(0, 0, 0, 6, 0, 0), max: new Date(0, 0, 0, 22, 0, 0) }
+
+    const [startHour, startMin] = settings.dayStartTime.split(":").map(Number)
+    const [endHour, endMin] = settings.dayEndTime.split(":").map(Number)
+
+    return {
+      min: new Date(0, 0, 0, startHour, startMin, 0),
+      max: new Date(0, 0, 0, endHour, endMin, 0),
+    }
+  }
+
+  const { min, max } = getCalendarHours()
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -138,6 +205,12 @@ export default function TrainerCalendarPage() {
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
           >
             Manage Availability
+          </Link>
+          <Link
+            href="/trainer/settings"
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          >
+            Settings
           </Link>
           <button
             onClick={() => {
@@ -170,21 +243,30 @@ export default function TrainerCalendarPage() {
             <span className="text-sm text-gray-600">Completed</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-red-500"></div>
+            <div className="w-4 h-4 rounded bg-gray-400"></div>
             <span className="text-sm text-gray-600">Cancelled</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-amber-500"></div>
             <span className="text-sm text-gray-600">Rescheduled</span>
           </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-red-500 border-2 border-red-600"></div>
+            <span className="text-sm text-gray-600">Blocked Time</span>
+          </div>
         </div>
+        {settings && (
+          <p className="mt-2 text-xs text-gray-500">
+            Calendar hours: {settings.dayStartTime} - {settings.dayEndTime}
+          </p>
+        )}
       </div>
 
       {/* Calendar */}
       <div className="bg-white p-6 rounded-lg shadow" style={{ height: "700px" }}>
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-600">Loading appointments...</p>
+            <p className="text-gray-600">Loading calendar...</p>
           </div>
         ) : (
           <Calendar
@@ -205,8 +287,8 @@ export default function TrainerCalendarPage() {
             defaultView="week"
             step={30}
             timeslots={2}
-            min={new Date(0, 0, 0, 6, 0, 0)} // 6 AM
-            max={new Date(0, 0, 0, 22, 0, 0)} // 10 PM
+            min={min}
+            max={max}
           />
         )}
       </div>

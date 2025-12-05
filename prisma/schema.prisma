@@ -28,6 +28,8 @@ model Workspace {
   workoutSessions           WorkoutSession[]
   invoices                  Invoice[]
   availabilityBlocks        AvailabilityBlock[]
+  blockedTimes              BlockedTime[]
+  trainerSettings           TrainerSettings[]
   customMetricDefinitions   CustomMetricDefinition[]
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -57,6 +59,8 @@ model User {
   trainerInvoices        Invoice[]           @relation("TrainerInvoices")
   clientInvoices         Invoice[]           @relation("ClientInvoices")
   availabilityBlocks     AvailabilityBlock[]
+  blockedTimes           BlockedTime[]       @relation("TrainerBlockedTimes")
+  trainerSettings        TrainerSettings?    @relation("TrainerSettings")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -111,6 +115,43 @@ model AvailabilityBlock {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("availability_blocks")
+}
+
+model BlockedTime {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation("TrainerBlockedTimes", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  startTime   DateTime  @map("start_time")  // Specific date and time
+  endTime     DateTime  @map("end_time")
+  reason      String?   @db.Text           // Optional reason (vacation, appointment, etc.)
+  isRecurring Boolean   @default(false) @map("is_recurring")
+  dayOfWeek   Int?      @map("day_of_week") // For recurring blocks (0-6)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceId, trainerId])
+  @@map("blocked_times")
+}
+
+model TrainerSettings {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId   String    @unique @map("trainer_id")
+  trainer     User      @relation("TrainerSettings", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  dayStartTime String    @default("06:00") @map("day_start_time") // "06:00" format
+  dayEndTime   String    @default("22:00") @map("day_end_time")   // "22:00" format
+  timezone     String    @default("America/New_York")             // IANA timezone
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("trainer_settings")
 }
 
 model Appointment {

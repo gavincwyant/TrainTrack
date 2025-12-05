@@ -63,6 +63,8 @@ const TENANT_SCOPED_MODELS = [
   'InvoiceLineItem',
   'ClientProfile',
   'AvailabilityBlock',
+  'BlockedTime',
+  'TrainerSettings',
   'CustomMetricDefinition',
 ]
 
