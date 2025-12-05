@@ -74,25 +74,25 @@ export function createTenantScopedPrisma(workspaceId: string) {
   const client = prisma.$extends({
     query: {
       $allModels: {
-        async findMany({ model, args, query }) {
+        async findMany({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
-              ...args.where,
+              ...(args.where as Record<string, unknown> || {}),
               workspaceId,
             }
           }
           return query(args)
         },
-        async findFirst({ model, args, query }) {
+        async findFirst({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
-              ...args.where,
+              ...(args.where as Record<string, unknown> || {}),
               workspaceId,
             }
           }
           return query(args)
         },
-        async findUnique({ model, args, query }) {
+        async findUnique({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             // For findUnique, we can't add to where, so we need to validate after
             const result = await query(args)
@@ -103,7 +103,7 @@ export function createTenantScopedPrisma(workspaceId: string) {
           }
           return query(args)
         },
-        async create({ model, args, query }) {
+        async create({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.data = {
               ...(args.data as Record<string, unknown>),
@@ -112,7 +112,7 @@ export function createTenantScopedPrisma(workspaceId: string) {
           }
           return query(args)
         },
-        async createMany({ model, args, query }) {
+        async createMany({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             if (Array.isArray(args.data)) {
               args.data = args.data.map((item: Record<string, unknown>) => ({
@@ -121,45 +121,45 @@ export function createTenantScopedPrisma(workspaceId: string) {
               }))
             } else {
               args.data = {
-                ...args.data,
+                ...(args.data as Record<string, unknown> || {}),
                 workspaceId,
               }
             }
           }
           return query(args)
         },
-        async update({ model, args, query }) {
+        async update({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
-              ...args.where,
+              ...(args.where as Record<string, unknown> || {}),
               workspaceId,
             } as Record<string, unknown>
           }
           return query(args)
         },
-        async updateMany({ model, args, query }) {
+        async updateMany({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
-              ...args.where,
+              ...(args.where as Record<string, unknown> || {}),
               workspaceId,
             } as Record<string, unknown>
           }
           return query(args)
         },
-        async delete({ model, args, query }) {
+        async delete({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             // Add workspace filter to where clause
             args.where = {
-              ...args.where,
+              ...(args.where as Record<string, unknown> || {}),
               workspaceId,
             } as Record<string, unknown>
           }
           return query(args)
         },
-        async deleteMany({ model, args, query }) {
+        async deleteMany({ model, args, query }: { model: string; args: Record<string, unknown>; query: (args: Record<string, unknown>) => Promise<unknown> }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
-              ...args.where,
+              ...(args.where as Record<string, unknown> || {}),
               workspaceId,
             } as Record<string, unknown>
           }

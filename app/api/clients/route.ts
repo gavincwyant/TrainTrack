@@ -3,6 +3,7 @@ import { hash } from "bcryptjs"
 import { z } from "zod"
 import { prisma } from "@/lib/db"
 import { requireWorkspace, requireUserId } from "@/lib/middleware/tenant"
+import { PrismaClient } from "@prisma/client"
 
 const createClientSchema = z.object({
   fullName: z.string().min(2),
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
 
       const passwordHash = await hash(data.password, 10)
 
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends">) => {
         // Create client user
         const client = await tx.user.create({
           data: {
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
       const tempPassword = Math.random().toString(36).slice(-12)
       const passwordHash = await hash(tempPassword, 10)
 
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends">) => {
         // Create client user with temporary password
         const client = await tx.user.create({
           data: {

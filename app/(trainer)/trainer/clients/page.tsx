@@ -1,6 +1,11 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import Link from "next/link"
+import { User, ClientProfile } from "@prisma/client"
+
+type ClientWithProfile = User & {
+  clientProfile: ClientProfile | null
+}
 
 export default async function ClientsPage() {
   const session = await auth()
@@ -73,7 +78,7 @@ export default async function ClientsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {clients.map((client) => (
+              {clients.map((client: ClientWithProfile) => (
                 <tr key={client.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{client.fullName}</div>

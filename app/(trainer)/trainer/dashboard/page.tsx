@@ -1,6 +1,15 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import Link from "next/link"
+import { Appointment, User, WorkoutSession } from "@prisma/client"
+
+type AppointmentWithClient = Appointment & {
+  client: User
+}
+
+type WorkoutWithClient = WorkoutSession & {
+  client: User
+}
 
 export default async function TrainerDashboardPage() {
   const session = await auth()
@@ -121,7 +130,7 @@ export default async function TrainerDashboardPage() {
           <p className="text-gray-600 text-center py-4">No upcoming appointments</p>
         ) : (
           <div className="space-y-3">
-            {upcomingAppointments.map((appointment) => (
+            {upcomingAppointments.map((appointment: AppointmentWithClient) => (
               <div
                 key={appointment.id}
                 className="flex justify-between items-center p-3 border border-gray-200 rounded-md"
@@ -160,7 +169,7 @@ export default async function TrainerDashboardPage() {
           <p className="text-gray-600 text-center py-4">No workout sessions logged yet</p>
         ) : (
           <div className="space-y-3">
-            {recentWorkouts.map((workout) => (
+            {recentWorkouts.map((workout: WorkoutWithClient) => (
               <div
                 key={workout.id}
                 className="flex justify-between items-center p-3 border border-gray-200 rounded-md"

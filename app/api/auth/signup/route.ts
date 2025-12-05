@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { hash } from "bcryptjs"
 import { z } from "zod"
 import { prisma } from "@/lib/db"
+import { PrismaClient } from "@prisma/client"
 
 const signupSchema = z.object({
   fullName: z.string().min(2),
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hash(data.password, 10)
 
     // Create user and workspace in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends">) => {
       // Create the trainer user
       const user = await tx.user.create({
         data: {
