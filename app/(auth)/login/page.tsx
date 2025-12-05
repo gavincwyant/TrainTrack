@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -46,8 +46,18 @@ function LoginForm() {
         return
       }
 
-      // Redirect based on role (we'll fetch this from the session)
-      router.push("/dashboard")
+      // Fetch session to get user role
+      const response = await fetch("/api/auth/session")
+      const session = await response.json()
+
+      // Redirect based on role
+      if (session?.user?.role === "TRAINER") {
+        router.push("/trainer/dashboard")
+      } else if (session?.user?.role === "CLIENT") {
+        router.push("/client/dashboard")
+      } else {
+        router.push("/")
+      }
       router.refresh()
     } catch {
       setError("An error occurred during login")
