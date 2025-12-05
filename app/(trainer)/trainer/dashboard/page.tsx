@@ -54,7 +54,7 @@ export default async function TrainerDashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Welcome back, {session.user.name}!</h1>
-        <p className="mt-2 text-gray-600">Here's what's happening with your training business</p>
+        <p className="mt-2 text-gray-600">Here&apos;s what&apos;s happening with your training business</p>
       </div>
 
       {/* Stats Grid */}
@@ -76,7 +76,7 @@ export default async function TrainerDashboardPage() {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow">
-          <div className="text-sm font-medium text-gray-600">This Month's Workouts</div>
+          <div className="text-sm font-medium text-gray-600">This Month&apos;s Workouts</div>
           <div className="mt-2 text-3xl font-bold text-gray-900">{recentWorkouts.length}</div>
           <Link href="/trainer/workouts" className="mt-2 text-sm text-blue-600 hover:text-blue-700">
             View workouts →

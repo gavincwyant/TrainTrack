@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { Prisma } from "@prisma/client"
 
 /**
  * Require workspace context from authenticated session
@@ -75,7 +74,7 @@ export function createTenantScopedPrisma(workspaceId: string) {
   const client = prisma.$extends({
     query: {
       $allModels: {
-        async findMany({ model, operation, args, query }) {
+        async findMany({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
               ...args.where,
@@ -84,7 +83,7 @@ export function createTenantScopedPrisma(workspaceId: string) {
           }
           return query(args)
         },
-        async findFirst({ model, operation, args, query }) {
+        async findFirst({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
               ...args.where,
@@ -93,30 +92,30 @@ export function createTenantScopedPrisma(workspaceId: string) {
           }
           return query(args)
         },
-        async findUnique({ model, operation, args, query }) {
+        async findUnique({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             // For findUnique, we can't add to where, so we need to validate after
             const result = await query(args)
-            if (result && (result as any).workspaceId !== workspaceId) {
+            if (result && typeof result === 'object' && 'workspaceId' in result && result.workspaceId !== workspaceId) {
               return null
             }
             return result
           }
           return query(args)
         },
-        async create({ model, operation, args, query }) {
+        async create({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.data = {
-              ...(args.data as any),
+              ...(args.data as Record<string, unknown>),
               workspaceId,
             }
           }
           return query(args)
         },
-        async createMany({ model, operation, args, query }) {
+        async createMany({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             if (Array.isArray(args.data)) {
-              args.data = args.data.map((item: any) => ({
+              args.data = args.data.map((item: Record<string, unknown>) => ({
                 ...item,
                 workspaceId,
               }))
@@ -129,40 +128,40 @@ export function createTenantScopedPrisma(workspaceId: string) {
           }
           return query(args)
         },
-        async update({ model, operation, args, query }) {
+        async update({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
               ...args.where,
               workspaceId,
-            }
+            } as Record<string, unknown>
           }
           return query(args)
         },
-        async updateMany({ model, operation, args, query }) {
+        async updateMany({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
               ...args.where,
               workspaceId,
-            }
+            } as Record<string, unknown>
           }
           return query(args)
         },
-        async delete({ model, operation, args, query }) {
+        async delete({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             // Add workspace filter to where clause
             args.where = {
               ...args.where,
               workspaceId,
-            }
+            } as Record<string, unknown>
           }
           return query(args)
         },
-        async deleteMany({ model, operation, args, query }) {
+        async deleteMany({ model, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.where = {
               ...args.where,
               workspaceId,
-            }
+            } as Record<string, unknown>
           }
           return query(args)
         },

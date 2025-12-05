@@ -32,7 +32,6 @@ export default function NewClientPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [accountType, setAccountType] = useState<"invite" | "direct">("invite")
 
   const {
     register,
@@ -104,7 +103,6 @@ export default function NewClientPage() {
                   type="radio"
                   value="invite"
                   className="mr-2"
-                  onChange={() => setAccountType("invite")}
                 />
                 <span className="text-sm">Send email invitation (client creates their own password)</span>
               </label>
@@ -114,7 +112,6 @@ export default function NewClientPage() {
                   type="radio"
                   value="direct"
                   className="mr-2"
-                  onChange={() => setAccountType("direct")}
                 />
                 <span className="text-sm">Create account directly (you set the password)</span>
               </label>

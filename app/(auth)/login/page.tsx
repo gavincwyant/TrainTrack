@@ -49,7 +49,7 @@ export default function LoginPage() {
       // Redirect based on role (we'll fetch this from the session)
       router.push("/dashboard")
       router.refresh()
-    } catch (err) {
+    } catch {
       setError("An error occurred during login")
     } finally {
       setIsLoading(false)
@@ -64,7 +64,7 @@ export default function LoginPage() {
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
               Sign up as a trainer
             </Link>

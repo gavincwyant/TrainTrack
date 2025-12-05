@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   try {
     // Verify authentication and get workspace
     const workspaceId = await requireWorkspace()
-    const trainerId = await requireUserId()
+    await requireUserId() // Verify user is authenticated
 
     const body = await request.json()
     const data = createClientSchema.parse(body)
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const workspaceId = await requireWorkspace()
 
