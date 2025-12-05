@@ -1,0 +1,259 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// Core Models
+// ============================================================================
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  subdomain String?  @unique
+  trainerId String   @map("trainer_id")
+  trainer   User     @relation("TrainerWorkspace", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  subscriptionTier String?  @map("subscription_tier")
+
+  users                     User[]                     @relation("WorkspaceMembers")
+  clientProfiles            ClientProfile[]
+  appointments              Appointment[]
+  workoutSessions           WorkoutSession[]
+  invoices                  Invoice[]
+  availabilityBlocks        AvailabilityBlock[]
+  customMetricDefinitions   CustomMetricDefinition[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("workspaces")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         Role
+  workspaceId  String?   @map("workspace_id")
+  workspace    Workspace? @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  fullName     String    @map("full_name")
+  phone        String?
+  profileImage String?   @map("profile_image")
+
+  ownedWorkspaces        Workspace[]         @relation("TrainerWorkspace")
+  clientProfile          ClientProfile?
+  trainerAppointments    Appointment[]       @relation("TrainerAppointments")
+  clientAppointments     Appointment[]       @relation("ClientAppointments")
+  trainerWorkoutSessions WorkoutSession[]    @relation("TrainerSessions")
+  clientWorkoutSessions  WorkoutSession[]    @relation("ClientSessions")
+  trainerInvoices        Invoice[]           @relation("TrainerInvoices")
+  clientInvoices         Invoice[]           @relation("ClientInvoices")
+  availabilityBlocks     AvailabilityBlock[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+enum Role {
+  TRAINER
+  CLIENT
+}
+
+model ClientProfile {
+  id               String          @id @default(uuid())
+  userId           String          @unique @map("user_id")
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId      String          @map("workspace_id")
+  workspace        Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  billingFrequency BillingFrequency @map("billing_frequency")
+  sessionRate      Decimal         @map("session_rate") @db.Decimal(10, 2)
+  notes            String?         @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("client_profiles")
+}
+
+enum BillingFrequency {
+  PER_SESSION
+  MONTHLY
+}
+
+// ============================================================================
+// Scheduling Models
+// ============================================================================
+
+model AvailabilityBlock {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  dayOfWeek   Int       @map("day_of_week") // 0-6 (Sunday-Saturday)
+  startTime   String    @map("start_time")  // "09:00" format
+  endTime     String    @map("end_time")    // "17:00" format
+  isRecurring Boolean   @default(true) @map("is_recurring")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("availability_blocks")
+}
+
+model Appointment {
+  id                 String            @id @default(uuid())
+  workspaceId        String            @map("workspace_id")
+  workspace          Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId          String            @map("trainer_id")
+  trainer            User              @relation("TrainerAppointments", fields: [trainerId], references: [id], onDelete: Cascade)
+  clientId           String            @map("client_id")
+  client             User              @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
+
+  startTime          DateTime          @map("start_time")
+  endTime            DateTime          @map("end_time")
+  status             AppointmentStatus
+  cancellationReason String?           @map("cancellation_reason") @db.Text
+
+  workoutSession     WorkoutSession?
+  invoiceLineItems   InvoiceLineItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceId, startTime])
+  @@index([trainerId, startTime])
+  @@index([clientId, startTime])
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+// ============================================================================
+// Workout Tracking Models
+// ============================================================================
+
+model CustomMetricDefinition {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  name        String
+  unit        String?
+  dataType    MetricDataType @map("data_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("custom_metric_definitions")
+}
+
+enum MetricDataType {
+  NUMBER
+  TEXT
+  BOOLEAN
+}
+
+model WorkoutSession {
+  id            String    @id @default(uuid())
+  workspaceId   String    @map("workspace_id")
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  appointmentId String    @unique @map("appointment_id")
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  trainerId     String    @map("trainer_id")
+  trainer       User      @relation("TrainerSessions", fields: [trainerId], references: [id], onDelete: Cascade)
+  clientId      String    @map("client_id")
+  client        User      @relation("ClientSessions", fields: [clientId], references: [id], onDelete: Cascade)
+
+  date          DateTime  @db.Date
+  notes         String?   @db.Text
+  exercises     Json?     // Array of {name, sets, reps, weight, notes}
+  customMetrics Json?     @map("custom_metrics") // {metric_name: value}
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceId, clientId, date])
+  @@map("workout_sessions")
+}
+
+// ============================================================================
+// Billing & Invoicing Models
+// ============================================================================
+
+model Invoice {
+  id            String        @id @default(uuid())
+  workspaceId   String        @map("workspace_id")
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId     String        @map("trainer_id")
+  trainer       User          @relation("TrainerInvoices", fields: [trainerId], references: [id], onDelete: Cascade)
+  clientId      String        @map("client_id")
+  client        User          @relation("ClientInvoices", fields: [clientId], references: [id], onDelete: Cascade)
+
+  amount        Decimal       @db.Decimal(10, 2)
+  dueDate       DateTime      @map("due_date") @db.Date
+  paidAt        DateTime?     @map("paid_at")
+  status        InvoiceStatus
+  paymentMethod PaymentMethod? @map("payment_method")
+  notes         String?       @db.Text
+
+  lineItems     InvoiceLineItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceId, status])
+  @@index([clientId, dueDate])
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  VENMO
+  ZELLE
+  CHECK
+  OTHER
+}
+
+model InvoiceLineItem {
+  id            String      @id @default(uuid())
+  invoiceId     String      @map("invoice_id")
+  invoice       Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  appointmentId String?     @map("appointment_id")
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  description   String
+  quantity      Int
+  unitPrice     Decimal     @map("unit_price") @db.Decimal(10, 2)
+  total         Decimal     @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("invoice_line_items")
+}
