@@ -107,7 +107,7 @@ export function createTenantScopedPrisma(workspaceId: string) {
         async create({ model, operation, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
             args.data = {
-              ...args.data,
+              ...(args.data as any),
               workspaceId,
             }
           }
@@ -149,13 +149,10 @@ export function createTenantScopedPrisma(workspaceId: string) {
         },
         async delete({ model, operation, args, query }) {
           if (TENANT_SCOPED_MODELS.includes(model)) {
-            // Verify workspace before delete
-            const record = await prisma[model as any].findUnique({
-              where: args.where,
-              select: { workspaceId: true },
-            })
-            if (!record || record.workspaceId !== workspaceId) {
-              throw new Error('Record not found or access denied')
+            // Add workspace filter to where clause
+            args.where = {
+              ...args.where,
+              workspaceId,
             }
           }
           return query(args)
