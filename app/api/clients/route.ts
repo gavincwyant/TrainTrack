@@ -12,8 +12,7 @@ const createClientSchema = z.object({
   billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]),
   sessionRate: z.string(),
   notes: z.string().optional(),
-  createAccount: z.enum(["invite", "direct"]),
-  password: z.string().optional(),
+  createAccount: z.enum(["invite", "manual"]),
 })
 
 export async function POST(request: NextRequest) {
@@ -48,23 +47,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create client based on account type
-    if (data.createAccount === "direct") {
-      // Direct account creation - trainer sets password
-      if (!data.password || data.password.length < 8) {
-        return NextResponse.json(
-          { error: "Password must be at least 8 characters" },
-          { status: 400 }
-        )
-      }
-
-      const passwordHash = await hash(data.password, 10)
+    if (data.createAccount === "manual") {
+      // Manual creation - trainer manages everything, client has NO login access
+      // We don't create a user account at all, just a client profile with contact info
 
       const result = await prisma.$transaction(async (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends">) => {
-        // Create client user
+        // Create a user record but with no password (null) - they cannot log in
         const client = await tx.user.create({
           data: {
             email: data.email,
-            passwordHash,
+            passwordHash: "", // Empty password hash - user cannot log in
             fullName: data.fullName,
             phone: data.phone,
             role: "CLIENT",
@@ -87,7 +79,7 @@ export async function POST(request: NextRequest) {
       })
 
       return NextResponse.json({
-        message: "Client account created successfully",
+        message: "Client added successfully",
         clientId: result.client.id,
       })
     } else {

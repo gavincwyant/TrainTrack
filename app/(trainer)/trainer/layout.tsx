@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
+import { auth, signOut } from "@/lib/auth"
 import Link from "next/link"
 
 export default async function TrainerLayout({
@@ -56,7 +56,10 @@ export default async function TrainerLayout({
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">{session.user.name}</span>
-              <form action="/api/auth/signout" method="POST">
+              <form action={async () => {
+                "use server"
+                await signOut({ redirectTo: "/login" })
+              }}>
                 <button
                   type="submit"
                   className="text-sm text-gray-700 hover:text-gray-900"

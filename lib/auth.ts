@@ -28,14 +28,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           })
 
           if (!user) {
+            console.log("User not found:", email)
             return null
           }
 
           const isValid = await compare(password, user.passwordHash)
 
           if (!isValid) {
+            console.log("Invalid password for user:", email)
             return null
           }
+
+          console.log("Auth successful for user:", email, "role:", user.role)
 
           return {
             id: user.id,

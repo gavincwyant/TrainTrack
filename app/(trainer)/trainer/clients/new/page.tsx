@@ -14,16 +14,7 @@ const clientSchema = z.object({
   billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]),
   sessionRate: z.string().min(1, "Session rate is required"),
   notes: z.string().optional(),
-  createAccount: z.enum(["invite", "direct"]),
-  password: z.string().optional(),
-}).refine((data) => {
-  if (data.createAccount === "direct") {
-    return data.password && data.password.length >= 8
-  }
-  return true
-}, {
-  message: "Password must be at least 8 characters for direct account creation",
-  path: ["password"],
+  createAccount: z.enum(["invite", "manual"]),
 })
 
 type ClientFormData = z.infer<typeof clientSchema>
@@ -41,7 +32,7 @@ export default function NewClientPage() {
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
-      createAccount: "invite",
+      createAccount: "manual",
       billingFrequency: "PER_SESSION",
     },
   })
@@ -96,24 +87,34 @@ export default function NewClientPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Account Creation Method
             </label>
-            <div className="space-y-2">
-              <label className="flex items-center">
+            <div className="space-y-3">
+              <label className="flex items-start">
+                <input
+                  {...register("createAccount")}
+                  type="radio"
+                  value="manual"
+                  className="mr-3 mt-1"
+                />
+                <div>
+                  <span className="text-sm font-medium">Manual Entry (No Client Access)</span>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Client profile for your records only. Client will not have login access. You manage all scheduling and billing.
+                  </p>
+                </div>
+              </label>
+              <label className="flex items-start">
                 <input
                   {...register("createAccount")}
                   type="radio"
                   value="invite"
-                  className="mr-2"
+                  className="mr-3 mt-1"
                 />
-                <span className="text-sm">Send email invitation (client creates their own password)</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  {...register("createAccount")}
-                  type="radio"
-                  value="direct"
-                  className="mr-2"
-                />
-                <span className="text-sm">Create account directly (you set the password)</span>
+                <div>
+                  <span className="text-sm font-medium">Send Email Invitation</span>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Client receives an email to create their own account and password. They can manage their own bookings.
+                  </p>
+                </div>
               </label>
             </div>
           </div>
@@ -164,26 +165,6 @@ export default function NewClientPage() {
                   placeholder="(555) 123-4567"
                 />
               </div>
-
-              {createAccount === "direct" && (
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password *
-                  </label>
-                  <input
-                    {...register("password")}
-                    type="password"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="••••••••"
-                  />
-                  {errors.password && (
-                    <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-                  )}
-                  <p className="mt-1 text-xs text-gray-500">
-                    Client will be able to change this password after first login
-                  </p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -256,7 +237,7 @@ export default function NewClientPage() {
               disabled={isLoading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Adding..." : createAccount === "invite" ? "Send Invitation" : "Create Client"}
+              {isLoading ? "Adding..." : createAccount === "invite" ? "Send Invitation" : "Add Client"}
             </button>
           </div>
         </form>
