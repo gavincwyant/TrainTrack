@@ -7,6 +7,7 @@ import { enUS } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import Link from "next/link"
 import AppointmentModal from "@/components/AppointmentModal"
+import BlockTimeModal from "@/components/BlockTimeModal"
 
 const locales = {
   "en-US": enUS,
@@ -69,6 +70,8 @@ export default function TrainerCalendarPage() {
   const [view, setView] = useState<View>("week")
   const [date, setDate] = useState(new Date())
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false)
+  const [showActionChoice, setShowActionChoice] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null)
 
   const fetchData = useCallback(async () => {
@@ -127,7 +130,7 @@ export default function TrainerCalendarPage() {
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     setSelectedSlot({ start, end })
-    setIsModalOpen(true)
+    setShowActionChoice(true)
   }
 
   const handleSelectEvent = (event: CalendarEvent) => {
@@ -371,11 +374,84 @@ export default function TrainerCalendarPage() {
         )}
       </div>
 
+      {/* Action Choice Modal */}
+      {showActionChoice && selectedSlot && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              What would you like to do?
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              {format(selectedSlot.start, "EEEE, MMMM d")} at{" "}
+              {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowActionChoice(false)
+                  setIsModalOpen(true)
+                }}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                Schedule Appointment
+              </button>
+              <button
+                onClick={() => {
+                  setShowActionChoice(false)
+                  setIsBlockModalOpen(true)
+                }}
+                className="w-full px-4 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                  />
+                </svg>
+                Block Time
+              </button>
+              <button
+                onClick={() => {
+                  setShowActionChoice(false)
+                  setSelectedSlot(null)
+                }}
+                className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Appointment Modal */}
       <AppointmentModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false)
+          setSelectedSlot(null)
+        }}
+        onSuccess={() => {
+          fetchData()
+        }}
+        preselectedDate={selectedSlot?.start}
+      />
+
+      {/* Block Time Modal */}
+      <BlockTimeModal
+        isOpen={isBlockModalOpen}
+        onClose={() => {
+          setIsBlockModalOpen(false)
           setSelectedSlot(null)
         }}
         onSuccess={() => {
