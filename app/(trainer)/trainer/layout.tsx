@@ -47,6 +47,12 @@ export default async function TrainerLayout({
                   Calendar
                 </Link>
                 <Link
+                  href="/trainer/workouts"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Workouts
+                </Link>
+                <Link
                   href="/trainer/metrics"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
