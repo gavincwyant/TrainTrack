@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db"
 import { requireWorkspace, requireUserId, isTrainer } from "@/lib/middleware/tenant"
 
 const appointmentSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().uuid().optional(), // Optional for client self-booking
   startTime: z.string().datetime(),
   endTime: z.string().datetime(),
 })
@@ -119,27 +119,79 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify client belongs to workspace
-    const client = await prisma.user.findFirst({
-      where: {
-        id: data.clientId,
-        workspaceId,
-        role: "CLIENT",
-      },
-    })
+    // Determine clientId and trainerId based on who's booking
+    let finalClientId: string
+    let finalTrainerId: string
 
-    if (!client) {
-      return NextResponse.json(
-        { error: "Client not found" },
-        { status: 404 }
-      )
+    if (userIsTrainer) {
+      // Trainer is booking for a client
+      if (!data.clientId) {
+        return NextResponse.json(
+          { error: "Client ID is required when trainer is booking" },
+          { status: 400 }
+        )
+      }
+
+      // Verify client belongs to workspace
+      const client = await prisma.user.findFirst({
+        where: {
+          id: data.clientId,
+          workspaceId,
+          role: "CLIENT",
+        },
+      })
+
+      if (!client) {
+        return NextResponse.json(
+          { error: "Client not found" },
+          { status: 404 }
+        )
+      }
+
+      finalClientId = data.clientId
+      finalTrainerId = userId
+    } else {
+      // Client is booking for themselves
+      finalClientId = userId
+
+      // Get the client's profile to find their trainer
+      const clientProfile = await prisma.clientProfile.findFirst({
+        where: {
+          userId: userId,
+          workspaceId,
+        },
+      })
+
+      if (!clientProfile) {
+        return NextResponse.json(
+          { error: "Client profile not found" },
+          { status: 404 }
+        )
+      }
+
+      // Get the trainer for this workspace
+      const trainer = await prisma.user.findFirst({
+        where: {
+          workspaceId,
+          role: "TRAINER",
+        },
+      })
+
+      if (!trainer) {
+        return NextResponse.json(
+          { error: "Trainer not found for this workspace" },
+          { status: 404 }
+        )
+      }
+
+      finalTrainerId = trainer.id
     }
 
     const appointment = await prisma.appointment.create({
       data: {
         workspaceId,
-        trainerId: userIsTrainer ? userId : client.id, // If client booking, use their trainer
-        clientId: data.clientId,
+        trainerId: finalTrainerId,
+        clientId: finalClientId,
         startTime,
         endTime,
         status: "SCHEDULED",

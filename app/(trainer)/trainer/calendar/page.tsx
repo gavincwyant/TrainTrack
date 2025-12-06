@@ -6,6 +6,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enUS } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import Link from "next/link"
+import AppointmentModal from "@/components/AppointmentModal"
 
 const locales = {
   "en-US": enUS,
@@ -67,6 +68,8 @@ export default function TrainerCalendarPage() {
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<View>("week")
   const [date, setDate] = useState(new Date())
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null)
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
@@ -123,8 +126,8 @@ export default function TrainerCalendarPage() {
   }, [fetchData])
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
-    // TODO: Open modal to create new appointment or blocked time
-    console.log("Selected slot:", start, end)
+    setSelectedSlot({ start, end })
+    setIsModalOpen(true)
   }
 
   const handleSelectEvent = (event: CalendarEvent) => {
@@ -214,8 +217,8 @@ export default function TrainerCalendarPage() {
           </Link>
           <button
             onClick={() => {
-              // TODO: Open new appointment modal
-              alert("New appointment modal coming soon!")
+              setSelectedSlot(null)
+              setIsModalOpen(true)
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
@@ -320,18 +323,42 @@ export default function TrainerCalendarPage() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => {
-                        // TODO: Mark as completed
-                        alert("Mark as completed coming soon!")
+                      onClick={async () => {
+                        if (confirm("Mark this appointment as completed?")) {
+                          try {
+                            const response = await fetch(`/api/appointments/${apt.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ status: "COMPLETED" }),
+                            })
+                            if (response.ok) {
+                              fetchData()
+                            }
+                          } catch (error) {
+                            console.error("Failed to update appointment:", error)
+                          }
+                        }
                       }}
                       className="text-sm text-green-600 hover:text-green-700"
                     >
                       Complete
                     </button>
                     <button
-                      onClick={() => {
-                        // TODO: Cancel appointment
-                        alert("Cancel appointment coming soon!")
+                      onClick={async () => {
+                        if (confirm("Cancel this appointment?")) {
+                          try {
+                            const response = await fetch(`/api/appointments/${apt.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ status: "CANCELLED" }),
+                            })
+                            if (response.ok) {
+                              fetchData()
+                            }
+                          } catch (error) {
+                            console.error("Failed to cancel appointment:", error)
+                          }
+                        }
                       }}
                       className="text-sm text-red-600 hover:text-red-700"
                     >
@@ -343,6 +370,19 @@ export default function TrainerCalendarPage() {
           </div>
         )}
       </div>
+
+      {/* Appointment Modal */}
+      <AppointmentModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedSlot(null)
+        }}
+        onSuccess={() => {
+          fetchData()
+        }}
+        preselectedDate={selectedSlot?.start}
+      />
     </div>
   )
 }
