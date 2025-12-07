@@ -15,7 +15,7 @@ const clientSchema = z.object({
   sessionRate: z.string().min(1, "Session rate is required"),
   notes: z.string().optional(),
   createAccount: z.enum(["invite", "manual"]),
-  autoInvoiceEnabled: z.boolean().optional().default(true),
+  autoInvoiceEnabled: z.boolean(),
 })
 
 type ClientFormData = z.infer<typeof clientSchema>

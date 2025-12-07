@@ -47,6 +47,10 @@ export async function GET(
 
     // Verify the client belongs to the trainer's workspace
     if (session.user.role === "TRAINER") {
+      if (!client.workspaceId) {
+        return NextResponse.json({ error: "Client has no workspace" }, { status: 400 })
+      }
+
       const workspace = await prisma.workspace.findUnique({
         where: {
           id: client.workspaceId,

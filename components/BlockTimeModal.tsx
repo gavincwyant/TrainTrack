@@ -10,7 +10,7 @@ const blockTimeSchema = z.object({
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   reason: z.string().optional(),
-  isRecurring: z.boolean().default(false),
+  isRecurring: z.boolean(),
 })
 
 type BlockTimeFormData = z.infer<typeof blockTimeSchema>

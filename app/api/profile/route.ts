@@ -20,10 +20,14 @@ export async function GET() {
             phone: true,
           },
         },
-        trainer: {
+        workspace: {
           select: {
-            fullName: true,
-            email: true,
+            trainer: {
+              select: {
+                fullName: true,
+                email: true,
+              },
+            },
           },
         },
       },
@@ -39,7 +43,7 @@ export async function GET() {
     return NextResponse.json({
       profile: {
         user: clientProfile.user,
-        trainer: clientProfile.trainer,
+        trainer: clientProfile.workspace.trainer,
         billingFrequency: clientProfile.billingFrequency,
         sessionRate: clientProfile.sessionRate,
         notes: clientProfile.notes,
