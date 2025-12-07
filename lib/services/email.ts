@@ -1,9 +1,18 @@
 import sgMail from "@sendgrid/mail"
-import { Invoice, InvoiceLineItem, User } from "@prisma/client"
+import { Invoice, InvoiceLineItem } from "@prisma/client"
 
 type InvoiceWithRelations = Invoice & {
-  client: User
-  trainer: User
+  client: {
+    id: string
+    fullName: string
+    email: string
+    phone?: string | null
+  }
+  trainer: {
+    id: string
+    fullName: string
+    email: string
+  }
   lineItems: InvoiceLineItem[]
 }
 

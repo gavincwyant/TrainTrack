@@ -1,19 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 
 export default function PendingAppointmentsBadge() {
   const [count, setCount] = useState(0)
 
-  useEffect(() => {
-    fetchCount()
-    // Refresh count every 30 seconds
-    const interval = setInterval(fetchCount, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const fetchCount = async () => {
+  const fetchCount = useCallback(async () => {
     try {
       const response = await fetch("/api/pending-appointments")
       const data = await response.json()
@@ -24,7 +17,15 @@ export default function PendingAppointmentsBadge() {
       // Silently fail - don't show errors in navigation
       console.error("Failed to fetch pending appointments count:", error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCount()
+    // Refresh count every 30 seconds
+    const interval = setInterval(fetchCount, 30000)
+    return () => clearInterval(interval)
+  }, [fetchCount])
 
   return (
     <Link

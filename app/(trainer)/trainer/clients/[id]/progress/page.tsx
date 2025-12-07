@@ -164,7 +164,7 @@ export default function ClientProgressPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{client.fullName}'s Progress</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{client.fullName}&apos;s Progress</h1>
           <p className="mt-2 text-gray-600">Visualize workout progress and metrics over time</p>
         </div>
         <Link
