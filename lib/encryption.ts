@@ -1,17 +1,23 @@
 import crypto from "crypto"
 
 const algorithm = "aes-256-gcm"
-const secretKey = process.env.ENCRYPTION_KEY!
 
-if (!secretKey) {
-  throw new Error("ENCRYPTION_KEY environment variable is not set")
-}
+function getSecretKey(): string {
+  const secretKey = process.env.ENCRYPTION_KEY
 
-if (Buffer.from(secretKey, "hex").length !== 32) {
-  throw new Error("ENCRYPTION_KEY must be a 32-byte (64-character) hex string")
+  if (!secretKey) {
+    throw new Error("ENCRYPTION_KEY environment variable is not set")
+  }
+
+  if (Buffer.from(secretKey, "hex").length !== 32) {
+    throw new Error("ENCRYPTION_KEY must be a 32-byte (64-character) hex string")
+  }
+
+  return secretKey
 }
 
 export async function encrypt(text: string): Promise<string> {
+  const secretKey = getSecretKey()
   const iv = crypto.randomBytes(16)
   const cipher = crypto.createCipheriv(
     algorithm,
@@ -30,6 +36,7 @@ export async function encrypt(text: string): Promise<string> {
 }
 
 export async function decrypt(encryptedText: string): Promise<string> {
+  const secretKey = getSecretKey()
   const { iv, encryptedData, authTag } = JSON.parse(encryptedText)
 
   const decipher = crypto.createDecipheriv(
