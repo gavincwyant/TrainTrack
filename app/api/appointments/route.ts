@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/db"
 import { requireWorkspace, requireUserId, isTrainer } from "@/lib/middleware/tenant"
+import { CalendarSyncService } from "@/lib/services/calendar-sync"
 
 const appointmentSchema = z.object({
   clientId: z.string().uuid().optional(), // Optional for client self-booking
@@ -44,13 +45,19 @@ export async function GET(request: Request) {
             email: true,
           },
         },
+        workoutSession: true,
       },
       orderBy: {
         startTime: "asc",
       },
     })
 
-    return NextResponse.json({ appointments })
+    // Filter out appointments that already have workout sessions if status=COMPLETED
+    const filteredAppointments = status === "COMPLETED"
+      ? appointments.filter(apt => !apt.workoutSession)
+      : appointments
+
+    return NextResponse.json({ appointments: filteredAppointments })
   } catch (error) {
     console.error("Get appointments error:", error)
 
@@ -212,6 +219,12 @@ export async function POST(request: Request) {
           },
         },
       },
+    })
+
+    // Sync to Google Calendar (async, don't wait)
+    const syncService = new CalendarSyncService()
+    syncService.syncAppointmentToGoogle(appointment.id).catch((error) => {
+      console.error("Background sync failed:", error)
     })
 
     return NextResponse.json({ appointment }, { status: 201 })

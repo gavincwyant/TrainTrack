@@ -13,6 +13,7 @@ const createClientSchema = z.object({
   sessionRate: z.string(),
   notes: z.string().optional(),
   createAccount: z.enum(["invite", "manual"]),
+  autoInvoiceEnabled: z.boolean().optional().default(true),
 })
 
 export async function POST(request: NextRequest) {
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
             billingFrequency: data.billingFrequency,
             sessionRate,
             notes: data.notes,
+            autoInvoiceEnabled: data.autoInvoiceEnabled ?? true,
           },
         })
 
@@ -109,6 +111,7 @@ export async function POST(request: NextRequest) {
             billingFrequency: data.billingFrequency,
             sessionRate,
             notes: data.notes,
+            autoInvoiceEnabled: data.autoInvoiceEnabled ?? true,
           },
         })
 

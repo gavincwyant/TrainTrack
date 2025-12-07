@@ -19,7 +19,7 @@ const workoutSessionSchema = z.object({
   date: z.string().min(1, "Date is required"),
   notes: z.string().optional(),
   exercises: z.array(exerciseSchema).optional(),
-  customMetrics: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
+  customMetrics: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
 })
 
 type WorkoutSessionFormData = z.infer<typeof workoutSessionSchema>

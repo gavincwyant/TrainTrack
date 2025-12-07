@@ -25,6 +25,7 @@ type AppointmentModalProps = {
   onClose: () => void
   onSuccess: () => void
   preselectedDate?: Date
+  preselectedEndDate?: Date
   preselectedClient?: string
 }
 
@@ -33,6 +34,7 @@ export default function AppointmentModal({
   onClose,
   onSuccess,
   preselectedDate,
+  preselectedEndDate,
   preselectedClient,
 }: AppointmentModalProps) {
   const [clients, setClients] = useState<Client[]>([])
@@ -53,12 +55,13 @@ export default function AppointmentModal({
         ? preselectedDate.toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0],
       startTime: preselectedDate
-        ? preselectedDate.toTimeString().slice(0, 5)
+        ? `${String(preselectedDate.getHours()).padStart(2, '0')}:${String(preselectedDate.getMinutes()).padStart(2, '0')}`
         : "09:00",
       endTime: preselectedDate
-        ? new Date(preselectedDate.getTime() + 60 * 60 * 1000)
-            .toTimeString()
-            .slice(0, 5)
+        ? (() => {
+            const endDate = new Date(preselectedDate.getTime() + 60 * 60 * 1000)
+            return `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`
+          })()
         : "10:00",
     },
   })
@@ -68,19 +71,17 @@ export default function AppointmentModal({
       fetchClients()
       if (preselectedDate) {
         setValue("date", preselectedDate.toISOString().split("T")[0])
-        setValue("startTime", preselectedDate.toTimeString().slice(0, 5))
-        setValue(
-          "endTime",
-          new Date(preselectedDate.getTime() + 60 * 60 * 1000)
-            .toTimeString()
-            .slice(0, 5)
-        )
+        setValue("startTime", `${String(preselectedDate.getHours()).padStart(2, '0')}:${String(preselectedDate.getMinutes()).padStart(2, '0')}`)
+
+        // Use preselectedEndDate if provided, otherwise default to 1 hour later
+        const endDate = preselectedEndDate || new Date(preselectedDate.getTime() + 60 * 60 * 1000)
+        setValue("endTime", `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`)
       }
       if (preselectedClient) {
         setValue("clientId", preselectedClient)
       }
     }
-  }, [isOpen, preselectedDate, preselectedClient, setValue])
+  }, [isOpen, preselectedDate, preselectedEndDate, preselectedClient, setValue])
 
   const fetchClients = async () => {
     try {

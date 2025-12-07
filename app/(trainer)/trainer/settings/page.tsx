@@ -17,11 +17,26 @@ const settingsSchema = z.object({
 
 type SettingsFormData = z.infer<typeof settingsSchema>
 
+type Settings = {
+  dayStartTime: string
+  dayEndTime: string
+  timezone: string
+  googleCalendarConnected: boolean
+  googleCalendarEmail: string | null
+  autoSyncEnabled: boolean
+  lastSyncedAt: string | null
+  autoInvoicingEnabled: boolean
+  monthlyInvoiceDay: number
+  defaultInvoiceDueDays: number
+}
+
 export default function TrainerSettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [settings, setSettings] = useState<Settings | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
 
   const {
     register,
@@ -51,6 +66,7 @@ export default function TrainerSettingsPage() {
         throw new Error(data.error || "Failed to fetch settings")
       }
 
+      setSettings(data.settings)
       reset({
         dayStartTime: data.settings.dayStartTime,
         dayEndTime: data.settings.dayEndTime,
@@ -87,6 +103,132 @@ export default function TrainerSettingsPage() {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleConnectGoogle = () => {
+    window.location.href = "/api/calendar/connect"
+  }
+
+  const handleDisconnectGoogle = async () => {
+    if (!confirm("Are you sure you want to disconnect your Google Calendar?")) {
+      return
+    }
+
+    try {
+      const response = await fetch("/api/calendar/disconnect", {
+        method: "POST",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to disconnect calendar")
+      }
+
+      await fetchSettings()
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    }
+  }
+
+  const handleToggleAutoSync = async (enabled: boolean) => {
+    try {
+      const response = await fetch("/api/trainer-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoSyncEnabled: enabled }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update auto-sync setting")
+      }
+
+      await fetchSettings()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    }
+  }
+
+  const handleManualSync = async () => {
+    setIsSyncing(true)
+    try {
+      const response = await fetch("/api/calendar/sync", {
+        method: "POST",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to sync calendar")
+      }
+
+      await fetchSettings()
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const handleToggleAutoInvoicing = async (enabled: boolean) => {
+    try {
+      const response = await fetch("/api/trainer-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoInvoicingEnabled: enabled }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update auto-invoicing setting")
+      }
+
+      await fetchSettings()
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    }
+  }
+
+  const handleMonthlyInvoiceDayChange = async (day: number) => {
+    try {
+      const response = await fetch("/api/trainer-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ monthlyInvoiceDay: day }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update monthly invoice day")
+      }
+
+      await fetchSettings()
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    }
+  }
+
+  const handleDefaultDueDaysChange = async (days: number) => {
+    try {
+      const response = await fetch("/api/trainer-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ defaultInvoiceDueDays: days }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update default due days")
+      }
+
+      await fetchSettings()
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
     }
   }
 
@@ -205,6 +347,179 @@ export default function TrainerSettingsPage() {
               </button>
             </div>
           </form>
+        )}
+      </div>
+
+      {/* Google Calendar Integration */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Calendar Integration</h2>
+
+        {isLoading ? (
+          <p className="text-gray-600">Loading...</p>
+        ) : settings?.googleCalendarConnected ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-green-50 rounded-md border border-green-200">
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-green-800">
+                    Google Calendar Connected
+                  </p>
+                  <p className="text-sm text-green-600">
+                    {settings.googleCalendarEmail}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleDisconnectGoogle}
+                className="text-sm text-red-600 hover:text-red-700 font-medium"
+              >
+                Disconnect
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md">
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Auto-sync enabled
+                </label>
+                <p className="text-sm text-gray-500">
+                  Automatically sync appointments and blocked times with Google Calendar
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.autoSyncEnabled}
+                onChange={(e) => handleToggleAutoSync(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+            </div>
+
+            {settings.lastSyncedAt && (
+              <p className="text-xs text-gray-500">
+                Last synced: {new Date(settings.lastSyncedAt).toLocaleString()}
+              </p>
+            )}
+
+            <button
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSyncing ? "Syncing..." : "Sync Now"}
+            </button>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <h3 className="text-sm font-medium text-blue-900 mb-2">How sync works:</h3>
+              <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                <li>Your appointments automatically appear in Google Calendar</li>
+                <li>Events in Google Calendar create blocked times here</li>
+                <li>Prevents double-booking across both calendars</li>
+                <li>Auto-sync runs every 15 minutes when enabled</li>
+              </ul>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm text-gray-600 mb-4">
+              Connect your Google Calendar to automatically sync appointments and prevent double-booking.
+            </p>
+            <button
+              onClick={handleConnectGoogle}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+              </svg>
+              Connect Google Calendar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Invoice Settings */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Invoice Settings</h2>
+
+        {isLoading ? (
+          <p className="text-gray-600">Loading...</p>
+        ) : (
+          <div className="space-y-6">
+            {/* Auto-invoicing toggle */}
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md">
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Automatic Invoicing
+                </label>
+                <p className="text-sm text-gray-500">
+                  Automatically generate and send invoices to clients based on their billing frequency
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings?.autoInvoicingEnabled ?? true}
+                onChange={(e) => handleToggleAutoInvoicing(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+            </div>
+
+            {/* Monthly invoice day */}
+            <div>
+              <label htmlFor="monthlyInvoiceDay" className="block text-sm font-medium text-gray-700">
+                Monthly Invoice Day
+              </label>
+              <p className="text-sm text-gray-500 mb-2">
+                Day of month to generate invoices for monthly billing clients
+              </p>
+              <select
+                id="monthlyInvoiceDay"
+                value={settings?.monthlyInvoiceDay ?? 1}
+                onChange={(e) => handleMonthlyInvoiceDayChange(Number(e.target.value))}
+                className="mt-1 block w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                  <option key={day} value={day}>
+                    {day}
+                    {day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of the month
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Default due days */}
+            <div>
+              <label htmlFor="defaultDueDays" className="block text-sm font-medium text-gray-700">
+                Default Payment Terms
+              </label>
+              <p className="text-sm text-gray-500 mb-2">
+                Number of days until invoice is due after generation
+              </p>
+              <select
+                id="defaultDueDays"
+                value={settings?.defaultInvoiceDueDays ?? 30}
+                onChange={(e) => handleDefaultDueDaysChange(Number(e.target.value))}
+                className="mt-1 block w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value={7}>Net 7 (Due in 7 days)</option>
+                <option value={15}>Net 15 (Due in 15 days)</option>
+                <option value={30}>Net 30 (Due in 30 days)</option>
+                <option value={60}>Net 60 (Due in 60 days)</option>
+              </select>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <h3 className="text-sm font-medium text-blue-900 mb-2">How invoicing works:</h3>
+              <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                <li>Per-session clients: Invoice generated immediately when appointment is marked completed</li>
+                <li>Monthly clients: Invoices generated on your chosen day of the month</li>
+                <li>All invoices are automatically emailed to clients</li>
+                <li>You can disable auto-invoicing for specific clients in their profile</li>
+                <li>View and manage all invoices in the Invoices section</li>
+              </ul>
+            </div>
+          </div>
         )}
       </div>
     </div>

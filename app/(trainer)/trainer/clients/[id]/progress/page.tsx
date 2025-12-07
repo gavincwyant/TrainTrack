@@ -51,27 +51,41 @@ export default function ClientProgressPage() {
 
   const fetchData = async () => {
     setIsLoading(true)
+    setError(null)
     try {
       // Fetch client details
       const clientRes = await fetch(`/api/clients/${clientId}`)
-      const clientData = await clientRes.json()
 
       if (!clientRes.ok) {
-        throw new Error(clientData.error || "Failed to fetch client")
+        if (clientRes.status === 404) {
+          throw new Error("Client not found")
+        }
+        throw new Error(`Failed to fetch client (${clientRes.status})`)
       }
+
+      const clientData = await clientRes.json().catch(() => {
+        throw new Error("Invalid response from server when fetching client")
+      })
 
       setClient(clientData.client)
 
       // Fetch workout sessions for this client
       const sessionsRes = await fetch(`/api/workout-sessions?clientId=${clientId}`)
-      const sessionsData = await sessionsRes.json()
 
       if (!sessionsRes.ok) {
-        throw new Error(sessionsData.error || "Failed to fetch sessions")
+        if (sessionsRes.status === 404) {
+          throw new Error("Sessions endpoint not found")
+        }
+        throw new Error(`Failed to fetch sessions (${sessionsRes.status})`)
       }
+
+      const sessionsData = await sessionsRes.json().catch(() => {
+        throw new Error("Invalid response from server when fetching sessions")
+      })
 
       setSessions(sessionsData.sessions || [])
     } catch (err) {
+      console.error("Fetch error:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
       setIsLoading(false)

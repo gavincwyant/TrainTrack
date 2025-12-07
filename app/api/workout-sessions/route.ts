@@ -16,7 +16,7 @@ const workoutSessionSchema = z.object({
   date: z.string(),
   notes: z.string().optional(),
   exercises: z.array(exerciseSchema).optional(),
-  customMetrics: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
+  customMetrics: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
 })
 
 export async function GET(request: Request) {

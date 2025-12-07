@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth, signOut } from "@/lib/auth"
 import Link from "next/link"
+import PendingAppointmentsBadge from "@/components/PendingAppointmentsBadge"
 
 export default async function TrainerLayout({
   children,
@@ -46,6 +47,7 @@ export default async function TrainerLayout({
                 >
                   Calendar
                 </Link>
+                <PendingAppointmentsBadge />
                 <Link
                   href="/trainer/workouts"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
