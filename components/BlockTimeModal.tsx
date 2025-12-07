@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -20,6 +20,7 @@ type BlockTimeModalProps = {
   onClose: () => void
   onSuccess: () => void
   preselectedDate?: Date
+  preselectedEndDate?: Date
 }
 
 export default function BlockTimeModal({
@@ -27,6 +28,7 @@ export default function BlockTimeModal({
   onClose,
   onSuccess,
   preselectedDate,
+  preselectedEndDate,
 }: BlockTimeModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,21 +42,28 @@ export default function BlockTimeModal({
   } = useForm<BlockTimeFormData>({
     resolver: zodResolver(blockTimeSchema),
     defaultValues: {
-      date: preselectedDate
-        ? preselectedDate.toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
-      startTime: preselectedDate
-        ? preselectedDate.toTimeString().slice(0, 5)
-        : "09:00",
-      endTime: preselectedDate
-        ? new Date(preselectedDate.getTime() + 60 * 60 * 1000)
-            .toTimeString()
-            .slice(0, 5)
-        : "10:00",
+      date: new Date().toISOString().split("T")[0],
+      startTime: "09:00",
+      endTime: "10:00",
       reason: "",
       isRecurring: false,
     },
   })
+
+  useEffect(() => {
+    if (isOpen && preselectedDate) {
+      setValue("date", preselectedDate.toISOString().split("T")[0])
+      setValue("startTime", `${String(preselectedDate.getHours()).padStart(2, '0')}:${String(preselectedDate.getMinutes()).padStart(2, '0')}`)
+
+      // Use preselectedEndDate if provided, otherwise default to 1 hour later
+      const endDate = preselectedEndDate || new Date(preselectedDate.getTime() + 60 * 60 * 1000)
+      setValue("endTime", `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`)
+    } else if (isOpen) {
+      setValue("date", new Date().toISOString().split("T")[0])
+      setValue("startTime", "09:00")
+      setValue("endTime", "10:00")
+    }
+  }, [isOpen, preselectedDate, preselectedEndDate, setValue])
 
   const onSubmit = async (data: BlockTimeFormData) => {
     setIsLoading(true)

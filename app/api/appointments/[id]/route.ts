@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/db"
 import { requireWorkspace, requireUserId } from "@/lib/middleware/tenant"
+import { CalendarSyncService } from "@/lib/services/calendar-sync"
+import { InvoiceService } from "@/lib/services/invoice"
 
 const updateAppointmentSchema = z.object({
   status: z.enum(["SCHEDULED", "COMPLETED", "CANCELLED", "RESCHEDULED"]).optional(),
@@ -127,6 +129,21 @@ export async function PATCH(
       },
     })
 
+    // Sync to Google Calendar (async, don't wait)
+    const syncService = new CalendarSyncService()
+    syncService.syncAppointmentToGoogle(id).catch((error) => {
+      console.error("Background sync failed:", error)
+    })
+
+    // Generate per-session invoice if status changed to COMPLETED
+    if (data.status === "COMPLETED") {
+      const invoiceService = new InvoiceService()
+      invoiceService.generatePerSessionInvoice(id).catch((error) => {
+        console.error("Failed to generate per-session invoice:", error)
+        // Don't fail the request if invoice generation fails
+      })
+    }
+
     return NextResponse.json({ appointment: updated })
   } catch (error) {
     console.error("Update appointment error:", error)
@@ -180,6 +197,12 @@ export async function DELETE(
         { status: 403 }
       )
     }
+
+    // Delete from Google Calendar first (async, don't wait)
+    const syncService = new CalendarSyncService()
+    syncService.deleteAppointmentFromGoogle(id, appointment.trainerId).catch((error) => {
+      console.error("Background sync deletion failed:", error)
+    })
 
     await prisma.appointment.delete({
       where: { id },

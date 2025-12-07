@@ -31,6 +31,8 @@ model Workspace {
   blockedTimes              BlockedTime[]
   trainerSettings           TrainerSettings[]
   customMetricDefinitions   CustomMetricDefinition[]
+  calendarEventMappings     CalendarEventMapping[]
+  pendingAppointments       PendingAppointment[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -58,9 +60,11 @@ model User {
   clientWorkoutSessions  WorkoutSession[]    @relation("ClientSessions")
   trainerInvoices        Invoice[]           @relation("TrainerInvoices")
   clientInvoices         Invoice[]           @relation("ClientInvoices")
-  availabilityBlocks     AvailabilityBlock[]
-  blockedTimes           BlockedTime[]       @relation("TrainerBlockedTimes")
-  trainerSettings        TrainerSettings?    @relation("TrainerSettings")
+  availabilityBlocks          AvailabilityBlock[]
+  blockedTimes                BlockedTime[]           @relation("TrainerBlockedTimes")
+  trainerSettings             TrainerSettings?        @relation("TrainerSettings")
+  trainerPendingAppointments  PendingAppointment[]    @relation("TrainerPendingAppointments")
+  clientPendingAppointments   PendingAppointment[]    @relation("ClientPendingAppointments")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -83,6 +87,9 @@ model ClientProfile {
   billingFrequency BillingFrequency @map("billing_frequency")
   sessionRate      Decimal         @map("session_rate") @db.Decimal(10, 2)
   notes            String?         @db.Text
+
+  // Invoice Settings
+  autoInvoiceEnabled Boolean @default(true) @map("auto_invoice_enabled") // Opt-out per client
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -130,6 +137,8 @@ model BlockedTime {
   isRecurring Boolean   @default(false) @map("is_recurring")
   dayOfWeek   Int?      @map("day_of_week") // For recurring blocks (0-6)
 
+  calendarEventMappings CalendarEventMapping[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -147,6 +156,21 @@ model TrainerSettings {
   dayStartTime String    @default("06:00") @map("day_start_time") // "06:00" format
   dayEndTime   String    @default("22:00") @map("day_end_time")   // "22:00" format
   timezone     String    @default("America/New_York")             // IANA timezone
+
+  // Google Calendar Integration
+  googleCalendarConnected Boolean   @default(false) @map("google_calendar_connected")
+  googleCalendarEmail     String?   @map("google_calendar_email")
+  googleAccessToken       String?   @db.Text @map("google_access_token")    // Encrypted
+  googleRefreshToken      String?   @db.Text @map("google_refresh_token")   // Encrypted
+  googleCalendarId        String?   @map("google_calendar_id")              // Primary calendar ID
+  autoSyncEnabled         Boolean   @default(false) @map("auto_sync_enabled")
+  lastSyncedAt            DateTime? @map("last_synced_at")
+  syncDirection           String    @default("bidirectional") @map("sync_direction") // "push_only", "pull_only", "bidirectional"
+
+  // Invoice Configuration
+  autoInvoicingEnabled  Boolean @default(true) @map("auto_invoicing_enabled")
+  monthlyInvoiceDay     Int     @default(1) @map("monthly_invoice_day")        // 1-31
+  defaultInvoiceDueDays Int     @default(30) @map("default_invoice_due_days")  // Net 7, 15, 30, etc.
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -168,8 +192,10 @@ model Appointment {
   status             AppointmentStatus
   cancellationReason String?           @map("cancellation_reason") @db.Text
 
-  workoutSession     WorkoutSession?
-  invoiceLineItems   InvoiceLineItem[]
+  workoutSession        WorkoutSession?
+  invoiceLineItems      InvoiceLineItem[]
+  calendarEventMappings CalendarEventMapping[]
+  convertedFromPending  PendingAppointment?    @relation("ConvertedFromPending")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -185,6 +211,39 @@ enum AppointmentStatus {
   COMPLETED
   CANCELLED
   RESCHEDULED
+}
+
+model PendingAppointment {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation("TrainerPendingAppointments", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  // Event details from Google Calendar
+  externalEventId    String   @map("external_event_id")
+  externalEventTitle String   @map("external_event_title")
+  startTime          DateTime @map("start_time")
+  endTime            DateTime @map("end_time")
+
+  // Smart detection
+  suggestedClientId   String? @map("suggested_client_id")
+  suggestedClient     User?   @relation("ClientPendingAppointments", fields: [suggestedClientId], references: [id], onDelete: SetNull)
+  matchConfidence     String  @map("match_confidence") // "high", "medium", "low"
+  matchReason         String? @map("match_reason") @db.Text // Explanation of why this client was suggested
+
+  // Status
+  status String @default("pending") // "pending", "approved", "rejected", "converted"
+
+  // If approved and converted
+  createdAppointmentId String? @unique @map("created_appointment_id")
+  createdAppointment   Appointment? @relation("ConvertedFromPending", fields: [createdAppointmentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceId, trainerId, status])
+  @@map("pending_appointments")
 }
 
 // ============================================================================
@@ -297,4 +356,38 @@ model InvoiceLineItem {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("invoice_line_items")
+}
+
+// ============================================================================
+// Calendar Integration Models
+// ============================================================================
+
+model CalendarEventMapping {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // Train app reference (one of these will be set)
+  appointmentId String?      @map("appointment_id")
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  blockedTimeId String?      @map("blocked_time_id")
+  blockedTime   BlockedTime? @relation(fields: [blockedTimeId], references: [id], onDelete: Cascade)
+
+  // External calendar reference
+  provider           String @map("provider")            // "google", future: "microsoft"
+  externalEventId    String @map("external_event_id")  // Google Calendar event ID
+  externalCalendarId String @map("external_calendar_id") // Which calendar it's in
+
+  // Sync metadata
+  syncDirection String   @map("sync_direction") // "outbound" (train→google) or "inbound" (google→train)
+  lastSyncedAt  DateTime @default(now()) @map("last_synced_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([provider, externalEventId])
+  @@index([appointmentId])
+  @@index([blockedTimeId])
+  @@index([workspaceId])
+  @@map("calendar_event_mappings")
 }

@@ -15,6 +15,7 @@ const clientSchema = z.object({
   sessionRate: z.string().min(1, "Session rate is required"),
   notes: z.string().optional(),
   createAccount: z.enum(["invite", "manual"]),
+  autoInvoiceEnabled: z.boolean().optional().default(true),
 })
 
 type ClientFormData = z.infer<typeof clientSchema>
@@ -34,6 +35,7 @@ export default function NewClientPage() {
     defaultValues: {
       createAccount: "manual",
       billingFrequency: "PER_SESSION",
+      autoInvoiceEnabled: true,
     },
   })
 
@@ -220,6 +222,21 @@ export default function NewClientPage() {
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Goals, preferences, special requirements..."
                 />
+              </div>
+
+              <div className="flex items-start">
+                <input
+                  {...register("autoInvoiceEnabled")}
+                  type="checkbox"
+                  id="autoInvoiceEnabled"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                />
+                <label htmlFor="autoInvoiceEnabled" className="ml-2 block text-sm text-gray-700">
+                  Enable automatic invoicing for this client
+                  <p className="text-xs text-gray-500 mt-1">
+                    When enabled, invoices will be automatically generated and sent based on billing frequency. Disable if you prefer to create invoices manually for this client.
+                  </p>
+                </label>
               </div>
             </div>
           </div>

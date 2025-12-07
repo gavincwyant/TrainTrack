@@ -8,6 +8,8 @@ import "react-big-calendar/lib/css/react-big-calendar.css"
 import Link from "next/link"
 import AppointmentModal from "@/components/AppointmentModal"
 import BlockTimeModal from "@/components/BlockTimeModal"
+import AppointmentDetailModal from "@/components/AppointmentDetailModal"
+import BlockedTimeDetailModal from "@/components/BlockedTimeDetailModal"
 
 const locales = {
   "en-US": enUS,
@@ -60,6 +62,8 @@ type CalendarEvent = {
   type: "appointment" | "blocked"
 }
 
+type FilterOption = "SCHEDULED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED" | "BLOCKED"
+
 export default function TrainerCalendarPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [blockedTimes, setBlockedTimes] = useState<BlockedTime[]>([])
@@ -73,6 +77,18 @@ export default function TrainerCalendarPage() {
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false)
   const [showActionChoice, setShowActionChoice] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [showAppointmentDetail, setShowAppointmentDetail] = useState(false)
+  const [showBlockedTimeDetail, setShowBlockedTimeDetail] = useState(false)
+  const [activeFilters, setActiveFilters] = useState<FilterOption[]>(["SCHEDULED", "COMPLETED", "BLOCKED"])
+
+  const toggleFilter = (filter: FilterOption) => {
+    setActiveFilters(prev =>
+      prev.includes(filter)
+        ? prev.filter(f => f !== filter)
+        : [...prev, filter]
+    )
+  }
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
@@ -107,14 +123,58 @@ export default function TrainerCalendarPage() {
         type: "appointment" as const,
       }))
 
-      const blockedEvents: CalendarEvent[] = blockedTimesData.blockedTimes.map((blocked: BlockedTime) => ({
-        id: blocked.id,
-        title: blocked.reason || "Blocked",
-        start: new Date(blocked.startTime),
-        end: new Date(blocked.endTime),
-        resource: blocked,
-        type: "blocked" as const,
-      }))
+      // Generate blocked time events, including recurring instances
+      const blockedEvents: CalendarEvent[] = []
+
+      blockedTimesData.blockedTimes.forEach((blocked: BlockedTime) => {
+        if (blocked.isRecurring) {
+          // Generate recurring instances for a reasonable time range
+          // We'll generate instances for 12 weeks before and after the current date
+          const today = new Date()
+          const startDate = new Date(today)
+          startDate.setDate(startDate.getDate() - 84) // 12 weeks before
+          const endDate = new Date(today)
+          endDate.setDate(endDate.getDate() + 84) // 12 weeks after
+
+          const originalStart = new Date(blocked.startTime)
+          const originalEnd = new Date(blocked.endTime)
+          const duration = originalEnd.getTime() - originalStart.getTime()
+
+          // Get the time of day from the original blocked time
+          const startHours = originalStart.getHours()
+          const startMinutes = originalStart.getMinutes()
+          const startSeconds = originalStart.getSeconds()
+
+          // Generate an instance for each week in the range
+          for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            if (d.getDay() === originalStart.getDay()) {
+              const instanceStart = new Date(d)
+              instanceStart.setHours(startHours, startMinutes, startSeconds, 0)
+
+              const instanceEnd = new Date(instanceStart.getTime() + duration)
+
+              blockedEvents.push({
+                id: `${blocked.id}-${instanceStart.toISOString()}`,
+                title: `${blocked.reason || "Blocked"} (Recurring)`,
+                start: instanceStart,
+                end: instanceEnd,
+                resource: blocked,
+                type: "blocked" as const,
+              })
+            }
+          }
+        } else {
+          // Non-recurring blocked time
+          blockedEvents.push({
+            id: blocked.id,
+            title: blocked.reason || "Blocked",
+            start: new Date(blocked.startTime),
+            end: new Date(blocked.endTime),
+            resource: blocked,
+            type: "blocked" as const,
+          })
+        }
+      })
 
       setEvents([...appointmentEvents, ...blockedEvents])
     } catch (err) {
@@ -123,6 +183,20 @@ export default function TrainerCalendarPage() {
       setIsLoading(false)
     }
   }, [])
+
+  // Filter events based on active filters
+  const filteredEvents = events.filter(event => {
+    if (event.type === "blocked") {
+      return activeFilters.includes("BLOCKED")
+    }
+    // For appointments, check the status
+    const appointment = event.resource as Appointment
+    return activeFilters.includes(appointment.status as FilterOption)
+  })
+
+  // Count only appointments (exclude blocked times)
+  const appointmentCount = events.filter(event => event.type === "appointment").length
+  const filteredAppointmentCount = filteredEvents.filter(event => event.type === "appointment").length
 
   useEffect(() => {
     fetchData()
@@ -134,19 +208,23 @@ export default function TrainerCalendarPage() {
   }
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    // TODO: Open modal to view/edit appointment or blocked time
-    console.log("Selected event:", event)
+    setSelectedEvent(event)
+    if (event.type === "appointment") {
+      setShowAppointmentDetail(true)
+    } else {
+      setShowBlockedTimeDetail(true)
+    }
   }
 
   const eventStyleGetter = (event: CalendarEvent) => {
     if (event.type === "blocked") {
       return {
         style: {
-          backgroundColor: "#ef4444", // red for blocked
+          backgroundColor: "#6b7280", // grey for blocked
           borderRadius: "5px",
-          opacity: 0.6,
+          opacity: 0.8,
           color: "white",
-          border: "2px solid #dc2626",
+          border: "2px solid #4b5563",
           display: "block",
         },
       }
@@ -236,8 +314,83 @@ export default function TrainerCalendarPage() {
         </div>
       )}
 
-      {/* Legend */}
+      {/* Filter Controls */}
       <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Filter Calendar View:</h3>
+        <div className="flex gap-3 flex-wrap">
+          <button
+            onClick={() => toggleFilter("SCHEDULED")}
+            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+              activeFilters.includes("SCHEDULED")
+                ? "bg-blue-500 text-white border-blue-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-3 h-3 rounded ${activeFilters.includes("SCHEDULED") ? "bg-blue-300" : "bg-blue-500"}`}></span>
+              Scheduled
+            </span>
+          </button>
+          <button
+            onClick={() => toggleFilter("COMPLETED")}
+            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+              activeFilters.includes("COMPLETED")
+                ? "bg-green-500 text-white border-green-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-3 h-3 rounded ${activeFilters.includes("COMPLETED") ? "bg-green-300" : "bg-green-500"}`}></span>
+              Completed
+            </span>
+          </button>
+          <button
+            onClick={() => toggleFilter("CANCELLED")}
+            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+              activeFilters.includes("CANCELLED")
+                ? "bg-red-500 text-white border-red-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-3 h-3 rounded ${activeFilters.includes("CANCELLED") ? "bg-red-300" : "bg-red-500"}`}></span>
+              Cancelled
+            </span>
+          </button>
+          <button
+            onClick={() => toggleFilter("RESCHEDULED")}
+            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+              activeFilters.includes("RESCHEDULED")
+                ? "bg-orange-500 text-white border-orange-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-3 h-3 rounded ${activeFilters.includes("RESCHEDULED") ? "bg-orange-300" : "bg-orange-500"}`}></span>
+              Rescheduled
+            </span>
+          </button>
+          <button
+            onClick={() => toggleFilter("BLOCKED")}
+            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+              activeFilters.includes("BLOCKED")
+                ? "bg-gray-500 text-white border-gray-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-3 h-3 rounded ${activeFilters.includes("BLOCKED") ? "bg-gray-300" : "bg-gray-500"}`}></span>
+              Blocked Time
+            </span>
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          Click to toggle filters. Showing {filteredAppointmentCount} of {appointmentCount} appointments.
+        </p>
+      </div>
+
+      {/* Legacy Legend - keeping for reference */}
+      <div className="bg-white p-4 rounded-lg shadow hidden">
         <h3 className="text-sm font-medium text-gray-700 mb-2">Status Legend:</h3>
         <div className="flex gap-4 flex-wrap">
           <div className="flex items-center gap-2">
@@ -277,7 +430,7 @@ export default function TrainerCalendarPage() {
         ) : (
           <Calendar
             localizer={localizer}
-            events={events}
+            events={filteredEvents}
             startAccessor="start"
             endAccessor="end"
             view={view}
@@ -445,6 +598,7 @@ export default function TrainerCalendarPage() {
           fetchData()
         }}
         preselectedDate={selectedSlot?.start}
+        preselectedEndDate={selectedSlot?.end}
       />
 
       {/* Block Time Modal */}
@@ -458,7 +612,38 @@ export default function TrainerCalendarPage() {
           fetchData()
         }}
         preselectedDate={selectedSlot?.start}
+        preselectedEndDate={selectedSlot?.end}
       />
+
+      {/* Appointment Detail Modal */}
+      {selectedEvent && selectedEvent.type === "appointment" && (
+        <AppointmentDetailModal
+          isOpen={showAppointmentDetail}
+          onClose={() => {
+            setShowAppointmentDetail(false)
+            setSelectedEvent(null)
+          }}
+          appointment={selectedEvent.resource as Appointment}
+          onUpdate={() => {
+            fetchData()
+          }}
+        />
+      )}
+
+      {/* Blocked Time Detail Modal */}
+      {selectedEvent && selectedEvent.type === "blocked" && (
+        <BlockedTimeDetailModal
+          isOpen={showBlockedTimeDetail}
+          onClose={() => {
+            setShowBlockedTimeDetail(false)
+            setSelectedEvent(null)
+          }}
+          blockedTime={selectedEvent.resource as BlockedTime}
+          onUpdate={() => {
+            fetchData()
+          }}
+        />
+      )}
     </div>
   )
 }
