@@ -3,7 +3,6 @@
 import { Settings } from "../useTrainerSettings"
 // Dark mode feature removed
 // import { useDarkMode } from "@/lib/contexts/dark-mode-context"
-import { useState } from "react"
 
 type Props = {
   settings: Settings | null

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Settings } from "../useTrainerSettings"
 
 type Props = {
@@ -16,11 +16,15 @@ export function PricingSettings({
 }: Props) {
   const [individualRate, setIndividualRate] = useState<string>("")
   const [groupRate, setGroupRate] = useState<string>("")
+  const initializedRef = useRef(false)
 
   useEffect(() => {
-    if (settings) {
+    if (settings && !initializedRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIndividualRate(settings.defaultIndividualSessionRate?.toString() || "")
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGroupRate(settings.defaultGroupSessionRate?.toString() || "")
+      initializedRef.current = true
     }
   }, [settings])
 

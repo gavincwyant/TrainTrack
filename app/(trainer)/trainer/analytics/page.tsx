@@ -399,7 +399,9 @@ function StatCard({
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderCustomLabel(entry: any) {
+  if (!entry.name || entry.value === undefined) return ""
   return `${entry.name}: ${entry.value}`
 }
 
