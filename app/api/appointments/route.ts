@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/db"
 import { requireWorkspace, requireUserId, isTrainer } from "@/lib/middleware/tenant"
 import { CalendarSyncService } from "@/lib/services/calendar-sync"
+import { InvoiceService } from "@/lib/services/invoice"
 
 const appointmentSchema = z.object({
   clientId: z.string().uuid().optional(), // Optional for client self-booking
@@ -58,9 +59,13 @@ export async function GET(request: Request) {
 
       // Sync to Google Calendar and generate invoices in background
       const syncService = new CalendarSyncService()
+      const invoiceService = new InvoiceService()
       for (const appointment of pastAppointments) {
         syncService.syncAppointmentToGoogle(appointment.id).catch((error) => {
           console.error("Background sync failed:", error)
+        })
+        invoiceService.generatePerSessionInvoice(appointment.id).catch((error) => {
+          console.error("Background invoice generation failed:", error)
         })
       }
     }
