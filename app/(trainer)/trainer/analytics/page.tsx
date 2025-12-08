@@ -399,7 +399,7 @@ function StatCard({
   )
 }
 
-function renderCustomLabel(entry: { name: string, value: number }) {
+function renderCustomLabel(entry: any) {
   return `${entry.name}: ${entry.value}`
 }
 
