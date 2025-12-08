@@ -28,6 +28,43 @@ export async function GET(request: Request) {
       where.status = status
     }
 
+    // Auto-complete past scheduled appointments before fetching
+    const now = new Date()
+    const pastAppointments = await prisma.appointment.findMany({
+      where: {
+        workspaceId,
+        ...(userIsTrainer ? { trainerId: userId } : { clientId: userId }),
+        status: {
+          in: ["SCHEDULED", "RESCHEDULED"],
+        },
+        endTime: {
+          lt: now,
+        },
+      },
+    })
+
+    // Update past appointments to COMPLETED
+    if (pastAppointments.length > 0) {
+      await prisma.appointment.updateMany({
+        where: {
+          id: {
+            in: pastAppointments.map((apt) => apt.id),
+          },
+        },
+        data: {
+          status: "COMPLETED",
+        },
+      })
+
+      // Sync to Google Calendar and generate invoices in background
+      const syncService = new CalendarSyncService()
+      for (const appointment of pastAppointments) {
+        syncService.syncAppointmentToGoogle(appointment.id).catch((error) => {
+          console.error("Background sync failed:", error)
+        })
+      }
+    }
+
     const appointments = await prisma.appointment.findMany({
       where,
       include: {
