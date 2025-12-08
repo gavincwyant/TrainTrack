@@ -5,6 +5,7 @@ import { Calendar, dateFnsLocalizer, View } from "react-big-calendar"
 import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enUS } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
+import "./calendar-custom.css"
 import Link from "next/link"
 import AppointmentModal from "@/components/AppointmentModal"
 import BlockTimeModal from "@/components/BlockTimeModal"
@@ -277,16 +278,16 @@ export default function TrainerCalendarPage() {
   const { min, max } = getCalendarHours()
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
-          <p className="mt-2 text-gray-600">View and manage your appointments</p>
+          <h1 className="text-4xl font-bold text-[var(--text-primary)]">Calendar</h1>
+          <p className="mt-3 text-lg text-[var(--text-secondary)]">View and manage your appointments</p>
         </div>
         <div className="flex gap-3">
           <Link
             href="/trainer/availability"
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50:bg-gray-800"
+            className="px-5 py-2.5 border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-blue-500/30 transition-all duration-200 font-medium"
           >
             Manage Availability
           </Link>
@@ -300,8 +301,11 @@ export default function TrainerCalendarPage() {
                 setError(err instanceof Error ? err.message : "Sync failed")
               }
             }}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50:bg-gray-800"
+            className="px-5 py-2.5 border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-green-500/30 transition-all duration-200 font-medium flex items-center gap-2"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
             Sync
           </button>
           <button
@@ -309,8 +313,11 @@ export default function TrainerCalendarPage() {
               setSelectedSlot(null)
               setIsModalOpen(true)
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl hover:shadow-blue-600/30 hover:-translate-y-0.5 flex items-center gap-2"
           >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
             New Appointment
           </button>
         </div>
@@ -323,77 +330,77 @@ export default function TrainerCalendarPage() {
       )}
 
       {/* Filter Controls */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Filter Calendar View:</h3>
+      <div className="bg-[var(--surface)] p-6 rounded-2xl shadow-lg border-2 border-[var(--border)]">
+        <h3 className="text-base font-semibold text-[var(--text-primary)] mb-4">Filter Calendar View</h3>
         <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => toggleFilter("SCHEDULED")}
-            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("SCHEDULED")
-                ? "bg-blue-500 text-white border-blue-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
+                ? "bg-blue-500 text-white border-blue-600 shadow-lg shadow-blue-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-blue-50 hover:border-blue-500/30"
             }`}
           >
-            <span className="flex items-center gap-2">
-              <span className={`w-3 h-3 rounded ${activeFilters.includes("SCHEDULED") ? "bg-blue-300" : "bg-blue-500"}`}></span>
+            <span className="flex items-center gap-2.5">
+              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("SCHEDULED") ? "bg-blue-200" : "bg-blue-500"}`}></span>
               Scheduled
             </span>
           </button>
           <button
             onClick={() => toggleFilter("COMPLETED")}
-            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("COMPLETED")
-                ? "bg-green-500 text-white border-green-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
+                ? "bg-green-500 text-white border-green-600 shadow-lg shadow-green-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-green-50 hover:border-green-500/30"
             }`}
           >
-            <span className="flex items-center gap-2">
-              <span className={`w-3 h-3 rounded ${activeFilters.includes("COMPLETED") ? "bg-green-300" : "bg-green-500"}`}></span>
+            <span className="flex items-center gap-2.5">
+              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("COMPLETED") ? "bg-green-200" : "bg-green-500"}`}></span>
               Completed
             </span>
           </button>
           <button
             onClick={() => toggleFilter("CANCELLED")}
-            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("CANCELLED")
-                ? "bg-red-500 text-white border-red-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
+                ? "bg-red-500 text-white border-red-600 shadow-lg shadow-red-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-red-50 hover:border-red-500/30"
             }`}
           >
-            <span className="flex items-center gap-2">
-              <span className={`w-3 h-3 rounded ${activeFilters.includes("CANCELLED") ? "bg-red-300" : "bg-red-500"}`}></span>
+            <span className="flex items-center gap-2.5">
+              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("CANCELLED") ? "bg-red-200" : "bg-red-500"}`}></span>
               Cancelled
             </span>
           </button>
           <button
             onClick={() => toggleFilter("RESCHEDULED")}
-            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("RESCHEDULED")
-                ? "bg-orange-500 text-white border-orange-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
+                ? "bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-orange-50 hover:border-orange-500/30"
             }`}
           >
-            <span className="flex items-center gap-2">
-              <span className={`w-3 h-3 rounded ${activeFilters.includes("RESCHEDULED") ? "bg-orange-300" : "bg-orange-500"}`}></span>
+            <span className="flex items-center gap-2.5">
+              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("RESCHEDULED") ? "bg-orange-200" : "bg-orange-500"}`}></span>
               Rescheduled
             </span>
           </button>
           <button
             onClick={() => toggleFilter("BLOCKED")}
-            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("BLOCKED")
-                ? "bg-gray-500 text-white border-gray-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
+                ? "bg-gray-500 text-white border-gray-600 shadow-lg shadow-gray-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-gray-100 hover:border-gray-500/30"
             }`}
           >
-            <span className="flex items-center gap-2">
-              <span className={`w-3 h-3 rounded ${activeFilters.includes("BLOCKED") ? "bg-gray-300" : "bg-gray-500"}`}></span>
+            <span className="flex items-center gap-2.5">
+              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("BLOCKED") ? "bg-gray-200" : "bg-gray-500"}`}></span>
               Blocked Time
             </span>
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Click to toggle filters. Showing {filteredAppointmentCount} of {appointmentCount} appointments.
+        <p className="text-sm text-[var(--text-secondary)] mt-4">
+          Click to toggle filters. Showing <span className="font-semibold text-[var(--text-primary)]">{filteredAppointmentCount}</span> of <span className="font-semibold text-[var(--text-primary)]">{appointmentCount}</span> appointments.
         </p>
       </div>
 
@@ -430,10 +437,13 @@ export default function TrainerCalendarPage() {
       </div>
 
       {/* Calendar */}
-      <div className="bg-white p-6 rounded-lg shadow" style={{ height: "700px" }}>
+      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-xl border-2 border-[var(--border)]" style={{ height: "750px" }}>
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-600">Loading calendar...</p>
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-[var(--text-secondary)] font-medium">Loading calendar...</p>
+            </div>
           </div>
         ) : (
           <Calendar
@@ -461,25 +471,28 @@ export default function TrainerCalendarPage() {
       </div>
 
       {/* Upcoming Appointments List */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Appointments</h2>
+      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-lg border-2 border-[var(--border)]">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Upcoming Appointments</h2>
         {appointments.filter((apt) =>
           new Date(apt.startTime) > new Date() && apt.status === "SCHEDULED"
         ).length === 0 ? (
-          <p className="text-gray-600">No upcoming appointments</p>
+          <p className="text-[var(--text-secondary)] text-center py-8">No upcoming appointments</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {appointments
               .filter((apt) => new Date(apt.startTime) > new Date() && apt.status === "SCHEDULED")
               .slice(0, 5)
               .map((apt) => (
                 <div
                   key={apt.id}
-                  className="flex justify-between items-center p-3 border border-gray-200 rounded-md"
+                  className="group flex justify-between items-center p-5 border-2 border-[var(--border)] rounded-xl hover:border-blue-500/30 hover:shadow-lg transition-all duration-200 bg-[var(--surface-secondary)]"
                 >
                   <div>
-                    <div className="font-medium text-gray-900">{apt.client.fullName}</div>
-                    <div className="text-sm text-gray-600">
+                    <div className="font-semibold text-lg text-[var(--text-primary)]">{apt.client.fullName}</div>
+                    <div className="text-sm text-[var(--text-secondary)] mt-1 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
                       {format(new Date(apt.startTime), "EEEE, MMM d")} at{" "}
                       {format(new Date(apt.startTime), "h:mm a")} -{" "}
                       {format(new Date(apt.endTime), "h:mm a")}
@@ -503,7 +516,7 @@ export default function TrainerCalendarPage() {
                           }
                         }
                       }}
-                      className="text-sm text-green-600 hover:text-green-700:text-green-300"
+                      className="px-4 py-2 text-sm font-medium text-green-600 hover:text-white hover:bg-green-500 border-2 border-green-500 rounded-lg transition-all duration-200"
                     >
                       Complete
                     </button>
@@ -524,7 +537,7 @@ export default function TrainerCalendarPage() {
                           }
                         }
                       }}
-                      className="text-sm text-red-600 hover:text-red-700:text-red-300"
+                      className="px-4 py-2 text-sm font-medium text-red-600 hover:text-white hover:bg-red-500 border-2 border-red-500 rounded-lg transition-all duration-200"
                     >
                       Cancel
                     </button>
