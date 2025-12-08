@@ -182,7 +182,7 @@ export class ClientSyncService {
    */
   private aggregateExtractedClients(
     extractedClients: ExtractedClient[]
-  ): Array<ExtractedClient & { occurrenceCount: number }> {
+  ): Array<ExtractedClient & { occurrenceCount: number; sourceEventIds: string[] }> {
     const aggregationMap = new Map<
       string,
       ExtractedClient & { occurrenceCount: number; sourceEventIds: string[] }

@@ -94,7 +94,7 @@ export class ClientExtractionService {
     // Calculate confidence
     const context = {
       name: extractedName,
-      email: extractedEmail,
+      email: extractedEmail || undefined,
       hasAttendees: (event.attendees?.length ?? 0) > 0,
       attendeeCount: event.attendees?.length ?? 0,
       hasDescription: !!event.description,
@@ -104,7 +104,7 @@ export class ClientExtractionService {
 
     return {
       name: extractedName,
-      email: extractedEmail,
+      email: extractedEmail || undefined,
       confidence,
       confidenceScore: score,
       reason,
