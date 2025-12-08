@@ -8,14 +8,23 @@ export default function PendingAppointmentsBadge() {
 
   const fetchCount = useCallback(async () => {
     try {
-      const response = await fetch("/api/pending-appointments")
-      const data = await response.json()
-      if (response.ok) {
-        setCount(data.pendingAppointments?.length || 0)
-      }
+      const [appointmentsRes, profilesRes] = await Promise.all([
+        fetch("/api/pending-appointments"),
+        fetch("/api/pending-client-profiles"),
+      ])
+
+      const [appointmentsData, profilesData] = await Promise.all([
+        appointmentsRes.json(),
+        profilesRes.json(),
+      ])
+
+      const appointmentsCount = appointmentsRes.ok ? (appointmentsData.pendingAppointments?.length || 0) : 0
+      const profilesCount = profilesRes.ok ? (profilesData.pendingProfiles?.length || 0) : 0
+
+      setCount(appointmentsCount + profilesCount)
     } catch (error) {
       // Silently fail - don't show errors in navigation
-      console.error("Failed to fetch pending appointments count:", error)
+      console.error("Failed to fetch pending count:", error)
     }
   }, [])
 
@@ -29,7 +38,7 @@ export default function PendingAppointmentsBadge() {
 
   return (
     <Link
-      href="/trainer/pending-appointments"
+      href="/trainer/pending"
       className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium relative"
     >
       Pending

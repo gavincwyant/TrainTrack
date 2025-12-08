@@ -33,6 +33,7 @@ model Workspace {
   customMetricDefinitions   CustomMetricDefinition[]
   calendarEventMappings     CalendarEventMapping[]
   pendingAppointments       PendingAppointment[]
+  pendingClientProfiles     PendingClientProfile[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -65,6 +66,8 @@ model User {
   trainerSettings             TrainerSettings?        @relation("TrainerSettings")
   trainerPendingAppointments  PendingAppointment[]    @relation("TrainerPendingAppointments")
   clientPendingAppointments   PendingAppointment[]    @relation("ClientPendingAppointments")
+  trainerPendingClientProfiles PendingClientProfile[] @relation("TrainerPendingClientProfiles")
+  convertedFromPendingClient   PendingClientProfile?  @relation("ConvertedFromPendingClient")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -171,6 +174,16 @@ model TrainerSettings {
   autoInvoicingEnabled  Boolean @default(true) @map("auto_invoicing_enabled")
   monthlyInvoiceDay     Int     @default(1) @map("monthly_invoice_day")        // 1-31
   defaultInvoiceDueDays Int     @default(30) @map("default_invoice_due_days")  // Net 7, 15, 30, etc.
+
+  // Pricing Configuration
+  defaultIndividualSessionRate Decimal? @map("default_individual_session_rate") @db.Decimal(10, 2)
+  defaultGroupSessionRate      Decimal? @map("default_group_session_rate") @db.Decimal(10, 2)
+
+  // Client Auto-Sync Settings
+  autoClientSyncEnabled         Boolean   @default(false) @map("auto_client_sync_enabled")
+  clientSyncLookbackDays        Int       @default(30) @map("client_sync_lookback_days")
+  lastClientSyncAt              DateTime? @map("last_client_sync_at")
+  hasCompletedInitialClientSync Boolean   @default(false) @map("has_completed_initial_client_sync")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -390,4 +403,51 @@ model CalendarEventMapping {
   @@index([blockedTimeId])
   @@index([workspaceId])
   @@map("calendar_event_mappings")
+}
+
+model PendingClientProfile {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation("TrainerPendingClientProfiles", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  // Source tracking
+  source         String   @map("source") // "google", "microsoft", "apple"
+  sourceEventIds String[] @map("source_event_ids") @db.Text
+
+  // Extracted data
+  extractedName  String  @map("extracted_name")
+  extractedEmail String? @map("extracted_email")
+  extractedPhone String? @map("extracted_phone")
+
+  // Detection metadata
+  extractionConfidence String   @map("extraction_confidence") // "high", "medium", "low"
+  extractionReason     String   @map("extraction_reason") @db.Text
+  firstSeenDate        DateTime @map("first_seen_date")
+  occurrenceCount      Int      @default(1) @map("occurrence_count")
+
+  // Review status
+  status String @default("pending") // "pending", "approved", "rejected", "duplicate"
+
+  // Editable fields (trainer reviews before approval)
+  reviewedName  String? @map("reviewed_name")
+  reviewedEmail String? @map("reviewed_email")
+  reviewedPhone String? @map("reviewed_phone")
+  reviewedNotes String? @map("reviewed_notes") @db.Text
+
+  // Default billing (editable)
+  defaultBillingFrequency String  @default("PER_SESSION") @map("default_billing_frequency")
+  defaultSessionRate      Decimal @default(0) @map("default_session_rate") @db.Decimal(10, 2)
+
+  // Created client link
+  createdClientId String? @unique @map("created_client_id")
+  createdClient   User?   @relation("ConvertedFromPendingClient", fields: [createdClientId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceId, trainerId, status])
+  @@index([source, extractedName])
+  @@map("pending_client_profiles")
 }

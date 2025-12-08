@@ -118,6 +118,8 @@ export async function PATCH(
       data: {
         ...(data.status && { status: data.status }),
         ...(data.notes !== undefined && { notes: data.notes }),
+        // Set paidAt timestamp when marking as PAID
+        ...(data.status === "PAID" && { paidAt: new Date() }),
       },
       include: {
         client: {

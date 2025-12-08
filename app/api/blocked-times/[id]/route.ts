@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireWorkspace, requireUserId } from "@/lib/middleware/tenant"
+import { GoogleCalendarService } from "@/lib/google-calendar"
 
 export async function DELETE(
   request: Request,
@@ -28,6 +29,31 @@ export async function DELETE(
         { error: "Unauthorized" },
         { status: 403 }
       )
+    }
+
+    // Find calendar event mapping for this blocked time
+    const mapping = await prisma.calendarEventMapping.findFirst({
+      where: {
+        blockedTimeId: id,
+        provider: "google",
+      },
+    })
+
+    // Delete from Google Calendar if mapping exists (async, don't wait)
+    if (mapping) {
+      const googleService = new GoogleCalendarService()
+      googleService
+        .deleteEvent(blockedTime.trainerId, mapping.externalEventId)
+        .catch((error) => {
+          console.error("Background sync deletion failed:", error)
+        })
+
+      // Delete the calendar event mapping
+      await prisma.calendarEventMapping.delete({
+        where: { id: mapping.id },
+      }).catch((error) => {
+        console.error("Failed to delete calendar event mapping:", error)
+      })
     }
 
     await prisma.blockedTime.delete({
