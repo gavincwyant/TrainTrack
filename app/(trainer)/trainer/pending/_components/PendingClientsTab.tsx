@@ -179,7 +179,7 @@ export function PendingClientsTab({ onCountChange }: Props) {
                 <li>High confidence detections are very likely real clients</li>
                 <li>Multiple occurrences indicate recurring appointments</li>
                 <li>Review and edit details before approving</li>
-                <li>Rejected profiles won't be suggested again</li>
+                <li>Rejected profiles won&apos;t be suggested again</li>
               </ul>
             </div>
           </>

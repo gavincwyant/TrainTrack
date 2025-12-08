@@ -179,7 +179,7 @@ export function PendingClientCard({ profile, onApprove, onReject, isProcessing }
           <strong>What happens:</strong>
           <br />
           • <strong>Edit & Approve:</strong> Review details and create client profile
-          <br />• <strong>Reject:</strong> Remove from pending list (won't be suggested again)
+          <br />• <strong>Reject:</strong> Remove from pending list (won&apos;t be suggested again)
         </p>
       </div>
     </div>

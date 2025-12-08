@@ -140,7 +140,7 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
               placeholder="optional"
             />
             <p className="mt-1 text-xs text-gray-500">
-              If no email provided, a placeholder will be used (client won't have login access)
+              If no email provided, a placeholder will be used (client won&apos;t have login access)
             </p>
           </div>
 

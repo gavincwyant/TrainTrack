@@ -45,7 +45,7 @@ export default function HomePage() {
               </h1>
               <p className="mt-8 text-xl sm:text-2xl text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed font-light">
                 A simple back-office app for personal trainers that automates scheduling,
-                invoices, and revenue tracking—so tax season doesn't suck.
+                invoices, and revenue tracking—so tax season doesn&apos;t suck.
               </p>
               <div className="mt-12 flex flex-col sm:flex-row gap-5 justify-center items-center">
                 <Link
@@ -133,7 +133,7 @@ export default function HomePage() {
               </div>
             </div>
             <p className="mt-16 text-center text-lg text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed">
-              If you're booking <span className="font-semibold text-[var(--text-primary)]">10–50+ sessions a week</span> and
+              If you&apos;re booking <span className="font-semibold text-[var(--text-primary)]">10–50+ sessions a week</span> and
               bouncing between texts, spreadsheets, and payment apps, <span className="text-[var(--text-primary)]">this is for you.</span>
             </p>
           </div>
@@ -147,7 +147,7 @@ export default function HomePage() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl sm:text-5xl font-bold text-[var(--text-primary)] text-center mb-16 leading-tight">
-                Right now, your "system" probably looks like:
+                Right now, your &quot;system&quot; probably looks like:
               </h2>
               <div className="space-y-5">
                 {[
@@ -173,7 +173,7 @@ export default function HomePage() {
                 <p className="text-xl text-[var(--text-secondary)] leading-relaxed">
                   It works… until you get busy.{" "}
                   <span className="block mt-3 text-2xl font-semibold text-[var(--text-primary)]">
-                    Then you're doing an extra 5–10 hours of unpaid admin every week.
+                    Then you&apos;re doing an extra 5–10 hours of unpaid admin every week.
                   </span>
                 </p>
               </div>
@@ -218,7 +218,7 @@ export default function HomePage() {
                     <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Avoid double-bookings and "Wait… when were we meeting?"</span>
+                    <span>Avoid double-bookings and &quot;Wait… when were we meeting?&quot;</span>
                   </li>
                 </ul>
               </div>
@@ -242,7 +242,7 @@ export default function HomePage() {
                     <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Track who's paid, who hasn't, and send reminders</span>
+                    <span>Track who&apos;s paid, who hasn&apos;t, and send reminders</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,8 +295,8 @@ export default function HomePage() {
                   Shaped with real trainers
                 </h2>
                 <p className="mt-4 text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  We're working closely with independent trainers and mobile studios to build
-                  something actually useful in the real world—not another giant "gym management" system.
+                  We&apos;re working closely with independent trainers and mobile studios to build
+                  something actually useful in the real world—not another giant &quot;gym management&quot; system.
                 </p>
               </div>
               <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-lg p-8 sm:p-10">
@@ -320,7 +320,7 @@ export default function HomePage() {
                       </svg>
                     </div>
                     <h4 className="font-semibold text-[var(--text-primary)] mb-1">White-glove setup</h4>
-                    <p className="text-sm text-[var(--text-secondary)]">We'll help import your clients & sessions</p>
+                    <p className="text-sm text-[var(--text-secondary)]">We&apos;ll help import your clients & sessions</p>
                   </div>
                   <div className="flex flex-col items-center text-center p-4">
                     <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
@@ -362,7 +362,7 @@ export default function HomePage() {
               </Link>
               <div className="mt-12 p-6 bg-white/10 backdrop-blur-md rounded-2xl max-w-2xl mx-auto border border-white/20">
                 <p className="text-blue-50 text-lg leading-relaxed">
-                  We're letting in a small group of trainers at a time so we can give real support
+                  We&apos;re letting in a small group of trainers at a time so we can give real support
                   and keep improving the product with your feedback.
                 </p>
               </div>
