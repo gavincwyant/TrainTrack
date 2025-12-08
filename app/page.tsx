@@ -2,110 +2,365 @@ import Link from "next/link"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       {/* Header */}
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">TrainTrack</h1>
-          <nav className="space-x-4">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold text-gray-900">
+            TrainTrack
+          </Link>
+          <nav className="flex items-center gap-4">
             <Link
               href="/login"
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
             >
               Login
             </Link>
             <Link
               href="/signup"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-600/25"
             >
-              Get Started
+              Get Early Access
             </Link>
           </nav>
         </div>
       </header>
 
-      {/* Hero Section */}
       <main className="flex-1">
-        <section className="container mx-auto px-4 py-20 text-center">
-          <h2 className="text-5xl font-bold mb-6">
-            Manage Your Personal Training Business
-          </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            TrainTrack helps personal trainers manage clients, schedule sessions,
-            track workouts, and automate invoicing - all in one place.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="px-8 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              Start Free Trial
-            </Link>
-            <Link
-              href="#features"
-              className="px-8 py-3 text-lg font-medium text-gray-700 border-2 border-gray-300 rounded-lg hover:border-gray-400"
-            >
-              Learn More
-            </Link>
+        {/* Hero Section */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50" />
+          <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32">
+            <div className="max-w-4xl mx-auto text-center">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight">
+                Less admin.{" "}
+                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  More training.
+                </span>
+              </h1>
+              <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                A simple back-office app for personal trainers that automates scheduling,
+                invoices, and revenue tracking—so tax season doesn't suck.
+              </p>
+              <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link
+                  href="/signup"
+                  className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all hover:shadow-xl hover:shadow-blue-600/25 hover:-translate-y-0.5"
+                >
+                  Get early access
+                  <span className="block text-sm font-normal text-blue-100 mt-0.5">
+                    Free for first 3–6 months
+                  </span>
+                </Link>
+                <a
+                  href="#demo"
+                  className="flex items-center gap-2 px-6 py-3 text-gray-600 hover:text-gray-900 transition-colors group"
+                >
+                  <span className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                    <svg className="w-4 h-4 text-gray-700 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                  <span className="font-medium">Watch a 3-minute demo</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Video Placeholder */}
+            <div id="demo" className="mt-16 sm:mt-20 max-w-4xl mx-auto scroll-mt-24">
+              <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl border border-gray-200 shadow-2xl shadow-gray-900/10 overflow-hidden">
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-white/90 shadow-lg flex items-center justify-center mb-4">
+                    <svg className="w-8 h-8 text-gray-400 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 font-medium">Demo video coming soon</p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="bg-gray-50 py-20">
-          <div className="container mx-auto px-4">
-            <h3 className="text-3xl font-bold text-center mb-12">
-              Everything You Need to Run Your Training Business
-            </h3>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <div className="text-4xl mb-4">📅</div>
-                <h4 className="text-xl font-semibold mb-2">Smart Scheduling</h4>
-                <p className="text-gray-600">
-                  Let clients book sessions based on your availability. Automatic
-                  conflict detection and email confirmations.
-                </p>
+        {/* Who It's For Section */}
+        <section className="py-20 sm:py-24 bg-white">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                Built for real trainers, not big box gyms
+              </h2>
+              <p className="mt-4 text-lg text-gray-600">
+                This app is designed for:
+              </p>
+            </div>
+            <div className="max-w-4xl mx-auto grid sm:grid-cols-3 gap-6 sm:gap-8">
+              <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-gray-900">Independent personal trainers</h3>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <div className="text-4xl mb-4">💪</div>
-                <h4 className="text-xl font-semibold mb-2">Workout Tracking</h4>
-                <p className="text-gray-600">
-                  Log exercises, track progress, and define custom metrics for each
-                  client. Visualize progress over time.
-                </p>
+              <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-gray-900">Small studios and mobile gyms</h3>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <div className="text-4xl mb-4">💰</div>
-                <h4 className="text-xl font-semibold mb-2">Automated Invoicing</h4>
-                <p className="text-gray-600">
-                  Generate invoices automatically per-session or monthly. Track
-                  payments and send professional PDFs via email.
+              <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-gray-900">Hybrid / online coaches across time zones</h3>
+              </div>
+            </div>
+            <p className="mt-10 text-center text-gray-600 max-w-2xl mx-auto">
+              If you're booking <span className="font-semibold text-gray-900">10–50+ sessions a week</span> and
+              bouncing between texts, spreadsheets, and payment apps, this is for you.
+            </p>
+          </div>
+        </section>
+
+        {/* Problem / Pain Section */}
+        <section className="py-20 sm:py-24 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-12">
+                Right now, your "system" probably looks like:
+              </h2>
+              <div className="space-y-4">
+                {[
+                  "Sessions scattered across 3 different calendars",
+                  "Clients texting to move sessions at the last minute",
+                  "Venmo / Zelle / cash everywhere, nothing reconciled",
+                  "A panic spreadsheet every time tax season rolls around",
+                ].map((pain, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-orange-100"
+                  >
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </span>
+                    <p className="text-gray-700 text-lg">{pain}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-10 text-center">
+                <p className="text-lg text-gray-700">
+                  It works… until you get busy.{" "}
+                  <span className="font-semibold text-gray-900">
+                    Then you're doing an extra 5–10 hours of unpaid admin every week.
+                  </span>
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4 text-center">
-            <h3 className="text-3xl font-bold mb-4">Ready to Get Started?</h3>
-            <p className="text-xl text-gray-600 mb-8">
-              Join trainers who are streamlining their business with TrainTrack
-            </p>
-            <Link
-              href="/signup"
-              className="px-8 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 inline-block"
-            >
-              Create Your Account
-            </Link>
+        {/* Solution Section */}
+        <section className="py-20 sm:py-24 bg-white">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-14">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                Your simple back office for training
+              </h2>
+              <p className="mt-4 text-lg text-gray-600">
+                Our app keeps the boring stuff organized so you can focus on coaching:
+              </p>
+            </div>
+            <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+              {/* Smart Scheduling */}
+              <div className="group p-8 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Smart Scheduling</h3>
+                <ul className="space-y-3 text-gray-600">
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>See all your sessions in one calendar</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Handle recurring sessions and cancellations cleanly</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Avoid double-bookings and "Wait… when were we meeting?"</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Invoices on Autopilot */}
+              <div className="group p-8 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-green-200 transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Invoices on Autopilot</h3>
+                <ul className="space-y-3 text-gray-600">
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Auto-generate invoices from your schedule</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Track who's paid, who hasn't, and send reminders</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Support for packages, drop-ins, and recurring clients</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Tax-Ready Reports */}
+              <div className="group p-8 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-purple-200 transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Tax-Ready Reports</h3>
+                <ul className="space-y-3 text-gray-600">
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Monthly and yearly revenue summaries</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Categorize income for taxes</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Export in a few clicks for your accountant or tax software</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Social Proof / Beta Section */}
+        <section className="py-20 sm:py-24 bg-gray-50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                  Shaped with real trainers
+                </h2>
+                <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+                  We're working closely with independent trainers and mobile studios to build
+                  something actually useful in the real world—not another giant "gym management" system.
+                </p>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 sm:p-10">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">
+                  As an early user, you get:
+                </h3>
+                <div className="grid sm:grid-cols-3 gap-6">
+                  <div className="flex flex-col items-center text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-1">3–6 months free</h4>
+                    <p className="text-sm text-gray-600">No credit card required to start</p>
+                  </div>
+                  <div className="flex flex-col items-center text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-1">White-glove setup</h4>
+                    <p className="text-sm text-gray-600">We'll help import your clients & sessions</p>
+                  </div>
+                  <div className="flex flex-col items-center text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Direct line to the builder</h4>
+                    <p className="text-sm text-gray-600">Request features and get real support</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA Section */}
+        <section className="py-20 sm:py-24 bg-gradient-to-br from-blue-600 to-indigo-700">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+                Ready to spend less time on admin?
+              </h2>
+              <Link
+                href="/signup"
+                className="inline-block px-10 py-4 text-lg font-semibold text-blue-600 bg-white rounded-xl hover:bg-gray-50 transition-all hover:shadow-xl hover:-translate-y-0.5"
+              >
+                Apply for the free trainer beta
+              </Link>
+              <div className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl max-w-lg mx-auto">
+                <p className="text-blue-100 text-sm">
+                  We're letting in a small group of trainers at a time so we can give real support
+                  and keep improving the product with your feedback.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container mx-auto px-4 text-center text-gray-600">
-          <p>&copy; 2025 TrainTrack. All rights reserved.</p>
+      <footer className="bg-gray-50 border-t border-gray-200 py-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-gray-600 text-sm">
+              &copy; {new Date().getFullYear()} TrainTrack. All rights reserved.
+            </p>
+            <div className="flex gap-6">
+              <Link href="/login" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
+                Login
+              </Link>
+              <Link href="/signup" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
+                Get Started
+              </Link>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

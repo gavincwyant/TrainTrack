@@ -1,0 +1,237 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useTrainerSettings } from "./useTrainerSettings"
+import { SchedulingSettings } from "./settings/SchedulingSettings"
+import { CalendarSettings } from "./settings/CalendarSettings"
+import { InvoicingSettings } from "./settings/InvoicingSettings"
+import { PricingSettings } from "./settings/PricingSettings"
+
+type Props = {
+  isOpen: boolean
+  onClose: () => void
+}
+
+type Category = "scheduling" | "calendar" | "pricing" | "invoicing"
+
+export function SettingsModal({ isOpen, onClose }: Props) {
+  const [activeCategory, setActiveCategory] = useState<Category>("scheduling")
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  const {
+    settings,
+    isLoading,
+    error,
+    isSaving,
+    isSyncing,
+    fetchSettings,
+    updateSettings,
+    handleConnectGoogle,
+    handleDisconnectGoogle,
+    handleToggleAutoSync,
+    handleToggleClientSync,
+    handleToggleAutoInvoicing,
+    handleMonthlyInvoiceDayChange,
+    handleDefaultDueDaysChange,
+    handleIndividualSessionRateChange,
+    handleGroupSessionRateChange,
+    handleManualSync,
+    clearError,
+  } = useTrainerSettings()
+
+  // Fetch settings when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchSettings()
+    }
+  }, [isOpen])
+
+  // Keyboard handler (Escape to close)
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape)
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = "hidden"
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape)
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen, onClose])
+
+  // Show success message temporarily after successful updates
+  const handleSuccessfulUpdate = async (updateFn: () => Promise<boolean>) => {
+    const success = await updateFn()
+    if (success) {
+      setShowSuccess(true)
+      setTimeout(() => setShowSuccess(false), 3000)
+    }
+    return success
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div
+          className="relative bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600:text-gray-300 transition-colors"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Alerts */}
+          {error && (
+            <div className="mx-6 mt-4 rounded-md bg-red-50 p-4 border border-red-200">
+              <div className="flex items-start">
+                <div className="flex-1 text-sm text-red-800">{error}</div>
+                <button
+                  onClick={clearError}
+                  className="ml-3 text-red-400 hover:text-red-600:text-red-400"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {showSuccess && (
+            <div className="mx-6 mt-4 rounded-md bg-green-50 p-4 border border-green-200">
+              <div className="text-sm text-green-800">Settings saved successfully!</div>
+            </div>
+          )}
+
+          {/* Content Area with Sidebar */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Sidebar */}
+            <div className="w-48 bg-gray-50 border-r border-gray-200 p-4">
+              <nav className="space-y-1">
+                <button
+                  onClick={() => setActiveCategory("scheduling")}
+                  className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeCategory === "scheduling"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-100:bg-gray-700"
+                  }`}
+                >
+                  Scheduling
+                </button>
+                <button
+                  onClick={() => setActiveCategory("calendar")}
+                  className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeCategory === "calendar"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-100:bg-gray-700"
+                  }`}
+                >
+                  Calendar
+                </button>
+                <button
+                  onClick={() => setActiveCategory("pricing")}
+                  className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeCategory === "pricing"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-100:bg-gray-700"
+                  }`}
+                >
+                  Pricing
+                </button>
+                <button
+                  onClick={() => setActiveCategory("invoicing")}
+                  className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeCategory === "invoicing"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-100:bg-gray-700"
+                  }`}
+                >
+                  Invoicing
+                </button>
+              </nav>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {activeCategory === "scheduling" && (
+                <SchedulingSettings
+                  settings={settings}
+                  onUpdate={(data) => handleSuccessfulUpdate(() => updateSettings(data))}
+                  isLoading={isLoading}
+                  isSaving={isSaving}
+                />
+              )}
+
+              {activeCategory === "calendar" && (
+                <CalendarSettings
+                  settings={settings}
+                  isLoading={isLoading}
+                  isSyncing={isSyncing}
+                  onConnectGoogle={handleConnectGoogle}
+                  onDisconnectGoogle={() => handleSuccessfulUpdate(handleDisconnectGoogle)}
+                  onToggleAutoSync={(enabled) => handleSuccessfulUpdate(() => handleToggleAutoSync(enabled))}
+                  onToggleClientSync={(enabled) => handleSuccessfulUpdate(() => handleToggleClientSync(enabled))}
+                  onManualSync={() => handleSuccessfulUpdate(handleManualSync)}
+                />
+              )}
+
+              {activeCategory === "pricing" && (
+                <PricingSettings
+                  settings={settings}
+                  isLoading={isLoading}
+                  onIndividualRateChange={(rate) => handleSuccessfulUpdate(() => handleIndividualSessionRateChange(rate))}
+                  onGroupRateChange={(rate) => handleSuccessfulUpdate(() => handleGroupSessionRateChange(rate))}
+                />
+              )}
+
+              {activeCategory === "invoicing" && (
+                <InvoicingSettings
+                  settings={settings}
+                  isLoading={isLoading}
+                  onToggleAutoInvoicing={(enabled) => handleSuccessfulUpdate(() => handleToggleAutoInvoicing(enabled))}
+                  onMonthlyInvoiceDayChange={(day) => handleSuccessfulUpdate(() => handleMonthlyInvoiceDayChange(day))}
+                  onDefaultDueDaysChange={(days) => handleSuccessfulUpdate(() => handleDefaultDueDaysChange(days))}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

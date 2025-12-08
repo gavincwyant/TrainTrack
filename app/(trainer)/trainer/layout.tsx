@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation"
-import { auth, signOut } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import Link from "next/link"
 import PendingAppointmentsBadge from "@/components/PendingAppointmentsBadge"
+import { TrainerNav } from "./_components/TrainerNav"
 
 export default async function TrainerLayout({
   children,
@@ -66,21 +67,16 @@ export default async function TrainerLayout({
                 >
                   Invoices
                 </Link>
+                <Link
+                  href="/trainer/analytics"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Analytics
+                </Link>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">{session.user.name}</span>
-              <form action={async () => {
-                "use server"
-                await signOut({ redirectTo: "/login" })
-              }}>
-                <button
-                  type="submit"
-                  className="text-sm text-gray-700 hover:text-gray-900"
-                >
-                  Sign out
-                </button>
-              </form>
+              <TrainerNav trainerName={session.user.name || "Trainer"} />
             </div>
           </div>
         </div>
