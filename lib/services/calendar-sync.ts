@@ -1,5 +1,6 @@
 import { GoogleCalendarService } from "../google-calendar"
 import { prisma } from "../db"
+import { ClientSyncService } from "./client-sync"
 
 interface ClientMatch {
   clientId: string
@@ -40,58 +41,23 @@ export class CalendarSyncService {
 
     const titleLower = eventTitle.toLowerCase().trim()
 
-    // High confidence: Exact full name match
+    // High confidence: ONLY exact full name match (no substring matching)
+    // This prevents "Lisa B" from matching "Lisa Berzansky"
     for (const client of clients) {
       const clientNameLower = client.fullName.toLowerCase().trim()
-      if (titleLower === clientNameLower || titleLower.includes(clientNameLower)) {
+      if (titleLower === clientNameLower) {
         return {
           clientId: client.id,
           clientName: client.fullName,
           confidence: "high",
-          reason: `Exact match: event title "${eventTitle}" contains client name "${client.fullName}"`,
+          reason: `Exact match: event title "${eventTitle}" exactly matches client name "${client.fullName}"`,
         }
       }
     }
 
-    // Medium confidence: First + Last name match
-    for (const client of clients) {
-      const nameParts = client.fullName.toLowerCase().split(" ")
-      const firstName = nameParts[0]
-      const lastName = nameParts[nameParts.length - 1]
-
-      if (
-        firstName &&
-        lastName &&
-        titleLower.includes(firstName) &&
-        titleLower.includes(lastName)
-      ) {
-        return {
-          clientId: client.id,
-          clientName: client.fullName,
-          confidence: "medium",
-          reason: `Partial match: event title "${eventTitle}" contains first and last name parts of "${client.fullName}"`,
-        }
-      }
-    }
-
-    // Low confidence: First name only match (only if unique)
-    const firstNameMatches: ClientMatch[] = []
-    for (const client of clients) {
-      const firstName = client.fullName.toLowerCase().split(" ")[0]
-      if (firstName && titleLower.includes(firstName)) {
-        firstNameMatches.push({
-          clientId: client.id,
-          clientName: client.fullName,
-          confidence: "low",
-          reason: `First name match: event title "${eventTitle}" contains first name of "${client.fullName}"`,
-        })
-      }
-    }
-
-    // Only return if there's exactly one first name match
-    if (firstNameMatches.length === 1) {
-      return firstNameMatches[0]
-    }
+    // For all other cases, do NOT auto-create appointments
+    // Instead, create pending appointments for manual approval
+    // This ensures trainers review any uncertain matches
 
     return null
   }
@@ -323,8 +289,29 @@ export class CalendarSyncService {
 
         // Check if this is an outbound event (we created it)
         if (existingMapping?.syncDirection === "outbound") {
-          console.log(`  ⏭️ Skipping outbound event (we created this)`)
-          continue // Don't create blocked time for our own appointments
+          console.log(`  ⏭️ Skipping outbound event (Train-originated, updates happen in Train)`)
+          continue // Don't update Train-originated appointments from Google
+        }
+
+        // Check if appointment already exists (inbound only gets here)
+        if (existingMapping?.appointmentId) {
+          console.log(`  📝 Updating existing inbound appointment times`)
+          // Update times for Google-originated appointments
+          await prisma.appointment.update({
+            where: { id: existingMapping.appointmentId },
+            data: {
+              startTime: new Date(event.start.dateTime),
+              endTime: new Date(event.end.dateTime),
+            },
+          })
+
+          // Update mapping timestamp
+          await prisma.calendarEventMapping.update({
+            where: { id: existingMapping.id },
+            data: { lastSyncedAt: new Date() },
+          })
+          console.log(`  ✅ Updated inbound appointment times`)
+          continue // Move to next event
         }
 
         // Check if blocked time already exists
@@ -466,32 +453,65 @@ export class CalendarSyncService {
             }
           } else {
             console.log(`  ❌ No client match found - creating as blocked time`)
-            // No match found - create as regular blocked time
-            const blockedTime = await prisma.blockedTime.create({
-              data: {
-                workspaceId: settings.workspaceId,
-                trainerId,
-                startTime: new Date(event.start.dateTime),
-                endTime: new Date(event.end.dateTime),
-                reason: `Google Calendar: ${event.summary}`,
-                isRecurring: false,
-              },
-            })
 
-            console.log(`  ✅ Created blocked time: ${blockedTime.id}`)
+            // Check if mapping exists without blockedTimeId
+            // (This can happen if event was previously processed but blocked time was deleted)
+            if (existingMapping && !existingMapping.blockedTimeId) {
+              console.log(`  📝 Mapping exists without blocked time, creating blocked time`)
+              // Create blocked time
+              const blockedTime = await prisma.blockedTime.create({
+                data: {
+                  workspaceId: settings.workspaceId,
+                  trainerId,
+                  startTime: new Date(event.start.dateTime),
+                  endTime: new Date(event.end.dateTime),
+                  reason: `Google Calendar: ${event.summary}`,
+                  isRecurring: false,
+                },
+              })
 
-            // Create mapping
-            await prisma.calendarEventMapping.create({
-              data: {
-                workspaceId: settings.workspaceId,
-                blockedTimeId: blockedTime.id,
-                provider: "google",
-                externalEventId: event.id!,
-                externalCalendarId: "primary",
-                syncDirection: "inbound",
-              },
-            })
-            console.log(`  ✅ Created calendar event mapping`)
+              console.log(`  ✅ Created blocked time: ${blockedTime.id}`)
+
+              // Update existing mapping to point to new blocked time
+              await prisma.calendarEventMapping.update({
+                where: { id: existingMapping.id },
+                data: {
+                  blockedTimeId: blockedTime.id,
+                  lastSyncedAt: new Date(),
+                },
+              })
+              console.log(`  ✅ Updated calendar event mapping`)
+            } else if (!existingMapping) {
+              console.log(`  ➕ No existing mapping, creating blocked time and mapping`)
+              // No match found - create as regular blocked time
+              const blockedTime = await prisma.blockedTime.create({
+                data: {
+                  workspaceId: settings.workspaceId,
+                  trainerId,
+                  startTime: new Date(event.start.dateTime),
+                  endTime: new Date(event.end.dateTime),
+                  reason: `Google Calendar: ${event.summary}`,
+                  isRecurring: false,
+                },
+              })
+
+              console.log(`  ✅ Created blocked time: ${blockedTime.id}`)
+
+              // Create mapping
+              await prisma.calendarEventMapping.create({
+                data: {
+                  workspaceId: settings.workspaceId,
+                  blockedTimeId: blockedTime.id,
+                  provider: "google",
+                  externalEventId: event.id!,
+                  externalCalendarId: "primary",
+                  syncDirection: "inbound",
+                },
+              })
+              console.log(`  ✅ Created calendar event mapping`)
+            } else {
+              console.log(`  ⚠️ Unexpected state - mapping exists with blocked time already`)
+            }
           }
         }
       }
@@ -501,8 +521,23 @@ export class CalendarSyncService {
         where: { trainerId },
         data: { lastSyncedAt: new Date() },
       })
+
+      // Extract client profiles from events if auto-sync is enabled
+      if (settings.autoClientSyncEnabled) {
+        console.log("🔍 Auto client sync enabled - extracting clients from events")
+        try {
+          const clientSyncService = new ClientSyncService()
+          await clientSyncService.extractClientsFromNewEvents(trainerId, googleEvents)
+          console.log("✅ Client extraction complete")
+        } catch (error) {
+          console.error("⚠️ Failed to extract clients from events (non-critical):", error)
+          // Don't throw - client extraction is non-critical, sync should continue
+        }
+      }
+
+      console.log("✅ Google Calendar sync completed successfully")
     } catch (error) {
-      console.error("Failed to pull Google Calendar events:", error)
+      console.error("❌ Failed to pull Google Calendar events:", error)
       throw error
     }
   }

@@ -11,6 +11,15 @@ const settingsSchema = z.object({
   autoInvoicingEnabled: z.boolean().optional(),
   monthlyInvoiceDay: z.number().int().min(1).max(31).optional(),
   defaultInvoiceDueDays: z.number().int().min(0).optional(),
+  // Pricing settings
+  defaultIndividualSessionRate: z.number().min(0).optional(),
+  defaultGroupSessionRate: z.number().min(0).optional(),
+  // Client sync settings
+  autoClientSyncEnabled: z.boolean().optional(),
+  clientSyncLookbackDays: z.number().int().min(1).max(365).optional(),
+  hasCompletedInitialClientSync: z.boolean().optional(),
+  // UI preferences
+  darkModeEnabled: z.boolean().optional(),
 })
 
 export async function GET() {
@@ -73,6 +82,12 @@ export async function PUT(request: Request) {
     if (data.autoInvoicingEnabled !== undefined) updateData.autoInvoicingEnabled = data.autoInvoicingEnabled
     if (data.monthlyInvoiceDay !== undefined) updateData.monthlyInvoiceDay = data.monthlyInvoiceDay
     if (data.defaultInvoiceDueDays !== undefined) updateData.defaultInvoiceDueDays = data.defaultInvoiceDueDays
+    if (data.defaultIndividualSessionRate !== undefined) updateData.defaultIndividualSessionRate = data.defaultIndividualSessionRate
+    if (data.defaultGroupSessionRate !== undefined) updateData.defaultGroupSessionRate = data.defaultGroupSessionRate
+    if (data.autoClientSyncEnabled !== undefined) updateData.autoClientSyncEnabled = data.autoClientSyncEnabled
+    if (data.clientSyncLookbackDays !== undefined) updateData.clientSyncLookbackDays = data.clientSyncLookbackDays
+    if (data.hasCompletedInitialClientSync !== undefined) updateData.hasCompletedInitialClientSync = data.hasCompletedInitialClientSync
+    if (data.darkModeEnabled !== undefined) updateData.darkModeEnabled = data.darkModeEnabled
 
     const settings = await prisma.trainerSettings.upsert({
       where: {

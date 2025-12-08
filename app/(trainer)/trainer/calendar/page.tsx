@@ -286,16 +286,24 @@ export default function TrainerCalendarPage() {
         <div className="flex gap-3">
           <Link
             href="/trainer/availability"
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50:bg-gray-800"
           >
             Manage Availability
           </Link>
-          <Link
-            href="/trainer/settings"
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          <button
+            onClick={async () => {
+              try {
+                const response = await fetch("/api/calendar/sync", { method: "POST" })
+                if (!response.ok) throw new Error("Sync failed")
+                await fetchData()
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Sync failed")
+              }
+            }}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50:bg-gray-800"
           >
-            Settings
-          </Link>
+            Sync
+          </button>
           <button
             onClick={() => {
               setSelectedSlot(null)
@@ -323,7 +331,7 @@ export default function TrainerCalendarPage() {
             className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
               activeFilters.includes("SCHEDULED")
                 ? "bg-blue-500 text-white border-blue-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -336,7 +344,7 @@ export default function TrainerCalendarPage() {
             className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
               activeFilters.includes("COMPLETED")
                 ? "bg-green-500 text-white border-green-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -349,7 +357,7 @@ export default function TrainerCalendarPage() {
             className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
               activeFilters.includes("CANCELLED")
                 ? "bg-red-500 text-white border-red-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -362,7 +370,7 @@ export default function TrainerCalendarPage() {
             className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
               activeFilters.includes("RESCHEDULED")
                 ? "bg-orange-500 text-white border-orange-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -375,7 +383,7 @@ export default function TrainerCalendarPage() {
             className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
               activeFilters.includes("BLOCKED")
                 ? "bg-gray-500 text-white border-gray-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50:bg-gray-700"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -495,7 +503,7 @@ export default function TrainerCalendarPage() {
                           }
                         }
                       }}
-                      className="text-sm text-green-600 hover:text-green-700"
+                      className="text-sm text-green-600 hover:text-green-700:text-green-300"
                     >
                       Complete
                     </button>
@@ -516,7 +524,7 @@ export default function TrainerCalendarPage() {
                           }
                         }
                       }}
-                      className="text-sm text-red-600 hover:text-red-700"
+                      className="text-sm text-red-600 hover:text-red-700:text-red-300"
                     >
                       Cancel
                     </button>
@@ -578,7 +586,7 @@ export default function TrainerCalendarPage() {
                   setShowActionChoice(false)
                   setSelectedSlot(null)
                 }}
-                className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50:bg-gray-800"
               >
                 Cancel
               </button>

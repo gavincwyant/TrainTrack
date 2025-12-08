@@ -200,7 +200,7 @@ export default function ClientProgressPage() {
                   id="exerciseSelect"
                   value={selectedExercise}
                   onChange={(e) => setSelectedExercise(e.target.value)}
-                  className="block w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   <option value="">-- Select an exercise --</option>
                   {uniqueExercises.map((exercise) => (
@@ -300,7 +300,7 @@ export default function ClientProgressPage() {
                   id="metricSelect"
                   value={selectedMetric}
                   onChange={(e) => setSelectedMetric(e.target.value)}
-                  className="block w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   <option value="">-- Select a metric --</option>
                   {uniqueMetrics.map((metric) => (
