@@ -76,7 +76,7 @@ export default async function TrainerLayout({
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <TrainerNav trainerName={session.user.name || "Trainer"} />
+              <TrainerNav trainerName={session.user.name || "Trainer"} isSystemAdmin={session.user.isSystemAdmin} />
             </div>
           </div>
         </div>

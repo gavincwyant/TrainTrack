@@ -5,12 +5,13 @@ import { handleSignOut } from "./actions"
 
 type Props = {
   trainerName: string
+  isSystemAdmin?: boolean
 }
 
-export function TrainerNav({ trainerName }: Props) {
+export function TrainerNav({ trainerName, isSystemAdmin }: Props) {
   const onSignOut = async () => {
     await handleSignOut()
   }
 
-  return <TrainerDropdown trainerName={trainerName} onSignOut={onSignOut} />
+  return <TrainerDropdown trainerName={trainerName} onSignOut={onSignOut} isSystemAdmin={isSystemAdmin} />
 }

@@ -49,9 +49,10 @@ model User {
   workspaceId  String?   @map("workspace_id")
   workspace    Workspace? @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  fullName     String    @map("full_name")
-  phone        String?
-  profileImage String?   @map("profile_image")
+  fullName      String    @map("full_name")
+  phone         String?
+  profileImage  String?   @map("profile_image")
+  isSystemAdmin Boolean   @default(false) @map("is_system_admin")
 
   ownedWorkspaces        Workspace[]         @relation("TrainerWorkspace")
   clientProfile          ClientProfile?

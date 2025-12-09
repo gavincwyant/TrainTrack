@@ -181,3 +181,31 @@ export async function getTenantPrisma() {
   const workspaceId = await requireWorkspace()
   return createTenantScopedPrisma(workspaceId)
 }
+
+/**
+ * Require system admin privileges
+ * Throws error if user is not a system admin
+ */
+export async function requireSystemAdmin(): Promise<void> {
+  const session = await auth()
+
+  console.log("[requireSystemAdmin] Session:", {
+    hasSession: !!session,
+    hasUser: !!session?.user,
+    isSystemAdmin: session?.user?.isSystemAdmin,
+    userEmail: session?.user?.email,
+    fullSession: JSON.stringify(session?.user)
+  })
+
+  if (!session?.user?.isSystemAdmin) {
+    throw new Error("Unauthorized: System admin access required")
+  }
+}
+
+/**
+ * Check if user is a system admin
+ */
+export async function isSystemAdmin(): Promise<boolean> {
+  const session = await auth()
+  return session?.user?.isSystemAdmin === true
+}

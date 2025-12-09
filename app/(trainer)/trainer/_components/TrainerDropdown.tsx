@@ -7,9 +7,10 @@ import { SettingsModal } from "./SettingsModal"
 type Props = {
   trainerName: string
   onSignOut: () => void
+  isSystemAdmin?: boolean
 }
 
-export function TrainerDropdown({ trainerName, onSignOut }: Props) {
+export function TrainerDropdown({ trainerName, onSignOut, isSystemAdmin = false }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -128,6 +129,38 @@ export function TrainerDropdown({ trainerName, onSignOut }: Props) {
                 </svg>
                 Plan
               </Link>
+
+              {isSystemAdmin && (
+                <>
+                  <div className="border-t border-gray-100 dark:border-gray-700"></div>
+                  <Link
+                    href="/admin"
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center"
+                    role="menuitem"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <svg
+                      className="h-4 w-4 mr-3 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                    <span className="flex items-center gap-2">
+                      Admin Dashboard
+                      <span className="px-1.5 py-0.5 text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded">
+                        ADMIN
+                      </span>
+                    </span>
+                  </Link>
+                </>
+              )}
 
               <div className="border-t border-gray-100 dark:border-gray-700"></div>
 
