@@ -1,11 +1,8 @@
-#!/usr/bin/env sh
 # Pre-commit hook that runs type-checking and linting on staged files
 # This ensures code quality before commits are created
 #
 # To bypass this hook (not recommended), use:
 #   git commit --no-verify
-
-. "$(dirname -- "$0")/_/husky.sh"
 
 echo "Running pre-commit checks..."
 

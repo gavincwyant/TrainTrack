@@ -243,7 +243,7 @@ export default function TrainerCalendarPage() {
         backgroundColor = "#10b981" // green
         break
       case "CANCELLED":
-        backgroundColor = "#9ca3af" // gray
+        backgroundColor = "#ef4444" // red
         break
       case "RESCHEDULED":
         backgroundColor = "#f59e0b" // amber
@@ -330,7 +330,7 @@ export default function TrainerCalendarPage() {
       )}
 
       {/* Filter Controls */}
-      <div className="bg-[var(--surface)] p-6 rounded-2xl shadow-lg border-2 border-[var(--border)]">
+      <div className="bg-[var(--surface)] p-6 rounded-2xl shadow-lg border-1 border-[var(--border)]">
         <h3 className="text-base font-semibold text-[var(--text-primary)] mb-4">Filter Calendar View</h3>
         <div className="flex gap-3 flex-wrap">
           <button
@@ -437,7 +437,7 @@ export default function TrainerCalendarPage() {
       </div>
 
       {/* Calendar */}
-      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-xl border-2 border-[var(--border)]" style={{ height: "750px" }}>
+      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-xl border-1 border-[var(--border)]" style={{ height: "750px" }}>
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4">
@@ -471,7 +471,7 @@ export default function TrainerCalendarPage() {
       </div>
 
       {/* Upcoming Appointments List */}
-      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-lg border-2 border-[var(--border)]">
+      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-lg border-1 border-[var(--border)]">
         <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Upcoming Appointments</h2>
         {appointments.filter((apt) =>
           new Date(apt.startTime) > new Date() && apt.status === "SCHEDULED"

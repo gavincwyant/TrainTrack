@@ -1,11 +1,8 @@
-#!/usr/bin/env sh
 # Pre-push hook that runs unit tests to ensure no broken tests are pushed
 # This helps maintain code quality in the remote repository
 #
 # To bypass this hook (not recommended), use:
 #   git push --no-verify
-
-. "$(dirname -- "$0")/_/husky.sh"
 
 echo "Running pre-push checks..."
 
