@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:test": "NODE_ENV=test next dev --port 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -11,7 +12,20 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "test": "dotenv -e .env.test -- vitest run",
+    "test:unit": "dotenv -e .env.test -- vitest run tests/unit",
+    "test:integration": "dotenv -e .env.test -- vitest run tests/integration",
+    "test:watch": "dotenv -e .env.test -- vitest watch",
+    "test:coverage": "dotenv -e .env.test -- vitest run --coverage",
+    "test:coverage:open": "npm run test:coverage && open coverage/index.html",
+    "test:coverage:unit": "dotenv -e .env.test -- vitest run tests/unit --coverage",
+    "test:coverage:integration": "dotenv -e .env.test -- vitest run tests/integration --coverage",
+    "test:coverage:check": "npm run test:coverage && node scripts/check-service-coverage.js",
+    "test:ui": "dotenv -e .env.test -- vitest --ui",
+    "test:e2e": "rm -rf .next && NODE_ENV=test playwright test",
+    "test:e2e:setup": "DATABASE_URL='postgresql://postgres:password@localhost:5432/traintrack_test' npx prisma migrate deploy",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -35,16 +49,34 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.1.0",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^24",
     "@types/pg": "^8.15.6",
     "@types/react": "^19",
     "@types/react-big-calendar": "^1.16.3",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/ui": "^4.0.15",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "msw": "^2.12.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.15"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ]
   }
 }
