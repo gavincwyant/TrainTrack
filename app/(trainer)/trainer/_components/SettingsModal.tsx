@@ -44,7 +44,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     if (isOpen) {
       fetchSettings()
     }
-  }, [isOpen])
+  }, [isOpen, fetchSettings])
 
   // Keyboard handler (Escape to close)
   useEffect(() => {

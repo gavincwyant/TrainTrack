@@ -22,7 +22,7 @@ export function PricingSettings({
     if (settings && !initializedRef.current) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIndividualRate(settings.defaultIndividualSessionRate?.toString() || "")
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setGroupRate(settings.defaultGroupSessionRate?.toString() || "")
       initializedRef.current = true
     }

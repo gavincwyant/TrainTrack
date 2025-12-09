@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { InvoiceService } from '@/lib/services/invoice'
-import { createTestWorkspace, createAppointment, createCompletedAppointment } from '@/tests/fixtures/workspace'
+import { createTestWorkspace, createAppointment } from '@/tests/fixtures/workspace'
 import { prisma } from '@/lib/db'
-import { clearSentEmails, getSentEmails } from '@/tests/mocks/sendgrid'
+import { clearSentEmails } from '@/tests/mocks/sendgrid'
 import { Prisma } from '@prisma/client'
 
 // Mock the email service
@@ -325,7 +325,7 @@ describe('InvoiceService', () => {
       lastMonth.setMonth(lastMonth.getMonth() - 1)
       lastMonth.setDate(15)
 
-      const appointments = await Promise.all([
+      await Promise.all([
         createAppointment({
           trainerId: workspace.trainer.id,
           clientId: workspace.client.id,
@@ -635,7 +635,7 @@ describe('InvoiceService', () => {
       // Arrange
       const today = new Date().getDate()
 
-      const workspace = await createTestWorkspace({
+      await createTestWorkspace({
         billingFrequency: 'MONTHLY',
         sessionRate: 100,
         autoInvoiceEnabled: true,

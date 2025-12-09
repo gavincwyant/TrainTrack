@@ -4,7 +4,7 @@ import { requireWorkspace, requireUserId } from "@/lib/middleware/tenant"
 
 export async function GET() {
   try {
-    const workspaceId = await requireWorkspace()
+    await requireWorkspace()
     const userId = await requireUserId()
 
     // Get the client profile with related user and trainer info

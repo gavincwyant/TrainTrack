@@ -33,10 +33,12 @@ export default function InvoicesPage() {
 
   useEffect(() => {
     fetchInvoices()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
 
   useEffect(() => {
     filterAndSortInvoices()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoices, searchQuery, dateFilter, customStartDate, customEndDate, sortField, sortOrder])
 
   const fetchInvoices = async () => {

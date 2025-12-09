@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { signIn, useSession } from "next-auth/react"
+import { signIn } from "next-auth/react"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { EmailService } from '@/lib/services/email'
 import { prisma } from '@/lib/db'
 import { createTestWorkspace, createAppointment } from '@/tests/fixtures/workspace'
-import type { Invoice, InvoiceLineItem } from '@prisma/client'
 
 // Mock SendGrid - must use factory function to avoid hoisting issues
 vi.mock('@sendgrid/mail', () => ({

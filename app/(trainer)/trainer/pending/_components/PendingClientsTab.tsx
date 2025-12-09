@@ -34,6 +34,7 @@ export function PendingClientsTab({ onCountChange }: Props) {
 
   useEffect(() => {
     fetchPendingProfiles()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchPendingProfiles = async () => {

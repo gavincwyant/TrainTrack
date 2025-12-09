@@ -30,7 +30,7 @@ beforeEach(async (context) => {
 afterAll(async () => {
   try {
     await disconnectDatabase()
-  } catch (error) {
+  } catch {
     // Ignore disconnect errors in tests that don't use database
   }
 })

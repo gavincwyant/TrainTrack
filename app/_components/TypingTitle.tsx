@@ -42,8 +42,6 @@ export function TypingTitle() {
     return () => clearInterval(cursorInterval)
   }, [])
 
-  const isComplete = currentIndex >= fullText.length
-
   // Cap cursor position at a specific character (e.g., at the last period)
   const cursorPosition = Math.min(currentIndex, fullText.length - 2)
 

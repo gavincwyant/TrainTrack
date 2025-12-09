@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { prisma } from '@/lib/db'
 import { createTestWorkspace, createAppointment } from '@/tests/fixtures/workspace'
 
@@ -76,7 +76,7 @@ describe('Multi-Tenancy Security', () => {
     it('should isolate client profiles between workspaces', async () => {
       // Arrange
       const workspace1 = await createTestWorkspace()
-      const workspace2 = await createTestWorkspace()
+      await createTestWorkspace()
 
       // Act - Try to query client profiles across workspaces
       const profiles = await prisma.clientProfile.findMany({
@@ -94,7 +94,7 @@ describe('Multi-Tenancy Security', () => {
     it('should isolate trainer settings between workspaces', async () => {
       // Arrange
       const workspace1 = await createTestWorkspace()
-      const workspace2 = await createTestWorkspace()
+      await createTestWorkspace()
 
       // Act
       const settings = await prisma.trainerSettings.findMany({

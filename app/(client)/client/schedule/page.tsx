@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar"
-import { format, parse, startOfWeek, getDay, addMinutes, isBefore, isAfter } from "date-fns"
+import { format, parse, startOfWeek, getDay, isBefore, isAfter } from "date-fns"
 import { enUS } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 
@@ -53,7 +53,6 @@ type CalendarEvent = {
 
 export default function ClientSchedulePage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [blockedTimes, setBlockedTimes] = useState<BlockedTime[]>([])
   const [settings, setSettings] = useState<TrainerSettings | null>(null)
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -83,7 +82,6 @@ export default function ClientSchedulePage() {
       }
 
       setAppointments(appointmentsData.appointments)
-      setBlockedTimes(blockedTimesData.blockedTimes)
       setSettings(settingsData.settings)
 
       // Convert to calendar events
