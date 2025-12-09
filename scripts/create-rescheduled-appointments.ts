@@ -22,7 +22,7 @@ async function main() {
     },
   })
 
-  if (!trainer) {
+  if (!trainer || !trainer.workspaceId) {
     console.error('No trainer found in workspace with clients')
     return
   }

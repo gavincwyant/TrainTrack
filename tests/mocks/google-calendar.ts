@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 
 // Track calls to Google Calendar API for testing
-let calendarCalls: Array<{ method: string; data: any }> = []
+let calendarCalls: Array<{ method: string; data: unknown }> = []
 
 /**
  * MSW handlers for Google Calendar API
@@ -25,10 +25,10 @@ export const googleCalendarHandlers = [
   http.post(
     'https://www.googleapis.com/calendar/v3/calendars/:calendarId/events',
     async ({ request, params }) => {
-      const body = await request.json()
+      const body = await request.json() as Record<string, unknown>
       calendarCalls.push({
         method: 'createEvent',
-        data: { calendarId: params.calendarId, ...body },
+        data: { calendarId: params.calendarId, body },
       })
 
       return HttpResponse.json({
@@ -46,10 +46,10 @@ export const googleCalendarHandlers = [
   http.patch(
     'https://www.googleapis.com/calendar/v3/calendars/:calendarId/events/:eventId',
     async ({ request, params }) => {
-      const body = await request.json()
+      const body = await request.json() as Record<string, unknown>
       calendarCalls.push({
         method: 'updateEvent',
-        data: { calendarId: params.calendarId, eventId: params.eventId, ...body },
+        data: { calendarId: params.calendarId, eventId: params.eventId, body },
       })
 
       return HttpResponse.json({

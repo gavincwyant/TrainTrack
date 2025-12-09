@@ -1,4 +1,3 @@
-import { signJWT } from '@/lib/jwt'
 import type { User } from '@prisma/client'
 import { encode } from 'next-auth/jwt'
 
@@ -22,6 +21,7 @@ export async function createSessionToken(user: {
       userId: user.id,
     },
     secret: process.env.NEXTAUTH_SECRET || 'test-secret-key',
+    salt: 'authjs.session-token',
   })
 
   return token

@@ -85,7 +85,7 @@ export async function createTestUser(options: {
         data: {
           trainerId: user.id,
           workspaceId,
-          invoiceDueDays: 30,
+          defaultInvoiceDueDays: 30,
           monthlyInvoiceDay: 1,
         },
       })

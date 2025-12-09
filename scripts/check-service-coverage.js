@@ -11,7 +11,9 @@
  * Run after: npm run test:coverage
  */
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const fs = require('fs');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require('path');
 
 // Configuration
