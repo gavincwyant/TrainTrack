@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { TypingTitle } from "./_components/TypingTitle"
+import { VideoPlayer } from "./_components/VideoPlayer"
 
 export default function HomePage() {
   return (
@@ -37,12 +39,7 @@ export default function HomePage() {
 
           <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
             <div className="max-w-5xl mx-auto text-center">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-[var(--text-primary)] tracking-tight leading-tight">
-                Less admin.{" "}
-                <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 bg-clip-text text-transparent">
-                  More training.
-                </span>
-              </h1>
+              <TypingTitle />
               <p className="mt-8 text-xl sm:text-2xl text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed font-light">
                 A simple back-office app for personal trainers that automates scheduling,
                 invoices, and revenue tracking—so tax season doesn&apos;t suck.
@@ -74,23 +71,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Video Placeholder */}
+            {/* Video Demo */}
             <div id="demo" className="mt-20 sm:mt-24 max-w-5xl mx-auto scroll-mt-24">
-              <div className="relative aspect-video bg-gradient-to-br from-[var(--surface-secondary)] to-[var(--border)] rounded-3xl border-2 border-[var(--border)] shadow-2xl overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5"></div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="w-24 h-24 rounded-full bg-blue-600 shadow-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 cursor-pointer">
-                    <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                  <p className="text-[var(--text-secondary)] font-medium text-lg">Demo video coming soon</p>
-                </div>
-                {/* Decorative elements */}
-                <div className="absolute top-4 left-4 w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="absolute top-4 left-10 w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="absolute top-4 left-16 w-3 h-3 rounded-full bg-green-500"></div>
-              </div>
+              <VideoPlayer videoSrc="/train_track_demo_v1.mp4" />
             </div>
           </div>
         </section>
