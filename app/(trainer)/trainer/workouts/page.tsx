@@ -36,6 +36,7 @@ export default function WorkoutHistoryPage() {
 
   useEffect(() => {
     fetchSessions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClient])
 
   const fetchSessions = async () => {

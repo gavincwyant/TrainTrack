@@ -67,7 +67,6 @@ type FilterOption = "SCHEDULED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED" | "B
 
 export default function TrainerCalendarPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [blockedTimes, setBlockedTimes] = useState<BlockedTime[]>([])
   const [settings, setSettings] = useState<TrainerSettings | null>(null)
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -111,7 +110,6 @@ export default function TrainerCalendarPage() {
       }
 
       setAppointments(appointmentsData.appointments)
-      setBlockedTimes(blockedTimesData.blockedTimes)
       setSettings(settingsData.settings)
 
       // Convert to calendar events

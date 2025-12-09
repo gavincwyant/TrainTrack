@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { format } from "date-fns"
 import { PendingClientsTab } from "./_components/PendingClientsTab"
 

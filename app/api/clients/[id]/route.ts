@@ -85,7 +85,7 @@ export async function PATCH(
 ) {
   try {
     const workspaceId = await requireWorkspace()
-    const userId = await requireUserId()
+    await requireUserId()
     const { id } = await params
 
     const body = await request.json()
@@ -155,12 +155,12 @@ export async function PATCH(
     // Update client and profile in transaction
     const updated = await prisma.$transaction(async (tx) => {
       // Update user record if there are changes
-      const client = Object.keys(userUpdateData).length > 0
-        ? await tx.user.update({
-            where: { id },
-            data: userUpdateData,
-          })
-        : await tx.user.findUnique({ where: { id } })
+      if (Object.keys(userUpdateData).length > 0) {
+        await tx.user.update({
+          where: { id },
+          data: userUpdateData,
+        })
+      }
 
       // Update client profile if there are changes
       if (Object.keys(profileUpdateData).length > 0 && existingClient.clientProfile) {

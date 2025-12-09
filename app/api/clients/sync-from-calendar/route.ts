@@ -11,7 +11,7 @@ import { prisma } from "@/lib/db"
  */
 export async function POST(request: Request) {
   try {
-    const workspaceId = await requireWorkspace()
+    await requireWorkspace()
     const trainerId = await requireUserId()
 
     // Check if trainer has Google Calendar connected

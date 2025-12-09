@@ -74,7 +74,7 @@ export async function GET(request: Request) {
 
     // If no invoices found, return a CSV with a helpful message
     if (invoices.length === 0) {
-      const csv = generateEmptyCSV(period, startDate, endDate)
+      const csv = generateEmptyCSV(period, startDate)
       return new NextResponse(csv, {
         headers: {
           "Content-Type": "text/csv",
@@ -206,8 +206,7 @@ function generateCSV(
 
 function generateEmptyCSV(
   period: ExportPeriod,
-  startDate: Date,
-  endDate: Date
+  startDate: Date
 ): string {
   const headers = [
     "Payment Date",

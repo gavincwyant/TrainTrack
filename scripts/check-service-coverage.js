@@ -132,7 +132,7 @@ function checkServiceCoverage() {
   console.log(colorize('File-by-File Results:', 'bold'));
   console.log('─'.repeat(80));
 
-  fileResults.forEach(({ fileName, coverage, failures, passed }) => {
+  fileResults.forEach(({ fileName, failures, passed }) => {
     const status = passed ? colorize('✅', 'green') : colorize('❌', 'red');
     console.log(`${status} ${fileName}`);
 

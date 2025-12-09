@@ -47,6 +47,7 @@ export default function ClientProgressPage() {
 
   useEffect(() => {
     fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId])
 
   const fetchData = async () => {
