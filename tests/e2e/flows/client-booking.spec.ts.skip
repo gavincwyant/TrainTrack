@@ -1,0 +1,377 @@
+import { test, expect } from '../helpers/fixtures'
+import { createTestUser, loginAs } from '../helpers/auth'
+import { prisma } from '@/lib/db'
+import { faker } from '@faker-js/faker'
+import bcrypt from 'bcryptjs'
+
+/**
+ * E2E Flow: Client Self-Booking
+ *
+ * User Story:
+ * As a client, I want to view my trainer's availability
+ * and book appointments myself through the client portal.
+ */
+
+test.describe('Client Booking Flow', () => {
+  test('should allow client to view appointments and book session', async ({ page }) => {
+    // Setup: Create trainer
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    // Create client with login access (invited, not manual)
+    const clientPassword = 'ClientPassword123!'
+    const passwordHash = await bcrypt.hash(clientPassword, 10)
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash, // Client has password (can login)
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+      },
+    })
+
+    // Create an existing appointment for the client
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(10, 0, 0, 0)
+
+    await prisma.appointment.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        clientId: client.id,
+        startTime: tomorrow,
+        endTime: new Date(tomorrow.getTime() + 3600000),
+        status: 'SCHEDULED',
+      },
+    })
+
+    // Login as client
+    await loginAs(page, { email: client.email, password: clientPassword })
+
+    // Client should be redirected to their appointments page
+    await expect(page).toHaveURL('/client/appointments')
+
+    // Should see existing appointment
+    await expect(page.locator(`text=${trainer.fullName}`)).toBeVisible()
+    await expect(page.locator('text=SCHEDULED')).toBeVisible()
+
+    // Click on appointment to view details
+    await page.click(`text=${trainer.fullName}`)
+
+    // Should show appointment details
+    await expect(page.locator('text=Appointment Details')).toBeVisible()
+    await expect(page.locator(`text=${trainer.fullName}`)).toBeVisible()
+
+    // Navigate to book new appointment
+    await page.click('text=Book Appointment')
+
+    // Should show trainer's availability
+    await expect(page.locator('text=Select Time Slot')).toBeVisible()
+
+    // Select a time slot (day after tomorrow, 2 PM)
+    const dayAfterTomorrow = new Date()
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2)
+    dayAfterTomorrow.setHours(14, 0, 0, 0)
+
+    // Click on the date
+    const dateSelector = `[data-date="${dayAfterTomorrow.toISOString().split('T')[0]}"]`
+    await page.click(dateSelector)
+
+    // Select 2 PM time slot
+    await page.click('text=2:00 PM')
+
+    // Add optional notes
+    await page.fill('textarea[name="notes"]', 'Looking forward to the session!')
+
+    // Confirm booking
+    await page.click('button:has-text("Confirm Booking")')
+
+    // Success message
+    await expect(page.locator('text=Appointment booked successfully')).toBeVisible()
+
+    // Should redirect back to appointments list
+    await expect(page).toHaveURL('/client/appointments')
+
+    // Should now see 2 appointments
+    const appointments = page.locator('[data-testid="appointment-card"]')
+    await expect(appointments).toHaveCount(2)
+
+    // Verify new appointment was created in database
+    const newAppointment = await prisma.appointment.findFirst({
+      where: {
+        trainerId: trainer.id,
+        clientId: client.id,
+        startTime: {
+          gte: dayAfterTomorrow,
+        },
+      },
+    })
+
+    expect(newAppointment).toBeTruthy()
+    expect(newAppointment?.status).toBe('SCHEDULED')
+  })
+
+  test('should allow client to cancel appointment', async ({ page }) => {
+    // Setup
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    const clientPassword = 'ClientPassword123!'
+    const passwordHash = await bcrypt.hash(clientPassword, 10)
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash,
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+      },
+    })
+
+    // Create appointment
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(10, 0, 0, 0)
+
+    const appointment = await prisma.appointment.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        clientId: client.id,
+        startTime: tomorrow,
+        endTime: new Date(tomorrow.getTime() + 3600000),
+        status: 'SCHEDULED',
+      },
+    })
+
+    // Login as client
+    await loginAs(page, { email: client.email, password: clientPassword })
+
+    // Click on appointment
+    await page.click(`text=${trainer.fullName}`)
+
+    // Click cancel button
+    await page.click('button:has-text("Cancel Appointment")')
+
+    // Confirm cancellation
+    await page.click('button:has-text("Confirm Cancellation")')
+
+    // Success message
+    await expect(page.locator('text=Appointment cancelled')).toBeVisible()
+
+    // Status should update to CANCELLED
+    await expect(page.locator('text=CANCELLED')).toBeVisible()
+
+    // Verify in database
+    const updated = await prisma.appointment.findUnique({
+      where: { id: appointment.id },
+    })
+
+    expect(updated?.status).toBe('CANCELLED')
+  })
+
+  test('should show client their invoices', async ({ page }) => {
+    // Setup
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    const clientPassword = 'ClientPassword123!'
+    const passwordHash = await bcrypt.hash(clientPassword, 10)
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash,
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+      },
+    })
+
+    // Create an invoice
+    const dueDate = new Date()
+    dueDate.setDate(dueDate.getDate() + 30)
+
+    await prisma.invoice.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        clientId: client.id,
+        amount: 100,
+        dueDate,
+        status: 'SENT',
+        notes: 'Payment for training session',
+      },
+    })
+
+    // Login as client
+    await loginAs(page, { email: client.email, password: clientPassword })
+
+    // Navigate to invoices
+    await page.click('text=Invoices')
+    await page.waitForURL('/client/invoices')
+
+    // Should see invoice
+    await expect(page.locator('text=$100')).toBeVisible()
+    await expect(page.locator('text=SENT')).toBeVisible()
+
+    // Click to view details
+    await page.click('text=$100')
+
+    // Should show invoice details
+    await expect(page.locator('text=Invoice Details')).toBeVisible()
+    await expect(page.locator('text=$100.00')).toBeVisible()
+    await expect(page.locator('text=Payment for training session')).toBeVisible()
+    await expect(page.locator(`text=${trainer.fullName}`)).toBeVisible()
+  })
+
+  test('should prevent booking conflicting time slots', async ({ page }) => {
+    // Setup
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    const clientPassword = 'ClientPassword123!'
+    const passwordHash = await bcrypt.hash(clientPassword, 10)
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash,
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+      },
+    })
+
+    // Create existing appointment
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(10, 0, 0, 0)
+
+    await prisma.appointment.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        clientId: client.id,
+        startTime: tomorrow,
+        endTime: new Date(tomorrow.getTime() + 3600000),
+        status: 'SCHEDULED',
+      },
+    })
+
+    // Login as client
+    await loginAs(page, { email: client.email, password: clientPassword })
+
+    // Try to book at same time
+    await page.click('text=Book Appointment')
+
+    const dateSelector = `[data-date="${tomorrow.toISOString().split('T')[0]}"]`
+    await page.click(dateSelector)
+
+    // Try to select 10 AM (already booked)
+    await page.click('text=10:00 AM')
+
+    // Should show error
+    await expect(page.locator('text=This time slot is not available')).toBeVisible()
+
+    // Confirm button should be disabled
+    await expect(page.locator('button:has-text("Confirm Booking")')).toBeDisabled()
+  })
+
+  test('should show workout history for completed sessions', async ({ page }) => {
+    // Setup
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    const clientPassword = 'ClientPassword123!'
+    const passwordHash = await bcrypt.hash(clientPassword, 10)
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash,
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+      },
+    })
+
+    // Create completed appointment
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    yesterday.setHours(10, 0, 0, 0)
+
+    await prisma.appointment.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        clientId: client.id,
+        startTime: yesterday,
+        endTime: new Date(yesterday.getTime() + 3600000),
+        status: 'COMPLETED',
+        workoutNotes: 'Great session! Focused on squats and deadlifts. PR on deadlift: 225 lbs.',
+      },
+    })
+
+    // Login as client
+    await loginAs(page, { email: client.email, password: clientPassword })
+
+    // Navigate to workout history
+    await page.click('text=Workout History')
+    await page.waitForURL('/client/history')
+
+    // Should see completed session
+    await expect(page.locator('text=COMPLETED')).toBeVisible()
+
+    // Click to view details
+    await page.click(`text=${trainer.fullName}`)
+
+    // Should show workout notes
+    await expect(page.locator('text=Great session!')).toBeVisible()
+    await expect(page.locator('text=PR on deadlift: 225 lbs')).toBeVisible()
+  })
+})

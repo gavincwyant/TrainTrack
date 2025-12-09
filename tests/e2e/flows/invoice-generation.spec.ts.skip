@@ -1,0 +1,287 @@
+import { test, expect } from '../helpers/fixtures'
+import { createTestUser, loginAs } from '../helpers/auth'
+import { prisma } from '@/lib/db'
+import { faker } from '@faker-js/faker'
+
+/**
+ * E2E Flow: Complete Session → Generate Invoice
+ *
+ * User Story:
+ * As a trainer, when I complete a training session,
+ * I want an invoice to be automatically generated and emailed
+ * to my client (if auto-invoicing is enabled).
+ */
+
+test.describe('Invoice Generation Flow', () => {
+  test('should auto-generate invoice after marking session complete', async ({ page }) => {
+    // Setup: Create trainer with per-session billing client
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash: '',
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+        autoInvoiceEnabled: true, // Enable auto-invoicing
+      },
+    })
+
+    // Create a completed appointment in the past
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    yesterday.setHours(10, 0, 0, 0)
+
+    const appointment = await prisma.appointment.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        clientId: client.id,
+        startTime: yesterday,
+        endTime: new Date(yesterday.getTime() + 3600000), // 1 hour later
+        status: 'SCHEDULED',
+      },
+    })
+
+    // Login as trainer
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    // Navigate to calendar
+    await page.click('text=Calendar')
+    await page.waitForURL('/trainer/calendar')
+
+    // Find and click on the past appointment
+    await page.click(`text=${client.fullName}`)
+
+    // Appointment details modal opens
+    await expect(page.locator('text=Appointment Details')).toBeVisible()
+
+    // Mark as completed
+    await page.click('button:has-text("Mark as Completed")')
+
+    // Add workout notes
+    await page.fill('textarea[name="workoutNotes"]', 'Great session - focused on strength training')
+    await page.click('button:has-text("Save")')
+
+    // Success message
+    await expect(page.locator('text=Appointment marked as completed')).toBeVisible({ timeout: 5000 })
+
+    // Navigate to invoices
+    await page.click('text=Invoices')
+    await page.waitForURL('/trainer/invoices')
+
+    // Verify invoice was auto-generated
+    await expect(page.locator(`text=${client.fullName}`)).toBeVisible()
+    await expect(page.locator('text=$100')).toBeVisible()
+    await expect(page.locator('text=SENT')).toBeVisible() // Status should be SENT after auto-generation
+
+    // Click on invoice to view details
+    await page.click(`text=${client.fullName}`)
+
+    // Verify invoice details
+    await expect(page.locator('text=Invoice Details')).toBeVisible()
+    await expect(page.locator(`text=${client.fullName}`)).toBeVisible()
+    await expect(page.locator('text=$100.00')).toBeVisible()
+    await expect(page.locator('text=Training session')).toBeVisible()
+  })
+
+  test('should not auto-generate invoice if auto-invoicing disabled', async ({ page }) => {
+    // Setup: Create trainer with per-session billing client (auto-invoice disabled)
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash: '',
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+        autoInvoiceEnabled: false, // Disable auto-invoicing
+      },
+    })
+
+    // Create a completed appointment
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    yesterday.setHours(10, 0, 0, 0)
+
+    await prisma.appointment.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        clientId: client.id,
+        startTime: yesterday,
+        endTime: new Date(yesterday.getTime() + 3600000),
+        status: 'SCHEDULED',
+      },
+    })
+
+    // Login and mark as completed
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    await page.click('text=Calendar')
+    await page.click(`text=${client.fullName}`)
+    await page.click('button:has-text("Mark as Completed")')
+    await page.fill('textarea[name="workoutNotes"]', 'Session notes')
+    await page.click('button:has-text("Save")')
+
+    await expect(page.locator('text=Appointment marked as completed')).toBeVisible()
+
+    // Navigate to invoices
+    await page.click('text=Invoices')
+
+    // Should NOT see any invoices (auto-invoicing disabled)
+    await expect(page.locator('text=No invoices found')).toBeVisible()
+  })
+
+  test('should manually create and send invoice', async ({ page }) => {
+    // Setup: Create trainer and client
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash: '',
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+      },
+    })
+
+    // Login
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    // Navigate to invoices
+    await page.click('text=Invoices')
+
+    // Click "Create Invoice"
+    await page.click('text=Create Invoice')
+
+    // Fill out invoice form
+    await page.selectOption('select[name="clientId"]', { label: client.fullName })
+    await page.fill('input[name="amount"]', '150')
+
+    // Set due date (30 days from now)
+    const dueDate = new Date()
+    dueDate.setDate(dueDate.getDate() + 30)
+    await page.fill('input[name="dueDate"]', dueDate.toISOString().split('T')[0])
+
+    // Add notes
+    await page.fill('textarea[name="notes"]', 'Payment for training services')
+
+    // Create as draft
+    await page.click('button:has-text("Save as Draft")')
+
+    // Success message
+    await expect(page.locator('text=Invoice created')).toBeVisible()
+
+    // Verify invoice in list (should be DRAFT status)
+    await expect(page.locator(`text=${client.fullName}`)).toBeVisible()
+    await expect(page.locator('text=$150')).toBeVisible()
+    await expect(page.locator('text=DRAFT')).toBeVisible()
+
+    // Send the invoice
+    await page.click(`text=${client.fullName}`)
+    await page.click('button:has-text("Send Invoice")')
+
+    // Confirm send
+    await page.click('button:has-text("Confirm")')
+
+    // Success message
+    await expect(page.locator('text=Invoice sent successfully')).toBeVisible()
+
+    // Status should update to SENT
+    await expect(page.locator('text=SENT')).toBeVisible()
+  })
+
+  test('should generate monthly invoice for multiple sessions', async ({ page }) => {
+    // Setup: Create trainer with monthly billing client
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash: '',
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'MONTHLY',
+        sessionRate: 100,
+        autoInvoiceEnabled: true,
+      },
+    })
+
+    // Create 4 completed appointments in the current month
+    for (let i = 1; i <= 4; i++) {
+      const sessionDate = new Date()
+      sessionDate.setDate(i * 5) // Days 5, 10, 15, 20
+      sessionDate.setHours(10, 0, 0, 0)
+
+      await prisma.appointment.create({
+        data: {
+          workspaceId: trainer.workspaceId,
+          trainerId: trainer.id,
+          clientId: client.id,
+          startTime: sessionDate,
+          endTime: new Date(sessionDate.getTime() + 3600000),
+          status: 'COMPLETED',
+        },
+      })
+    }
+
+    // Login
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    // Trigger monthly invoice generation (simulate cron job)
+    // In real scenario, this would be triggered on the invoice day
+    // For test, we'll manually navigate to invoices and it should exist
+
+    await page.click('text=Invoices')
+
+    // Should see one monthly invoice with aggregated amount (4 sessions * $100 = $400)
+    await expect(page.locator(`text=${client.fullName}`)).toBeVisible()
+    await expect(page.locator('text=$400')).toBeVisible()
+
+    // Click to view details
+    await page.click(`text=${client.fullName}`)
+
+    // Should show all 4 sessions as line items
+    await expect(page.locator('text=4 sessions')).toBeVisible()
+    await expect(page.locator('text=$400.00')).toBeVisible()
+  })
+})
