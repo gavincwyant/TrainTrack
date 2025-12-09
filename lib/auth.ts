@@ -22,7 +22,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const user = await prisma.user.findUnique({
             where: { email },
-            include: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              passwordHash: true,
+              role: true,
+              workspaceId: true,
+              isSystemAdmin: true,
               workspace: true,
             },
           })
@@ -47,6 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: user.fullName,
             role: user.role,
             workspaceId: user.workspaceId,
+            isSystemAdmin: user.isSystemAdmin,
           }
         } catch (error) {
           console.error("Auth error:", error)
@@ -71,8 +79,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       // Role-based access control
+      const isAdminRoute = pathname.startsWith("/admin")
       const isTrainerRoute = pathname.startsWith("/trainer")
       const isClientRoute = pathname.startsWith("/client")
+
+      if (isAdminRoute && !auth.user.isSystemAdmin) {
+        return false
+      }
 
       if (isTrainerRoute && auth.user.role !== "TRAINER") {
         return false
@@ -89,6 +102,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = user.role
         token.workspaceId = user.workspaceId
         token.userId = user.id
+        token.isSystemAdmin = user.isSystemAdmin
       }
       return token
     },
@@ -97,6 +111,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as string
         session.user.workspaceId = token.workspaceId as string | null
         session.user.id = token.userId as string
+        session.user.isSystemAdmin = token.isSystemAdmin as boolean
       }
       return session
     },
