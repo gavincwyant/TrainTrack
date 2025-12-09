@@ -23,6 +23,7 @@ describe('SendGrid Email Integration', () => {
     workspace = await createTestWorkspace()
     emailService = new EmailService()
     vi.mocked(sgMail.send).mockClear()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.mocked(sgMail.send).mockResolvedValue([{ statusCode: 202 } as any])
   })
 

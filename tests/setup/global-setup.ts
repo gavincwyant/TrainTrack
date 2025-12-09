@@ -20,7 +20,8 @@ beforeEach(async (context) => {
     try {
       await cleanDatabase()
     } catch (error) {
-      console.warn('Database cleanup skipped - database not available:', error.message)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.warn('Database cleanup skipped - database not available:', errorMessage)
     }
   }
 })

@@ -203,6 +203,7 @@ describe('InvoiceService', () => {
       })
 
       // Spy on the email service to make it fail
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const emailService = (invoiceService as any).emailService
       vi.spyOn(emailService, 'sendInvoiceEmail').mockRejectedValue(new Error('Email failed'))
 
@@ -535,6 +536,7 @@ describe('InvoiceService', () => {
       })
 
       // Spy on the email service to make it fail
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const emailService = (invoiceService as any).emailService
       vi.spyOn(emailService, 'sendInvoiceEmail').mockRejectedValue(new Error('Email failed'))
 

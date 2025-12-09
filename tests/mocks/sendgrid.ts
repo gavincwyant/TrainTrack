@@ -16,15 +16,21 @@ let sentEmails: Array<{
 export const sendgridHandlers = [
   // Send email endpoint
   http.post('https://api.sendgrid.com/v3/mail/send', async ({ request }) => {
-    const body = (await request.json()) as any
+    const body = (await request.json()) as {
+      personalizations?: Array<{ to?: Array<{ email?: string }> }>
+      from?: { email?: string }
+      subject?: string
+      content?: Array<{ type: string; value?: string }>
+      reply_to?: { email?: string }
+    }
 
     // Extract email data
     const emailData = {
       to: body.personalizations?.[0]?.to?.[0]?.email || 'unknown@example.com',
       from: body.from?.email,
       subject: body.subject || '',
-      html: body.content?.find((c: any) => c.type === 'text/html')?.value || '',
-      text: body.content?.find((c: any) => c.type === 'text/plain')?.value,
+      html: body.content?.find((c) => c.type === 'text/html')?.value || '',
+      text: body.content?.find((c) => c.type === 'text/plain')?.value,
       replyTo: body.reply_to?.email,
     }
 
