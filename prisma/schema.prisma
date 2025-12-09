@@ -34,6 +34,7 @@ model Workspace {
   calendarEventMappings     CalendarEventMapping[]
   pendingAppointments       PendingAppointment[]
   pendingClientProfiles     PendingClientProfile[]
+  blockTimeTemplates        BlockTimeTemplate[]    @relation("WorkspaceBlockTimeTemplates")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -69,6 +70,7 @@ model User {
   clientPendingAppointments   PendingAppointment[]    @relation("ClientPendingAppointments")
   trainerPendingClientProfiles PendingClientProfile[] @relation("TrainerPendingClientProfiles")
   convertedFromPendingClient   PendingClientProfile?  @relation("ConvertedFromPendingClient")
+  blockTimeTemplates          BlockTimeTemplate[]     @relation("TrainerBlockTimeTemplates")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -148,6 +150,28 @@ model BlockedTime {
 
   @@index([workspaceId, trainerId])
   @@map("blocked_times")
+}
+
+model BlockTimeTemplate {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation("WorkspaceBlockTimeTemplates", fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation("TrainerBlockTimeTemplates", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  name        String
+  icon        String    @default("💼")
+  days        Int[]     // Array of day numbers (0-6)
+  startTime   String    @map("start_time")  // "12:00" format
+  endTime     String    @map("end_time")    // "13:00" format
+  reason      String?   @db.Text
+  recurrence  String    @default("weekly")  // "one-time", "weekly", "custom"
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceId, trainerId])
+  @@map("block_time_templates")
 }
 
 model TrainerSettings {

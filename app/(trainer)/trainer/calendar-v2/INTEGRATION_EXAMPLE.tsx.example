@@ -1,0 +1,415 @@
+/**
+ * INTEGRATION EXAMPLE: Command Palette & Enhanced Modals
+ *
+ * This file demonstrates how to integrate the command palette system
+ * into your calendar application.
+ *
+ * Copy relevant sections into your main calendar page.
+ */
+
+"use client"
+
+import { useState, useEffect } from 'react'
+import { useCommandPalette } from './hooks/useCommandPalette'
+import { CommandPalette } from './components/Shared/CommandPalette'
+import { AppointmentDrawer } from './components/Shared/AppointmentDrawer'
+import { QuickScheduler, ScheduleData } from './components/Shared/QuickScheduler'
+import { SlideOverPanel } from './components/Shared/SlideOverPanel'
+import { CalendarEvent, AppointmentStatus } from './types/calendar'
+
+export default function CalendarPageWithCommandPalette() {
+  // State management
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [quickSchedulerOpen, setQuickSchedulerOpen] = useState(false)
+  const [currentFilter, setCurrentFilter] = useState<string | null>(null)
+
+  // Command Palette Hook
+  const {
+    isOpen,
+    setIsOpen,
+    query,
+    setQuery,
+    results,
+    search,
+    execute,
+    isLoading,
+    recentSearches,
+  } = useCommandPalette({
+    // Called when user selects a client from search results
+    onScheduleClient: (clientId) => {
+      console.log('Schedule for client:', clientId)
+      // Option 1: Open your existing appointment modal
+      // setShowAppointmentModal(true)
+      // setPreselectedClient(clientId)
+
+      // Option 2: Open quick scheduler
+      setQuickSchedulerOpen(true)
+    },
+
+    // Called when user types natural language and hits enter
+    onQuickSchedule: async (parsed) => {
+      console.log('Quick schedule:', parsed)
+
+      // Create appointment from parsed data
+      if (parsed.type === 'schedule' && parsed.date && parsed.time) {
+        // You would implement this based on your API
+        const response = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            // Map parsed data to your API format
+            clientName: parsed.client,
+            date: parsed.date,
+            time: parsed.time,
+            duration: parsed.duration || '60min',
+          }),
+        })
+
+        if (response.ok) {
+          // Refresh calendar
+          console.log('Appointment created!')
+        }
+      } else if (parsed.type === 'block' && parsed.date) {
+        // Handle time blocking
+        console.log('Block time:', parsed)
+      }
+    },
+
+    // Called for quick commands (C, B, T shortcuts)
+    onExecuteCommand: (command) => {
+      console.log('Execute command:', command)
+
+      switch (command) {
+        case 'schedule':
+          // Open appointment creation modal/drawer
+          setQuickSchedulerOpen(true)
+          break
+        case 'block':
+          // Open block time modal
+          console.log('Open block time modal')
+          break
+        case 'today':
+          // Jump to today's view
+          const today = new Date()
+          // setCurrentDate(today)
+          // setView('day')
+          console.log('Jump to today')
+          break
+      }
+    },
+
+    // Called when user selects a filter
+    onApplyFilter: (filter) => {
+      console.log('Apply filter:', filter)
+      setCurrentFilter(filter)
+
+      // Apply the filter to your calendar
+      switch (filter) {
+        case 'today':
+          // Filter to show only today's appointments
+          break
+        case 'week':
+          // Filter to show this week
+          break
+        case 'completed':
+          // Filter to show only completed
+          break
+      }
+    },
+  })
+
+  // Trigger search when query changes
+  useEffect(() => {
+    search(query)
+  }, [query, search])
+
+  // Appointment CRUD operations
+  const handleSaveAppointment = async (updates: Partial<CalendarEvent>) => {
+    try {
+      const response = await fetch(`/api/appointments/${updates.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update appointment')
+      }
+
+      // Refresh calendar or update state optimistically
+      console.log('Appointment updated!')
+    } catch (error) {
+      console.error('Failed to save appointment:', error)
+      throw error
+    }
+  }
+
+  const handleDeleteAppointment = async (appointmentId: string) => {
+    try {
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete appointment')
+      }
+
+      // Refresh calendar
+      console.log('Appointment deleted!')
+    } catch (error) {
+      console.error('Failed to delete appointment:', error)
+      throw error
+    }
+  }
+
+  const handleStatusChange = async (appointmentId: string, status: AppointmentStatus) => {
+    try {
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update status')
+      }
+
+      // Refresh calendar
+      console.log('Status updated to:', status)
+    } catch (error) {
+      console.error('Failed to update status:', error)
+      throw error
+    }
+  }
+
+  const handleQuickSchedule = async (data: ScheduleData) => {
+    try {
+      // Map QuickScheduler data to your API format
+      const startTime = new Date(data.date)
+      const endTime = new Date(data.date.getTime() + data.duration * 60 * 1000)
+
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // If clientName is provided, look up client ID
+          // Otherwise, this is a blocked time slot
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          type: data.type,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create appointment')
+      }
+
+      // Close quick scheduler and refresh calendar
+      setQuickSchedulerOpen(false)
+      console.log('Appointment created via quick scheduler!')
+    } catch (error) {
+      console.error('Failed to create appointment:', error)
+      throw error
+    }
+  }
+
+  return (
+    <div>
+      {/*
+        YOUR EXISTING CALENDAR UI
+        Replace this with your actual calendar components
+      */}
+      <div style={{ padding: '20px' }}>
+        <h1>Calendar with Command Palette</h1>
+        <p>Press Cmd/Ctrl + K to open command palette</p>
+
+        {/* Sample event for testing */}
+        <button
+          onClick={() => {
+            setSelectedEvent({
+              id: '1',
+              title: 'Training Session',
+              startTime: new Date(),
+              endTime: new Date(Date.now() + 60 * 60 * 1000),
+              status: 'SCHEDULED',
+              clientId: 'client-1',
+              clientName: 'John Doe',
+              clientEmail: 'john@example.com',
+              type: 'appointment',
+            })
+            setDrawerOpen(true)
+          }}
+        >
+          Open Sample Appointment Drawer
+        </button>
+      </div>
+
+      {/* Command Palette - Always include this */}
+      <CommandPalette
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        query={query}
+        onQueryChange={setQuery}
+        results={results}
+        onExecute={execute}
+        isLoading={isLoading}
+        recentSearches={recentSearches}
+      />
+
+      {/* Appointment Drawer - Replaces your modal */}
+      <AppointmentDrawer
+        appointment={selectedEvent}
+        isOpen={drawerOpen}
+        onClose={() => {
+          setDrawerOpen(false)
+          setSelectedEvent(null)
+        }}
+        onSave={handleSaveAppointment}
+        onDelete={handleDeleteAppointment}
+        onStatusChange={handleStatusChange}
+      />
+
+      {/* Quick Scheduler Panel - Optional */}
+      <SlideOverPanel
+        isOpen={quickSchedulerOpen}
+        onClose={() => setQuickSchedulerOpen(false)}
+        position="right"
+        title="Quick Schedule"
+        width="400px"
+      >
+        <QuickScheduler
+          onSchedule={handleQuickSchedule}
+          onParse={(parsed) => {
+            // Optional: Show parsing feedback
+            console.log('Parsing:', parsed)
+          }}
+        />
+      </SlideOverPanel>
+
+      {/*
+        KEYBOARD SHORTCUTS INFO
+        Optional: Show keyboard shortcuts to users
+      */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          padding: '12px 16px',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          color: 'white',
+          borderRadius: '8px',
+          fontSize: '12px',
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: '8px' }}>Keyboard Shortcuts</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div>
+            <kbd style={{ padding: '2px 6px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '4px' }}>
+              Cmd+K
+            </kbd>
+            {' '}Command Palette
+          </div>
+          <div>
+            <kbd style={{ padding: '2px 6px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '4px' }}>
+              C
+            </kbd>
+            {' '}Create
+          </div>
+          <div>
+            <kbd style={{ padding: '2px 6px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '4px' }}>
+              B
+            </kbd>
+            {' '}Block Time
+          </div>
+          <div>
+            <kbd style={{ padding: '2px 6px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '4px' }}>
+              T
+            </kbd>
+            {' '}Go to Today
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * MINIMAL INTEGRATION EXAMPLE
+ *
+ * If you just want the command palette without the full example:
+ */
+export function MinimalCommandPaletteIntegration() {
+  const palette = useCommandPalette({
+    onScheduleClient: (id) => console.log('Schedule client:', id),
+    onQuickSchedule: (parsed) => console.log('Quick schedule:', parsed),
+    onExecuteCommand: (cmd) => console.log('Execute:', cmd),
+    onApplyFilter: (filter) => console.log('Filter:', filter),
+  })
+
+  useEffect(() => {
+    palette.search(palette.query)
+  }, [palette.query])
+
+  return (
+    <>
+      {/* Your existing calendar */}
+      <YourCalendarComponent />
+
+      {/* Just add the command palette */}
+      <CommandPalette
+        isOpen={palette.isOpen}
+        onClose={() => palette.setIsOpen(false)}
+        query={palette.query}
+        onQueryChange={palette.setQuery}
+        results={palette.results}
+        onExecute={palette.execute}
+        isLoading={palette.isLoading}
+      />
+    </>
+  )
+}
+
+/**
+ * APPOINTMENT DRAWER ONLY
+ *
+ * If you just want to replace your modal with the drawer:
+ */
+export function AppointmentDrawerOnly() {
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <>
+      {/* Your calendar that calls setSelectedEvent and setIsOpen */}
+      <YourCalendarComponent
+        onEventClick={(event) => {
+          setSelectedEvent(event)
+          setIsOpen(true)
+        }}
+      />
+
+      <AppointmentDrawer
+        appointment={selectedEvent}
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        onSave={async (updates) => {
+          await fetch(`/api/appointments/${updates.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+          })
+        }}
+        onDelete={async (id) => {
+          await fetch(`/api/appointments/${id}`, { method: 'DELETE' })
+        }}
+        onStatusChange={async (id, status) => {
+          await fetch(`/api/appointments/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+          })
+        }}
+      />
+    </>
+  )
+}

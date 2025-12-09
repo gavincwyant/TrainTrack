@@ -9,6 +9,68 @@
   --text-primary: #111827;
   --text-secondary: #4b5563;
   --text-tertiary: #6b7280;
+
+  /* Premium Calendar Design System */
+  /* Primary Brand Colors */
+  --calendar-primary: #3b82f6;
+  --calendar-primary-light: #60a5fa;
+  --calendar-primary-dark: #2563eb;
+  --calendar-accent: #6366f1;
+  --calendar-success: #10b981;
+  --calendar-warning: #f59e0b;
+  --calendar-danger: #ef4444;
+  --calendar-neutral: #6b7280;
+
+  /* Calendar-specific surfaces */
+  --calendar-bg-primary: #ffffff;
+  --calendar-bg-secondary: #f9fafb;
+  --calendar-bg-tertiary: #f3f4f6;
+  --calendar-bg-hover: rgba(59, 130, 246, 0.04);
+  --calendar-bg-selected: rgba(59, 130, 246, 0.08);
+
+  /* Shadow System - 5 Elevation Layers */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.12), 0 2px 6px 0 rgba(0, 0, 0, 0.18);
+  --shadow-xl: 0 12px 32px 0 rgba(0, 0, 0, 0.15), 0 4px 12px 0 rgba(0, 0, 0, 0.2);
+  --shadow-2xl: 0 20px 48px 0 rgba(0, 0, 0, 0.18), 0 8px 16px 0 rgba(0, 0, 0, 0.25);
+
+  /* Colored glows for status */
+  --shadow-glow-blue: 0 4px 20px 0 rgba(59, 130, 246, 0.25);
+  --shadow-glow-green: 0 4px 20px 0 rgba(16, 185, 129, 0.25);
+  --shadow-glow-amber: 0 4px 20px 0 rgba(245, 158, 11, 0.25);
+  --shadow-glow-red: 0 4px 20px 0 rgba(239, 68, 68, 0.25);
+
+  /* Animation Timing Constants */
+  --timing-instant: 100ms;
+  --timing-fast: 180ms;
+  --timing-normal: 250ms;
+  --timing-slow: 350ms;
+  --timing-very-slow: 500ms;
+
+  /* Easing Curves */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0.0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* Calendar Spacing */
+  --calendar-space-xs: 4px;
+  --calendar-space-sm: 8px;
+  --calendar-space-md: 12px;
+  --calendar-space-lg: 16px;
+  --calendar-space-xl: 24px;
+  --calendar-space-2xl: 32px;
+
+  /* Border Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
 }
 
 @theme inline {
@@ -18,6 +80,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark mode disabled - uncomment when implementing app-wide dark mode */
+/*
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -28,8 +92,19 @@
     --text-primary: #f5f5f5;
     --text-secondary: #a3a3a3;
     --text-tertiary: #737373;
+
+    --calendar-bg-primary: #1a1a1a;
+    --calendar-bg-secondary: #262626;
+    --calendar-bg-tertiary: #2d2d2d;
+    --calendar-bg-hover: rgba(59, 130, 246, 0.08);
+    --calendar-bg-selected: rgba(59, 130, 246, 0.15);
+
+    --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.4), 0 2px 6px 0 rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 12px 32px 0 rgba(0, 0, 0, 0.5), 0 4px 12px 0 rgba(0, 0, 0, 0.6);
   }
 }
+*/
 
 body {
   background: var(--background);
@@ -106,4 +181,210 @@ body {
 
 .animate-fade-in {
   animation: fade-in 0.8s ease-out forwards;
+}
+
+/* Premium Calendar Animations */
+
+/* Event card micro-interactions */
+@keyframes event-hover {
+  from {
+    transform: translateY(0) scale(1);
+  }
+  to {
+    transform: translateY(-2px) scale(1.02);
+  }
+}
+
+/* Confetti burst for completion */
+@keyframes confetti-burst {
+  0% {
+    opacity: 1;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2) rotate(180deg);
+  }
+}
+
+/* Checkmark drawing animation */
+@keyframes checkmark-draw {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Success overlay */
+@keyframes success-overlay {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* View transitions */
+@keyframes view-fade-out {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-30px) scale(0.98);
+  }
+}
+
+@keyframes view-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateX(30px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Skeleton loading shimmer */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Spinner rotation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Cell pulse on click */
+@keyframes cell-pulse {
+  0% {
+    background-color: rgba(59, 130, 246, 0.0);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.12);
+  }
+  100% {
+    background-color: rgba(59, 130, 246, 0.08);
+  }
+}
+
+/* Current time indicator pulse */
+@keyframes time-indicator-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+  }
+}
+
+@keyframes time-dot-pulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5), 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgba(239, 68, 68, 0.7), 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+/* Toast animations */
+@keyframes toast-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-exit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+}
+
+/* Modal/Drawer entrance */
+@keyframes modal-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes backdrop-blur-in {
+  0% {
+    backdrop-filter: blur(0px);
+    background-color: rgba(0, 0, 0, 0);
+  }
+  100% {
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Ripple effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Pulse border for drop targets */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    border-color: rgba(59, 130, 246, 1);
+  }
+}
+
+/* Event drop animation */
+@keyframes event-drop {
+  0% {
+    transform: scale(1.05) rotate(3deg);
+  }
+  50% {
+    transform: scale(0.95) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }

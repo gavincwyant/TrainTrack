@@ -1,0 +1,398 @@
+/**
+ * INTEGRATION EXAMPLE: Quick Create System
+ *
+ * This file shows how to integrate all the quick create components
+ * into your calendar application to reduce appointment creation
+ * from 7 clicks to 2-3 clicks.
+ */
+
+'use client'
+
+import { useState, useCallback, useEffect } from 'react'
+import {
+  QuickCreatePopover,
+  QuickCreateInlineForm,
+  CalendarContextMenu,
+  AppointmentCreateData,
+  Client,
+  Position
+} from './index'
+import { CalendarEvent, TimeSlot } from '../../types/calendar'
+
+interface CalendarState {
+  events: CalendarEvent[]
+  selectedDate: Date
+  view: 'day' | 'week' | 'month'
+}
+
+// Example toast notification (implement your own)
+const showToast = (message: string, type: 'success' | 'error') => {
+  console.log(`[${type.toUpperCase()}] ${message}`)
+  // Your toast implementation here
+}
+
+export default function CalendarIntegrationExample() {
+  // Calendar state
+  const [calendar, setCalendar] = useState<CalendarState>({
+    events: [],
+    selectedDate: new Date(),
+    view: 'week'
+  })
+
+  // Quick create popover state
+  const [quickCreatePopover, setQuickCreatePopover] = useState<{
+    isOpen: boolean
+    position: Position
+    slot: { start: Date; end: Date } | null
+  }>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    slot: null
+  })
+
+  // Inline form state
+  const [inlineForm, setInlineForm] = useState<{
+    isOpen: boolean
+    slot: TimeSlot | null
+  }>({
+    isOpen: false,
+    slot: null
+  })
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean
+    position: Position
+    target: { type: 'slot' | 'event'; data: TimeSlot | CalendarEvent } | null
+  }>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    target: null
+  })
+
+  // Clients (fetch from API)
+  const [clients, setClients] = useState<Client[]>([])
+
+  // ===========================================
+  // HANDLER: Single click on empty slot
+  // Opens quick create popover
+  // ===========================================
+  const handleSlotClick = useCallback((e: React.MouseEvent, slot: TimeSlot) => {
+    if (slot.isEmpty && !e.ctrlKey && !e.metaKey) {
+      setQuickCreatePopover({
+        isOpen: true,
+        position: { x: e.clientX, y: e.clientY },
+        slot: { start: slot.start, end: slot.end }
+      })
+    }
+  }, [])
+
+  // ===========================================
+  // HANDLER: Double click on empty slot
+  // Opens inline form
+  // ===========================================
+  const handleSlotDoubleClick = useCallback((slot: TimeSlot) => {
+    if (slot.isEmpty) {
+      setInlineForm({
+        isOpen: true,
+        slot
+      })
+    }
+  }, [])
+
+  // ===========================================
+  // HANDLER: Right click (context menu)
+  // Shows context menu for slots or events
+  // ===========================================
+  const handleContextMenu = useCallback((
+    e: React.MouseEvent,
+    target: TimeSlot | CalendarEvent
+  ) => {
+    e.preventDefault()
+
+    const isSlot = 'isEmpty' in target
+    setContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+      target: {
+        type: isSlot ? 'slot' : 'event',
+        data: target
+      }
+    })
+  }, [])
+
+  // ===========================================
+  // HANDLER: Submit appointment (with optimistic UI)
+  // ===========================================
+  const handleCreateAppointment = useCallback(async (data: AppointmentCreateData) => {
+    // Find client info for display
+    const client = clients.find(c => c.id === data.clientId)
+    if (!client) {
+      showToast('Client not found', 'error')
+      throw new Error('Client not found')
+    }
+
+    // 1. CREATE OPTIMISTIC EVENT
+    // Show immediately in the UI before API call
+    const tempId = `temp-${Date.now()}`
+    const optimisticEvent: CalendarEvent = {
+      id: tempId,
+      _tempId: tempId,
+      _pending: true, // Flag for styling (e.g., lower opacity)
+      title: client.fullName,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      clientId: data.clientId,
+      clientName: client.fullName,
+      clientEmail: client.email,
+      type: 'appointment',
+      status: 'SCHEDULED'
+    }
+
+    // Add to calendar immediately
+    setCalendar(prev => ({
+      ...prev,
+      events: [...prev.events, optimisticEvent]
+    }))
+
+    try {
+      // 2. CALL API
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: data.clientId,
+          startTime: data.startTime.toISOString(),
+          endTime: data.endTime.toISOString()
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create appointment')
+      }
+
+      const result = await response.json()
+
+      // 3. REPLACE OPTIMISTIC WITH REAL EVENT
+      setCalendar(prev => ({
+        ...prev,
+        events: prev.events.map(event =>
+          event._tempId === tempId
+            ? {
+                id: result.appointment.id,
+                title: result.appointment.client.fullName,
+                startTime: new Date(result.appointment.startTime),
+                endTime: new Date(result.appointment.endTime),
+                clientId: result.appointment.clientId,
+                clientName: result.appointment.client.fullName,
+                clientEmail: result.appointment.client.email,
+                type: 'appointment',
+                status: result.appointment.status
+              }
+            : event
+        )
+      }))
+
+      // Show success message
+      showToast(`Appointment created for ${client.fullName}`, 'success')
+    } catch (error) {
+      // 4. REMOVE OPTIMISTIC EVENT ON ERROR
+      setCalendar(prev => ({
+        ...prev,
+        events: prev.events.filter(e => e._tempId !== tempId)
+      }))
+
+      const message = error instanceof Error ? error.message : 'Failed to create appointment'
+      showToast(message, 'error')
+
+      // Re-throw so popover can show error
+      throw error
+    }
+  }, [clients])
+
+  // ===========================================
+  // HANDLER: Context menu actions
+  // ===========================================
+  const handleContextMenuAction = useCallback(
+    (action: string, target: { type: 'slot' | 'event'; data: TimeSlot | CalendarEvent }) => {
+      switch (action) {
+        case 'schedule':
+          // Open quick create popover
+          const slot = target.data as TimeSlot
+          setQuickCreatePopover({
+            isOpen: true,
+            position: contextMenu.position,
+            slot: { start: slot.start, end: slot.end }
+          })
+          break
+
+        case 'block':
+          // TODO: Implement block time
+          console.log('Block time:', target.data)
+          showToast('Block time - Coming soon', 'success')
+          break
+
+        case 'note':
+          // TODO: Implement add note
+          console.log('Add note:', target.data)
+          showToast('Add note - Coming soon', 'success')
+          break
+
+        case 'complete':
+          // Mark appointment as complete
+          const eventToComplete = target.data as CalendarEvent
+          handleCompleteAppointment(eventToComplete.id)
+          break
+
+        case 'edit':
+          // TODO: Open edit modal
+          console.log('Edit:', target.data)
+          showToast('Edit - Opening modal...', 'success')
+          break
+
+        case 'delete':
+          // TODO: Implement delete with confirmation
+          console.log('Delete:', target.data)
+          showToast('Delete - Coming soon', 'success')
+          break
+
+        case 'cancel':
+          // TODO: Implement cancel appointment
+          console.log('Cancel:', target.data)
+          showToast('Cancel - Coming soon', 'success')
+          break
+      }
+    },
+    [contextMenu.position]
+  )
+
+  // ===========================================
+  // HANDLER: Complete appointment
+  // ===========================================
+  const handleCompleteAppointment = async (appointmentId: string) => {
+    try {
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' })
+      })
+
+      if (!response.ok) throw new Error('Failed to complete appointment')
+
+      // Update event in state
+      setCalendar(prev => ({
+        ...prev,
+        events: prev.events.map(event =>
+          event.id === appointmentId
+            ? { ...event, status: 'COMPLETED' as const }
+            : event
+        )
+      }))
+
+      showToast('Appointment marked as complete!', 'success')
+    } catch (error) {
+      showToast('Failed to complete appointment', 'error')
+    }
+  }
+
+  // ===========================================
+  // RENDER
+  // ===========================================
+  return (
+    <div className="calendar-page">
+      {/* Calendar Grid (simplified for example) */}
+      <div className="calendar-grid">
+        {/* Your calendar rendering logic here */}
+        {/* Each slot should have click handlers: */}
+        {/*
+        <div
+          onClick={(e) => handleSlotClick(e, slot)}
+          onDoubleClick={() => handleSlotDoubleClick(slot)}
+          onContextMenu={(e) => handleContextMenu(e, slot)}
+        >
+          Slot content
+        </div>
+        */}
+      </div>
+
+      {/* ===========================================
+          QUICK CREATE POPOVER
+          Appears on single-click of empty slot
+          =========================================== */}
+      <QuickCreatePopover
+        isOpen={quickCreatePopover.isOpen}
+        position={quickCreatePopover.position}
+        slot={quickCreatePopover.slot || { start: new Date(), end: new Date() }}
+        onClose={() =>
+          setQuickCreatePopover(prev => ({ ...prev, isOpen: false }))
+        }
+        onSubmit={handleCreateAppointment}
+      />
+
+      {/* ===========================================
+          INLINE FORM
+          Appears on double-click of empty slot
+          =========================================== */}
+      {inlineForm.isOpen && inlineForm.slot && (
+        <QuickCreateInlineForm
+          slot={inlineForm.slot}
+          clients={clients}
+          onSubmit={async (data) => {
+            await handleCreateAppointment(data)
+            setInlineForm({ isOpen: false, slot: null })
+          }}
+          onCancel={() => setInlineForm({ isOpen: false, slot: null })}
+        />
+      )}
+
+      {/* ===========================================
+          CONTEXT MENU
+          Appears on right-click
+          =========================================== */}
+      <CalendarContextMenu
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        target={contextMenu.target}
+        onAction={handleContextMenuAction}
+        onClose={() =>
+          setContextMenu(prev => ({ ...prev, isOpen: false }))
+        }
+      />
+    </div>
+  )
+}
+
+// ===========================================
+// KEYBOARD SHORTCUTS (Optional Enhancement)
+// ===========================================
+export function useCalendarKeyboardShortcuts(handlers: {
+  onQuickCreate?: () => void
+  onDelete?: () => void
+  onEdit?: () => void
+}) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + N: Quick create
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault()
+        handlers.onQuickCreate?.()
+      }
+
+      // Delete/Backspace: Delete selected
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault()
+        handlers.onDelete?.()
+      }
+
+      // Enter: Edit selected
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        handlers.onEdit?.()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handlers])
+}
