@@ -1,0 +1,333 @@
+import { test, expect } from '../helpers/fixtures'
+import { createTestUser, loginAs } from '../helpers/auth'
+import { prisma } from '@/lib/db'
+import { faker } from '@faker-js/faker'
+
+/**
+ * E2E Flow: Google Calendar Integration
+ *
+ * User Story:
+ * As a trainer, I want to connect my Google Calendar so that
+ * appointments sync bidirectionally between TrainTrack and Google.
+ */
+
+test.describe('Google Calendar Integration Flow', () => {
+  test('should connect Google Calendar and enable auto-sync', async ({ page }) => {
+    // Setup: Create trainer
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    // Login
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    // Navigate to settings
+    await page.click('text=Settings')
+    await page.waitForURL('/trainer/settings')
+
+    // Find Google Calendar section
+    await expect(page.locator('text=Google Calendar Integration')).toBeVisible()
+
+    // Should show "Not Connected" initially
+    await expect(page.locator('text=Not Connected')).toBeVisible()
+
+    // Click "Connect Google Calendar"
+    await page.click('button:has-text("Connect Google Calendar")')
+
+    // In E2E tests, we'll mock the OAuth flow by directly updating the database
+    // In a real scenario, this would redirect to Google OAuth
+    // For this test, we'll simulate successful connection
+
+    // Mock OAuth success by updating trainer settings
+    await prisma.trainerSettings.update({
+      where: { trainerId: trainer.id },
+      data: {
+        googleCalendarConnected: true,
+        googleAccessToken: 'mock_access_token',
+        googleRefreshToken: 'mock_refresh_token',
+      },
+    })
+
+    // Refresh the page to see updated status
+    await page.reload()
+
+    // Should now show "Connected"
+    await expect(page.locator('text=Connected')).toBeVisible()
+
+    // Enable auto-sync
+    await page.click('input[name="autoSyncEnabled"]')
+
+    // Save settings
+    await page.click('button:has-text("Save Settings")')
+
+    // Success message
+    await expect(page.locator('text=Settings saved successfully')).toBeVisible()
+
+    // Verify settings were saved
+    const settings = await prisma.trainerSettings.findUnique({
+      where: { trainerId: trainer.id },
+    })
+
+    expect(settings?.autoSyncEnabled).toBe(true)
+  })
+
+  test('should sync appointment to Google Calendar when created', async ({ page }) => {
+    // Setup: Create trainer with Google Calendar connected
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    await prisma.trainerSettings.update({
+      where: { trainerId: trainer.id },
+      data: {
+        googleCalendarConnected: true,
+        googleAccessToken: 'mock_access_token',
+        googleRefreshToken: 'mock_refresh_token',
+        autoSyncEnabled: true,
+      },
+    })
+
+    // Create client
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: faker.person.fullName(),
+        passwordHash: '',
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+      },
+    })
+
+    // Login
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    // Create appointment
+    await page.click('text=Calendar')
+    await page.click('text=New Appointment')
+
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(10, 0, 0, 0)
+
+    await page.selectOption('select[name="clientId"]', { label: client.fullName })
+    await page.fill('input[name="startTime"]', tomorrow.toISOString().slice(0, 16))
+
+    const endTime = new Date(tomorrow)
+    endTime.setHours(11, 0, 0, 0)
+    await page.fill('input[name="endTime"]', endTime.toISOString().slice(0, 16))
+
+    await page.click('button:has-text("Create Appointment")')
+
+    // Success message should mention Google Calendar sync
+    await expect(page.locator('text=Appointment created')).toBeVisible()
+    await expect(page.locator('text=Synced to Google Calendar')).toBeVisible()
+
+    // Verify calendar event mapping was created
+    const mapping = await prisma.calendarEventMapping.findFirst({
+      where: {
+        workspaceId: trainer.workspaceId,
+        appointment: {
+          clientId: client.id,
+        },
+      },
+    })
+
+    expect(mapping).toBeTruthy()
+    expect(mapping?.provider).toBe('google')
+    expect(mapping?.syncDirection).toBe('outbound')
+  })
+
+  test('should pull events from Google Calendar and create appointments', async ({ page }) => {
+    // Setup: Create trainer with Google Calendar connected
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    await prisma.trainerSettings.update({
+      where: { trainerId: trainer.id },
+      data: {
+        googleCalendarConnected: true,
+        googleAccessToken: 'mock_access_token',
+        googleRefreshToken: 'mock_refresh_token',
+        autoSyncEnabled: true,
+      },
+    })
+
+    // Create client so we can match names
+    const client = await prisma.user.create({
+      data: {
+        email: faker.internet.email().toLowerCase(),
+        fullName: 'John Smith', // Use a recognizable name
+        passwordHash: '',
+        role: 'CLIENT',
+        workspaceId: trainer.workspaceId,
+      },
+    })
+
+    await prisma.clientProfile.create({
+      data: {
+        userId: client.id,
+        workspaceId: trainer.workspaceId,
+        billingFrequency: 'PER_SESSION',
+        sessionRate: 100,
+      },
+    })
+
+    // Mock Google Calendar event (in real test, this would be fetched from Google)
+    // Create a pending appointment to simulate Google Calendar sync
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(14, 0, 0, 0)
+
+    await prisma.pendingAppointment.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        externalEventId: 'google_event_123',
+        externalEventTitle: 'John Smith - Training Session',
+        startTime: tomorrow,
+        endTime: new Date(tomorrow.getTime() + 3600000),
+        suggestedClientId: client.id,
+        matchConfidence: 'high',
+        matchReason: 'Exact name match',
+        status: 'pending',
+      },
+    })
+
+    // Login
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    // Navigate to calendar
+    await page.click('text=Calendar')
+
+    // Should see a notification about pending appointments
+    await expect(page.locator('text=1 pending appointment')).toBeVisible()
+
+    // Click to view pending appointments
+    await page.click('text=View Pending')
+
+    // Should show the pending appointment
+    await expect(page.locator('text=John Smith - Training Session')).toBeVisible()
+    await expect(page.locator('text=High confidence')).toBeVisible()
+
+    // Approve the appointment
+    await page.click('button:has-text("Approve")')
+
+    // Success message
+    await expect(page.locator('text=Appointment approved')).toBeVisible()
+
+    // Verify appointment was created
+    const appointment = await prisma.appointment.findFirst({
+      where: {
+        trainerId: trainer.id,
+        clientId: client.id,
+      },
+    })
+
+    expect(appointment).toBeTruthy()
+    expect(appointment?.status).toBe('SCHEDULED')
+
+    // Pending appointment should be deleted
+    const pending = await prisma.pendingAppointment.findFirst({
+      where: { externalEventId: 'google_event_123' },
+    })
+
+    expect(pending).toBeNull()
+  })
+
+  test('should disconnect Google Calendar', async ({ page }) => {
+    // Setup: Create trainer with Google Calendar connected
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    await prisma.trainerSettings.update({
+      where: { trainerId: trainer.id },
+      data: {
+        googleCalendarConnected: true,
+        googleAccessToken: 'mock_access_token',
+        googleRefreshToken: 'mock_refresh_token',
+        autoSyncEnabled: true,
+      },
+    })
+
+    // Login
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    // Navigate to settings
+    await page.click('text=Settings')
+
+    // Should show "Connected"
+    await expect(page.locator('text=Connected')).toBeVisible()
+
+    // Click "Disconnect"
+    await page.click('button:has-text("Disconnect")')
+
+    // Confirm disconnection
+    await page.click('button:has-text("Confirm")')
+
+    // Success message
+    await expect(page.locator('text=Google Calendar disconnected')).toBeVisible()
+
+    // Should now show "Not Connected"
+    await expect(page.locator('text=Not Connected')).toBeVisible()
+
+    // Verify tokens were cleared
+    const settings = await prisma.trainerSettings.findUnique({
+      where: { trainerId: trainer.id },
+    })
+
+    expect(settings?.googleCalendarConnected).toBe(false)
+    expect(settings?.googleAccessToken).toBeNull()
+    expect(settings?.googleRefreshToken).toBeNull()
+    expect(settings?.autoSyncEnabled).toBe(false)
+  })
+
+  test('should show blocked time for unmatched Google Calendar events', async ({ page }) => {
+    // Setup: Create trainer with Google Calendar connected
+    const trainer = await createTestUser({ role: 'TRAINER' })
+
+    await prisma.trainerSettings.update({
+      where: { trainerId: trainer.id },
+      data: {
+        googleCalendarConnected: true,
+        googleAccessToken: 'mock_access_token',
+        googleRefreshToken: 'mock_refresh_token',
+        autoSyncEnabled: true,
+      },
+    })
+
+    // Create a blocked time from Google Calendar sync
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(16, 0, 0, 0)
+
+    await prisma.blockedTime.create({
+      data: {
+        workspaceId: trainer.workspaceId,
+        trainerId: trainer.id,
+        startTime: tomorrow,
+        endTime: new Date(tomorrow.getTime() + 3600000),
+        reason: 'Google Calendar: Doctor Appointment',
+        isRecurring: false,
+      },
+    })
+
+    // Login
+    await loginAs(page, { email: trainer.email, password: trainer.password })
+
+    // Navigate to calendar
+    await page.click('text=Calendar')
+
+    // Should see blocked time on calendar
+    await expect(page.locator('text=Doctor Appointment')).toBeVisible()
+
+    // Click on blocked time
+    await page.click('text=Doctor Appointment')
+
+    // Should show blocked time details
+    await expect(page.locator('text=Blocked Time')).toBeVisible()
+    await expect(page.locator('text=Google Calendar: Doctor Appointment')).toBeVisible()
+  })
+})
