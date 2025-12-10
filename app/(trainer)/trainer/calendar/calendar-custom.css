@@ -367,6 +367,110 @@
   }
 }
 
+/* Extra small phones (iPhone SE, small Android) */
+@media (max-width: 480px) {
+  .rbc-toolbar-label {
+    font-size: 1rem;
+  }
+
+  .rbc-btn-group button {
+    font-size: 0.7rem;
+    min-height: 44px;
+    padding: 0.5rem 0.5rem;
+  }
+
+  .rbc-header {
+    font-size: 0.5rem;
+    padding: 0.375rem 0.125rem;
+    letter-spacing: 0;
+  }
+
+  .rbc-event {
+    font-size: 0.625rem;
+    min-height: 40px;
+    padding: 0.25rem 0.375rem;
+  }
+
+  .rbc-event-content {
+    font-size: 0.625rem;
+  }
+
+  .rbc-event-label {
+    font-size: 0.625rem;
+  }
+
+  .rbc-date-cell > a {
+    font-size: 0.625rem;
+  }
+
+  .rbc-month-row {
+    min-height: 3.5rem;
+  }
+
+  /* Agenda view on extra small */
+  .rbc-agenda-date-cell,
+  .rbc-agenda-time-cell,
+  .rbc-agenda-event-cell {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .rbc-agenda-table {
+    font-size: 0.75rem;
+  }
+
+  .rbc-time-gutter {
+    font-size: 0.625rem;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Ensure all interactive elements have proper touch targets */
+  .rbc-event,
+  .rbc-toolbar button,
+  .rbc-show-more {
+    min-height: 44px;
+  }
+
+  /* Active state feedback for touch */
+  .rbc-toolbar button:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+
+  .rbc-event:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* Remove hover effects that don't work well on touch */
+  .rbc-toolbar button:hover {
+    transform: none;
+  }
+
+  .rbc-event:hover {
+    transform: none;
+  }
+
+  /* Better touch feedback for show more */
+  .rbc-show-more {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rbc-show-more:active {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Touch pan support for swipe gestures */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
 /* Dark mode enhancements */
 @media (prefers-color-scheme: dark) {
   .rbc-event {

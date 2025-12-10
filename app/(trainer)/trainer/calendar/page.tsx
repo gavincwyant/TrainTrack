@@ -11,6 +11,8 @@ import AppointmentModal from "@/components/AppointmentModal"
 import BlockTimeModal from "@/components/BlockTimeModal"
 import AppointmentDetailModal from "@/components/AppointmentDetailModal"
 import BlockedTimeDetailModal from "@/components/BlockedTimeDetailModal"
+import { CalendarToolbar } from "@/components/calendar"
+import { useCalendarSwipe } from "@/hooks/useCalendarSwipe"
 
 const locales = {
   "en-US": enUS,
@@ -87,6 +89,7 @@ export default function TrainerCalendarPage() {
   const [showAppointmentDetail, setShowAppointmentDetail] = useState(false)
   const [showBlockedTimeDetail, setShowBlockedTimeDetail] = useState(false)
   const [activeFilters, setActiveFilters] = useState<FilterOption[]>(["SCHEDULED", "COMPLETED", "BLOCKED"])
+  const [showFilters, setShowFilters] = useState(false)
 
   const toggleFilter = (filter: FilterOption) => {
     setActiveFilters(prev =>
@@ -281,19 +284,36 @@ export default function TrainerCalendarPage() {
 
   const { min, max } = getCalendarHours()
 
+  // Swipe gesture handlers for mobile calendar navigation
+  const swipeHandlers = useCalendarSwipe(date, setDate, view)
+
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-start">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-[var(--text-primary)]">Calendar</h1>
-          <p className="mt-3 text-lg text-[var(--text-secondary)]">View and manage your appointments</p>
+          <h1 className="text-2xl sm:text-4xl font-bold text-[var(--text-primary)]">Calendar</h1>
+          <p className="mt-2 sm:mt-3 text-base sm:text-lg text-[var(--text-secondary)]">View and manage your appointments</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <button
+            onClick={() => {
+              setSelectedSlot(null)
+              setIsModalOpen(true)
+            }}
+            className="order-first sm:order-last px-4 sm:px-6 py-2.5 min-h-[44px] bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl hover:shadow-blue-600/30 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span className="sm:hidden">New</span>
+            <span className="hidden sm:inline">New Appointment</span>
+          </button>
           <Link
             href="/trainer/availability"
-            className="px-5 py-2.5 border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-blue-500/30 transition-all duration-200 font-medium"
+            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-blue-500/30 transition-all duration-200 font-medium flex items-center justify-center"
           >
-            Manage Availability
+            <span className="hidden sm:inline">Manage Availability</span>
+            <span className="sm:hidden">Availability</span>
           </Link>
           <button
             onClick={async () => {
@@ -305,24 +325,12 @@ export default function TrainerCalendarPage() {
                 setError(err instanceof Error ? err.message : "Sync failed")
               }
             }}
-            className="px-5 py-2.5 border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-green-500/30 transition-all duration-200 font-medium flex items-center gap-2"
+            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-green-500/30 transition-all duration-200 font-medium flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Sync
-          </button>
-          <button
-            onClick={() => {
-              setSelectedSlot(null)
-              setIsModalOpen(true)
-            }}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl hover:shadow-blue-600/30 hover:-translate-y-0.5 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            New Appointment
           </button>
         </div>
       </div>
@@ -334,78 +342,109 @@ export default function TrainerCalendarPage() {
       )}
 
       {/* Filter Controls */}
-      <div className="bg-[var(--surface)] p-6 rounded-2xl shadow-lg border-1 border-[var(--border)]">
-        <h3 className="text-base font-semibold text-[var(--text-primary)] mb-4">Filter Calendar View</h3>
-        <div className="flex gap-3 flex-wrap">
-          <button
-            onClick={() => toggleFilter("SCHEDULED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
-              activeFilters.includes("SCHEDULED")
-                ? "bg-blue-500 text-white border-blue-600 shadow-lg shadow-blue-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-500/30"
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("SCHEDULED") ? "bg-blue-200" : "bg-blue-500"}`}></span>
-              Scheduled
+      <div className="bg-[var(--surface)] p-4 sm:p-6 rounded-2xl shadow-lg border-1 border-[var(--border)]">
+        {/* Mobile Filter Toggle */}
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="md:hidden w-full flex items-center justify-between px-4 py-2.5 min-h-[44px] border-2 border-[var(--border)] rounded-xl text-[var(--text-primary)] font-medium"
+        >
+          <span className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filters
+            <span className="bg-blue-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
+              {activeFilters.length}
             </span>
-          </button>
-          <button
-            onClick={() => toggleFilter("COMPLETED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
-              activeFilters.includes("COMPLETED")
-                ? "bg-green-500 text-white border-green-600 shadow-lg shadow-green-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-500/30"
-            }`}
+          </span>
+          <svg
+            className={`w-5 h-5 transition-transform duration-200 ${showFilters ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <span className="flex items-center gap-2.5">
-              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("COMPLETED") ? "bg-green-200" : "bg-green-500"}`}></span>
-              Completed
-            </span>
-          </button>
-          <button
-            onClick={() => toggleFilter("CANCELLED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
-              activeFilters.includes("CANCELLED")
-                ? "bg-red-500 text-white border-red-600 shadow-lg shadow-red-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-500/30"
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("CANCELLED") ? "bg-red-200" : "bg-red-500"}`}></span>
-              Cancelled
-            </span>
-          </button>
-          <button
-            onClick={() => toggleFilter("RESCHEDULED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
-              activeFilters.includes("RESCHEDULED")
-                ? "bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-500/30"
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("RESCHEDULED") ? "bg-orange-200" : "bg-orange-500"}`}></span>
-              Rescheduled
-            </span>
-          </button>
-          <button
-            onClick={() => toggleFilter("BLOCKED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
-              activeFilters.includes("BLOCKED")
-                ? "bg-gray-500 text-white border-gray-600 shadow-lg shadow-gray-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-500/30"
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <span className={`w-3 h-3 rounded-full ${activeFilters.includes("BLOCKED") ? "bg-gray-200" : "bg-gray-500"}`}></span>
-              Blocked Time
-            </span>
-          </button>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {/* Desktop title - hidden on mobile when toggle is shown */}
+        <h3 className="hidden md:block text-base font-semibold text-[var(--text-primary)] mb-4">Filter Calendar View</h3>
+
+        {/* Filter buttons - collapsible on mobile */}
+        <div className={`${showFilters ? "block" : "hidden"} md:block mt-4 md:mt-0`}>
+          <div className="flex gap-2 sm:gap-3 flex-wrap">
+            <button
+              onClick={() => toggleFilter("SCHEDULED")}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+                activeFilters.includes("SCHEDULED")
+                  ? "bg-blue-500 text-white border-blue-600 shadow-lg shadow-blue-500/30"
+                  : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-500/30"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${activeFilters.includes("SCHEDULED") ? "bg-blue-200" : "bg-blue-500"}`}></span>
+                Scheduled
+              </span>
+            </button>
+            <button
+              onClick={() => toggleFilter("COMPLETED")}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+                activeFilters.includes("COMPLETED")
+                  ? "bg-green-500 text-white border-green-600 shadow-lg shadow-green-500/30"
+                  : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-500/30"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${activeFilters.includes("COMPLETED") ? "bg-green-200" : "bg-green-500"}`}></span>
+                Completed
+              </span>
+            </button>
+            <button
+              onClick={() => toggleFilter("CANCELLED")}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+                activeFilters.includes("CANCELLED")
+                  ? "bg-red-500 text-white border-red-600 shadow-lg shadow-red-500/30"
+                  : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-500/30"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${activeFilters.includes("CANCELLED") ? "bg-red-200" : "bg-red-500"}`}></span>
+                Cancelled
+              </span>
+            </button>
+            <button
+              onClick={() => toggleFilter("RESCHEDULED")}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+                activeFilters.includes("RESCHEDULED")
+                  ? "bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/30"
+                  : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-500/30"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${activeFilters.includes("RESCHEDULED") ? "bg-orange-200" : "bg-orange-500"}`}></span>
+                <span className="hidden sm:inline">Rescheduled</span>
+                <span className="sm:hidden">Resched.</span>
+              </span>
+            </button>
+            <button
+              onClick={() => toggleFilter("BLOCKED")}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+                activeFilters.includes("BLOCKED")
+                  ? "bg-gray-500 text-white border-gray-600 shadow-lg shadow-gray-500/30"
+                  : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-500/30"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${activeFilters.includes("BLOCKED") ? "bg-gray-200" : "bg-gray-500"}`}></span>
+                <span className="hidden sm:inline">Blocked Time</span>
+                <span className="sm:hidden">Blocked</span>
+              </span>
+            </button>
+          </div>
+          <p className="text-sm text-[var(--text-secondary)] mt-4">
+            Click to toggle filters. Showing <span className="font-semibold text-[var(--text-primary)]">{filteredAppointmentCount}</span> of <span className="font-semibold text-[var(--text-primary)]">{appointmentCount}</span> appointments.
+          </p>
         </div>
-        <p className="text-sm text-[var(--text-secondary)] mt-4">
-          Click to toggle filters. Showing <span className="font-semibold text-[var(--text-primary)]">{filteredAppointmentCount}</span> of <span className="font-semibold text-[var(--text-primary)]">{appointmentCount}</span> appointments.
-        </p>
       </div>
 
       {/* Legacy Legend - keeping for reference */}
@@ -441,7 +480,10 @@ export default function TrainerCalendarPage() {
       </div>
 
       {/* Calendar */}
-      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-xl border-1 border-[var(--border)]" style={{ height: "750px" }}>
+      <div
+        {...swipeHandlers()}
+        className="bg-[var(--surface)] p-4 sm:p-6 md:p-8 rounded-2xl shadow-xl border-1 border-[var(--border)] h-[calc(100vh-200px)] sm:h-[calc(100vh-280px)] md:h-[750px] min-h-[400px] max-h-[900px] touch-pan-y"
+      >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4">
@@ -470,6 +512,9 @@ export default function TrainerCalendarPage() {
             timeslots={2}
             min={min}
             max={max}
+            components={{
+              toolbar: CalendarToolbar,
+            }}
           />
         )}
       </div>
