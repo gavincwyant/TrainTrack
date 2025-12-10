@@ -18,6 +18,9 @@ export function CalendarToolbar(props: ToolbarProps<any, object>) {
   const views: View[] = ["month", "week", "day", "agenda"]
 
   if (isMobile) {
+    // Reorder views to put mobile-friendly options first
+    const mobileViews: View[] = ["day", "agenda", "week", "month"]
+
     return (
       <div className="flex flex-col gap-3 pb-4">
         {/* Row 1: Date Label - centered, prominent */}
@@ -27,7 +30,7 @@ export function CalendarToolbar(props: ToolbarProps<any, object>) {
 
         {/* Row 2: View Switcher - segmented control style */}
         <div className="flex rounded-xl border-2 border-[var(--border)] overflow-hidden">
-          {views.map((v) => (
+          {mobileViews.map((v) => (
             <button
               key={v}
               onClick={() => onView(v)}

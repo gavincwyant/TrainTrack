@@ -348,6 +348,93 @@
   .rbc-agenda-table {
     font-size: 0.875rem;
   }
+
+  /* ========================================
+     Week/Day Time View Mobile Improvements
+     ======================================== */
+
+  /* Compact time gutter - minimal width */
+  .rbc-time-gutter {
+    min-width: 28px !important;
+    max-width: 28px !important;
+    font-size: 0.5rem;
+  }
+
+  .rbc-time-gutter .rbc-timeslot-group {
+    min-width: 28px !important;
+  }
+
+  .rbc-label {
+    padding: 0 1px !important;
+    font-size: 0.5rem;
+  }
+
+  /* Compact time header */
+  .rbc-time-header {
+    min-height: auto;
+  }
+
+  .rbc-time-header-content {
+    min-height: 50px;
+  }
+
+  /* Compact day headers in week view - show abbreviated names */
+  .rbc-header {
+    padding: 0.375rem 0.125rem !important;
+    font-size: 0.5rem !important;
+    letter-spacing: -0.02em;
+  }
+
+  /* Make events in time view more compact */
+  .rbc-time-view .rbc-event {
+    padding: 0.125rem 0.125rem;
+    font-size: 0.625rem;
+    min-height: 24px;
+    border-radius: 0.25rem;
+  }
+
+  .rbc-time-view .rbc-event-content {
+    font-size: 0.625rem;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rbc-time-view .rbc-event-label {
+    display: none !important; /* Hide time labels on events to save space */
+  }
+
+  /* Reduce time slot height for more compact view */
+  .rbc-timeslot-group {
+    min-height: 2.5rem;
+  }
+
+  /* Day column improvements - events use full width */
+  .rbc-day-slot {
+    min-width: 0;
+  }
+
+  .rbc-day-slot .rbc-events-container {
+    margin-right: 0 !important;
+    right: 0 !important;
+  }
+
+  .rbc-day-slot .rbc-event {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+
+  /* All-day section compact */
+  .rbc-allday-cell {
+    max-height: 60px;
+    overflow-y: auto;
+  }
+
+  .rbc-row-segment {
+    padding: 0 1px;
+  }
 }
 
 /* Extra small mobile devices */
@@ -364,6 +451,31 @@
   .rbc-header {
     padding: 0.5rem 0.25rem;
     font-size: 0.625rem;
+  }
+
+  /* Week view specific - even more compact */
+  .rbc-time-gutter {
+    min-width: 24px !important;
+    max-width: 24px !important;
+    font-size: 0.4375rem;
+  }
+
+  .rbc-label {
+    font-size: 0.4375rem;
+  }
+
+  .rbc-time-view .rbc-event {
+    min-height: 20px;
+    font-size: 0.5625rem;
+    padding: 0.0625rem 0.125rem;
+  }
+
+  .rbc-time-view .rbc-event-content {
+    font-size: 0.5625rem;
+  }
+
+  .rbc-timeslot-group {
+    min-height: 2rem;
   }
 }
 
@@ -405,6 +517,29 @@
 
   .rbc-month-row {
     min-height: 3.5rem;
+  }
+
+  /* Time gutter - ultra compact for tiny screens */
+  .rbc-time-gutter {
+    min-width: 20px !important;
+    max-width: 20px !important;
+    font-size: 0.375rem;
+  }
+
+  .rbc-label {
+    font-size: 0.375rem;
+    padding: 0 !important;
+  }
+
+  /* Time view events - ultra compact */
+  .rbc-time-view .rbc-event {
+    min-height: 18px;
+    font-size: 0.5rem;
+    padding: 0 0.0625rem;
+  }
+
+  .rbc-time-view .rbc-event-content {
+    font-size: 0.5rem;
   }
 
   /* Agenda view on extra small */
