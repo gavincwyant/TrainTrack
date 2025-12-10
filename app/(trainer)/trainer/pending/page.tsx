@@ -212,9 +212,9 @@ export default function PendingAppointmentsPage() {
               {pendingAppointments.map((pending) => (
                 <div
                   key={pending.id}
-                  className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6 border-l-4 border-blue-500 dark:border-blue-400"
+                  className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6 border-l-4 border-blue-500 dark:border-blue-400"
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -286,7 +286,7 @@ export default function PendingAppointmentsPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 ml-4">
+                    <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0 sm:ml-4">
                       <button
                         onClick={() =>
                           handleApprove(
@@ -295,14 +295,14 @@ export default function PendingAppointmentsPage() {
                           )
                         }
                         disabled={processingId === pending.id || !pending.suggestedClient}
-                        className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white text-sm rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 min-h-[44px] bg-green-600 dark:bg-green-500 text-white text-sm rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {processingId === pending.id ? "Processing..." : "Approve"}
                       </button>
                       <button
                         onClick={() => handleReject(pending.id)}
                         disabled={processingId === pending.id}
-                        className="px-4 py-2 bg-red-600 dark:bg-red-500 text-white text-sm rounded-md hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 min-h-[44px] bg-red-600 dark:bg-red-500 text-white text-sm rounded-md hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Reject
                       </button>
