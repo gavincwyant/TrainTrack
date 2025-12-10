@@ -49,7 +49,7 @@ export function TypingTitle() {
     <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-[var(--text-primary)] tracking-tight leading-tight relative">
       <span className="relative inline-block">
         {"Less admin. "}
-        <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 dark:from-blue-500 dark:via-blue-400 dark:to-indigo-500 bg-clip-text text-transparent">
           More training.
         </span>
       </span>
@@ -64,7 +64,7 @@ export function TypingTitle() {
       {/* Cursor that moves with the reveal */}
       {!hideCursor && (
         <span
-          className={`absolute top-0 w-0.5 h-full bg-blue-600 transition-opacity duration-100 ${
+          className={`absolute top-0 w-0.5 h-full bg-blue-600 dark:bg-blue-400 transition-opacity duration-100 ${
             showCursor ? "opacity-100" : "opacity-0"
           }`}
           style={{

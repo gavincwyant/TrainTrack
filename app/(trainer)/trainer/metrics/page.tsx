@@ -116,70 +116,70 @@ export default function CustomMetricsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Custom Metrics</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Custom Metrics</h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
           Define custom metrics to track client progress beyond standard exercises
         </p>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-800">{error}</div>
+        <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+          <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
         </div>
       )}
 
       {success && (
-        <div className="rounded-md bg-green-50 p-4">
-          <div className="text-sm text-green-800">{success}</div>
+        <div className="rounded-md bg-green-50 dark:bg-green-950/30 p-4 border border-green-200 dark:border-green-800">
+          <div className="text-sm text-green-800 dark:text-green-300">{success}</div>
         </div>
       )}
 
       {/* Add New Metric Form */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Add New Metric</h2>
+      <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Add New Metric</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-1">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Metric Name *
               </label>
               <input
                 {...register("name")}
                 type="text"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
                 placeholder="e.g., Flexibility Score"
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>
               )}
             </div>
 
             <div className="md:col-span-1">
-              <label htmlFor="unit" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="unit" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Unit (optional)
               </label>
               <input
                 {...register("unit")}
                 type="text"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
                 placeholder="e.g., inches, 1-10"
               />
             </div>
 
             <div className="md:col-span-1">
-              <label htmlFor="dataType" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="dataType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Data Type *
               </label>
               <select
                 {...register("dataType")}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
               >
                 <option value="NUMBER">Number</option>
                 <option value="TEXT">Text</option>
                 <option value="BOOLEAN">Yes/No</option>
               </select>
               {errors.dataType && (
-                <p className="mt-1 text-sm text-red-600">{errors.dataType.message}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.dataType.message}</p>
               )}
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function CustomMetricsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Adding..." : "Add Metric"}
             </button>
@@ -197,12 +197,12 @@ export default function CustomMetricsPage() {
       </div>
 
       {/* Existing Metrics List */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Custom Metrics</h2>
+      <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Your Custom Metrics</h2>
         {isLoading ? (
-          <p className="text-gray-600">Loading metrics...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading metrics...</p>
         ) : metrics.length === 0 ? (
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             No custom metrics defined yet. Add your first metric above to start tracking additional client progress data.
           </p>
         ) : (
@@ -210,18 +210,18 @@ export default function CustomMetricsPage() {
             {metrics.map((metric) => (
               <div
                 key={metric.id}
-                className="flex justify-between items-center p-4 border border-gray-200 rounded-md hover:bg-gray-50"
+                className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 <div>
-                  <div className="font-medium text-gray-900">{metric.name}</div>
-                  <div className="text-sm text-gray-600">
+                  <div className="font-medium text-gray-900 dark:text-gray-100">{metric.name}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Type: {metric.dataType.toLowerCase()}
                     {metric.unit && ` • Unit: ${metric.unit}`}
                   </div>
                 </div>
                 <button
                   onClick={() => handleDelete(metric.id)}
-                  className="text-sm text-red-600 hover:text-red-700"
+                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                 >
                   Delete
                 </button>
@@ -232,9 +232,9 @@ export default function CustomMetricsPage() {
       </div>
 
       {/* Info Box */}
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-2">About Custom Metrics:</h3>
-        <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+        <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">About Custom Metrics:</h3>
+        <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
           <li>Use custom metrics to track client-specific progress indicators</li>
           <li>Examples: Body weight, body fat %, flexibility score, endurance rating</li>
           <li>Metrics can be logged for each workout session alongside exercises</li>

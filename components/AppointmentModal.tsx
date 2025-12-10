@@ -149,14 +149,14 @@ export default function AppointmentModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Schedule Appointment</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Schedule Appointment</h2>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               type="button"
             >
               <svg
@@ -176,20 +176,20 @@ export default function AppointmentModal({
           </div>
 
           {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
+            <div className="mb-4 rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+              <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
             </div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label htmlFor="clientId" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Client *
               </label>
               <select
                 {...register("clientId")}
                 id="clientId"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
               >
                 <option value="">Select a client</option>
                 {clients.map((client) => (
@@ -199,53 +199,53 @@ export default function AppointmentModal({
                 ))}
               </select>
               {errors.clientId && (
-                <p className="mt-1 text-sm text-red-600">{errors.clientId.message}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.clientId.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Date *
               </label>
               <input
                 {...register("date")}
                 type="date"
                 id="date"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
               />
               {errors.date && (
-                <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.date.message}</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Start Time *
                 </label>
                 <input
                   {...register("startTime")}
                   type="time"
                   id="startTime"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
                 />
                 {errors.startTime && (
-                  <p className="mt-1 text-sm text-red-600">{errors.startTime.message}</p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.startTime.message}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   End Time *
                 </label>
                 <input
                   {...register("endTime")}
                   type="time"
                   id="endTime"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
                 />
                 {errors.endTime && (
-                  <p className="mt-1 text-sm text-red-600">{errors.endTime.message}</p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.endTime.message}</p>
                 )}
               </div>
             </div>
@@ -254,14 +254,14 @@ export default function AppointmentModal({
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? "Scheduling..." : "Schedule Appointment"}
               </button>

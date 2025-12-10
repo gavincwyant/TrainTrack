@@ -52,60 +52,60 @@ export function SchedulingSettings({ settings, onUpdate, isLoading, isSaving }: 
   }
 
   if (isLoading) {
-    return <div className="text-gray-600">Loading settings...</div>
+    return <div className="text-gray-600 dark:text-gray-400">Loading settings...</div>
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Scheduling & Availability</h2>
-        <p className="mt-2 text-gray-600">Configure your calendar hours and timezone preferences</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Scheduling & Availability</h2>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">Configure your calendar hours and timezone preferences</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="dayStartTime" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="dayStartTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Day Start Time
             </label>
             <input
               {...register("dayStartTime")}
               type="time"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
             {errors.dayStartTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.dayStartTime.message}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.dayStartTime.message}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               When does your workday typically start?
             </p>
           </div>
 
           <div>
-            <label htmlFor="dayEndTime" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="dayEndTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Day End Time
             </label>
             <input
               {...register("dayEndTime")}
               type="time"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
             {errors.dayEndTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.dayEndTime.message}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.dayEndTime.message}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               When does your workday typically end?
             </p>
           </div>
         </div>
 
         <div>
-          <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Timezone
           </label>
           <select
             {...register("timezone")}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="America/New_York">Eastern Time (ET)</option>
             <option value="America/Chicago">Central Time (CT)</option>
@@ -114,14 +114,14 @@ export function SchedulingSettings({ settings, onUpdate, isLoading, isSaving }: 
             <option value="America/Anchorage">Alaska Time (AKT)</option>
             <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
           </select>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Your local timezone for scheduling
           </p>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">How this works:</h3>
-          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+          <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">How this works:</h3>
+          <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 list-disc list-inside">
             <li>Your calendar will only show hours between your start and end times</li>
             <li>Clients will see your availability within these hours</li>
             <li>You can still block specific times using the availability manager</li>
