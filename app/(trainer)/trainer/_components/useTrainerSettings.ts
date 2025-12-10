@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useCallback } from "react"
 
 export type Settings = {
   dayStartTime: string
@@ -24,7 +24,7 @@ export function useTrainerSettings() {
   const [isSaving, setIsSaving] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
@@ -41,7 +41,7 @@ export function useTrainerSettings() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   const updateSettings = async (updates: Partial<Settings>) => {
     setIsSaving(true)

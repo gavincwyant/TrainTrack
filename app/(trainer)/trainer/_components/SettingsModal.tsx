@@ -89,15 +89,15 @@ export function SettingsModal({ isOpen, onClose }: Props) {
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+          className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-5xl w-full h-[600px] max-h-[90vh] overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Settings</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600:text-gray-300 transition-colors"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
             >
               <svg
                 className="h-6 w-6"
@@ -117,12 +117,12 @@ export function SettingsModal({ isOpen, onClose }: Props) {
 
           {/* Alerts */}
           {error && (
-            <div className="mx-6 mt-4 rounded-md bg-red-50 p-4 border border-red-200">
+            <div className="mx-6 mt-4 rounded-md bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
               <div className="flex items-start">
-                <div className="flex-1 text-sm text-red-800">{error}</div>
+                <div className="flex-1 text-sm text-red-800 dark:text-red-300">{error}</div>
                 <button
                   onClick={clearError}
-                  className="ml-3 text-red-400 hover:text-red-600:text-red-400"
+                  className="ml-3 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -133,22 +133,22 @@ export function SettingsModal({ isOpen, onClose }: Props) {
           )}
 
           {showSuccess && (
-            <div className="mx-6 mt-4 rounded-md bg-green-50 p-4 border border-green-200">
-              <div className="text-sm text-green-800">Settings saved successfully!</div>
+            <div className="mx-6 mt-4 rounded-md bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
+              <div className="text-sm text-green-800 dark:text-green-300">Settings saved successfully!</div>
             </div>
           )}
 
           {/* Content Area with Sidebar */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 overflow-hidden min-h-0">
             {/* Sidebar */}
-            <div className="w-48 bg-gray-50 border-r border-gray-200 p-4">
+            <div className="w-48 flex-shrink-0 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
               <nav className="space-y-1">
                 <button
                   onClick={() => setActiveCategory("scheduling")}
                   className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     activeCategory === "scheduling"
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100:bg-gray-700"
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
                   Scheduling
@@ -157,8 +157,8 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   onClick={() => setActiveCategory("calendar")}
                   className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     activeCategory === "calendar"
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100:bg-gray-700"
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
                   Calendar
@@ -167,8 +167,8 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   onClick={() => setActiveCategory("pricing")}
                   className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     activeCategory === "pricing"
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100:bg-gray-700"
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
                   Pricing
@@ -177,8 +177,8 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   onClick={() => setActiveCategory("invoicing")}
                   className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     activeCategory === "invoicing"
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100:bg-gray-700"
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
                   Invoicing

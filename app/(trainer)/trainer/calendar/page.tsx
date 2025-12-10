@@ -322,8 +322,8 @@ export default function TrainerCalendarPage() {
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-800">{error}</div>
+        <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+          <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
         </div>
       )}
 
@@ -336,7 +336,7 @@ export default function TrainerCalendarPage() {
             className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("SCHEDULED")
                 ? "bg-blue-500 text-white border-blue-600 shadow-lg shadow-blue-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-blue-50 hover:border-blue-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-500/30"
             }`}
           >
             <span className="flex items-center gap-2.5">
@@ -349,7 +349,7 @@ export default function TrainerCalendarPage() {
             className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("COMPLETED")
                 ? "bg-green-500 text-white border-green-600 shadow-lg shadow-green-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-green-50 hover:border-green-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-500/30"
             }`}
           >
             <span className="flex items-center gap-2.5">
@@ -362,7 +362,7 @@ export default function TrainerCalendarPage() {
             className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("CANCELLED")
                 ? "bg-red-500 text-white border-red-600 shadow-lg shadow-red-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-red-50 hover:border-red-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-500/30"
             }`}
           >
             <span className="flex items-center gap-2.5">
@@ -375,7 +375,7 @@ export default function TrainerCalendarPage() {
             className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("RESCHEDULED")
                 ? "bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-orange-50 hover:border-orange-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-500/30"
             }`}
           >
             <span className="flex items-center gap-2.5">
@@ -388,7 +388,7 @@ export default function TrainerCalendarPage() {
             className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("BLOCKED")
                 ? "bg-gray-500 text-white border-gray-600 shadow-lg shadow-gray-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-gray-100 hover:border-gray-500/30"
+                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-500/30"
             }`}
           >
             <span className="flex items-center gap-2.5">
@@ -548,12 +548,12 @@ export default function TrainerCalendarPage() {
 
       {/* Action Choice Modal */}
       {showActionChoice && selectedSlot && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               What would you like to do?
             </h3>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
               {format(selectedSlot.start, "EEEE, MMMM d")} at{" "}
               {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
             </p>
@@ -563,7 +563,7 @@ export default function TrainerCalendarPage() {
                   setShowActionChoice(false)
                   setIsModalOpen(true)
                 }}
-                className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -580,7 +580,7 @@ export default function TrainerCalendarPage() {
                   setShowActionChoice(false)
                   setIsBlockModalOpen(true)
                 }}
-                className="w-full px-4 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 bg-red-600 dark:bg-red-500 text-white rounded-md hover:bg-red-700 dark:hover:bg-red-600 flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -597,7 +597,7 @@ export default function TrainerCalendarPage() {
                   setShowActionChoice(false)
                   setSelectedSlot(null)
                 }}
-                className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50:bg-gray-800"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Cancel
               </button>
