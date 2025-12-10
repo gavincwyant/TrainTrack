@@ -22,46 +22,46 @@ export function CalendarSettings({
   onManualSync,
 }: Props) {
   if (isLoading) {
-    return <div className="text-gray-600">Loading settings...</div>
+    return <div className="text-gray-600 dark:text-gray-400">Loading settings...</div>
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Calendar Integration</h2>
-        <p className="mt-2 text-gray-600">Manage your Google Calendar connection and sync settings</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Calendar Integration</h2>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">Manage your Google Calendar connection and sync settings</p>
       </div>
 
       {settings?.googleCalendarConnected ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-green-50 rounded-md border border-green-200">
+          <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
             <div className="flex items-center gap-3">
-              <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-green-600 dark:text-green-500" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
               </svg>
               <div>
-                <p className="text-sm font-medium text-green-800">
+                <p className="text-sm font-medium text-green-800 dark:text-green-300">
                   Google Calendar Connected
                 </p>
-                <p className="text-sm text-green-600">
+                <p className="text-sm text-green-600 dark:text-green-400">
                   {settings.googleCalendarEmail}
                 </p>
               </div>
             </div>
             <button
               onClick={onDisconnectGoogle}
-              className="text-sm text-red-600 hover:text-red-700 font-medium"
+              className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
             >
               Disconnect
             </button>
           </div>
 
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md">
+          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-md">
             <div>
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Auto-sync enabled
               </label>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Automatically sync appointments and blocked times with Google Calendar
               </p>
             </div>
@@ -69,16 +69,16 @@ export function CalendarSettings({
               type="checkbox"
               checked={settings.autoSyncEnabled}
               onChange={(e) => onToggleAutoSync(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md">
+          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-md">
             <div>
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Auto-detect client profiles
               </label>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Automatically detect potential clients from calendar event names
               </p>
             </div>
@@ -87,12 +87,12 @@ export function CalendarSettings({
               checked={settings.autoClientSyncEnabled || false}
               onChange={(e) => onToggleClientSync(e.target.checked)}
               disabled={!settings.autoSyncEnabled}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 bg-white dark:bg-gray-800"
             />
           </div>
 
           {settings.lastSyncedAt && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Last synced: {new Date(settings.lastSyncedAt).toLocaleString()}
             </p>
           )}
@@ -105,9 +105,9 @@ export function CalendarSettings({
             {isSyncing ? "Syncing..." : "Sync Now"}
           </button>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">How sync works:</h3>
-            <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+            <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">How sync works:</h3>
+            <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 list-disc list-inside">
               <li>Your appointments automatically appear in Google Calendar</li>
               <li>Events in Google Calendar create blocked times here</li>
               <li>Prevents double-booking across both calendars</li>
@@ -117,7 +117,7 @@ export function CalendarSettings({
         </div>
       ) : (
         <div>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Connect your Google Calendar to automatically sync appointments and prevent double-booking.
           </p>
           <button
