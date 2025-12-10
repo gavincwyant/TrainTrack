@@ -310,4 +310,52 @@
   .rbc-current-time-indicator {
     box-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
   }
+
+  /* Softer, more subtle borders for time slots in dark mode */
+  .rbc-time-slot {
+    border-top: 1px solid rgba(55, 65, 81, 0.4) !important;
+  }
+
+  .rbc-timeslot-group {
+    border-left: 1px solid rgba(55, 65, 81, 0.4) !important;
+  }
+
+  .rbc-time-header-content {
+    border-left: 1px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  .rbc-time-content {
+    border-top: 1px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  .rbc-month-row {
+    border-top: 1px solid rgba(55, 65, 81, 0.4) !important;
+  }
+
+  .rbc-day-bg + .rbc-day-bg {
+    border-left: 1px solid rgba(55, 65, 81, 0.4) !important;
+  }
+
+  .rbc-header + .rbc-header {
+    border-left: 1px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  .rbc-header {
+    border-bottom: 1px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  .rbc-month-view,
+  .rbc-time-view,
+  .rbc-agenda-view {
+    border: 1px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  /* Table borders in agenda view */
+  .rbc-agenda-table tbody > tr > td + td {
+    border-left: 1px solid rgba(55, 65, 81, 0.4) !important;
+  }
+
+  .rbc-agenda-table tbody > tr + tr {
+    border-top: 1px solid rgba(55, 65, 81, 0.4) !important;
+  }
 }
