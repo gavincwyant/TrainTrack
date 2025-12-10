@@ -102,24 +102,24 @@ export default function AnalyticsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header with Date Range Selector and Export Button */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Analytics</h1>
 
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           <button
             onClick={() => setShowExportModal(true)}
-            className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-medium text-sm"
+            className="px-4 py-2 min-h-[44px] bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-medium text-sm"
           >
             Export for Taxes
           </button>
 
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="flex space-x-8">
+          <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto w-full sm:w-auto">
+            <nav className="flex space-x-4 sm:space-x-8">
               {(["week", "month", "year"] as DateRange[]).map((r) => (
                 <button
                   key={r}
                   onClick={() => setRange(r)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap min-h-[44px] ${
                     range === r
                       ? "border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
                       : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -444,8 +444,8 @@ function ExportModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 border border-gray-200 dark:border-gray-700 max-w-md w-full p-6">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 border border-gray-200 dark:border-gray-700 max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
           Export Payment Data
         </h2>
@@ -552,16 +552,16 @@ function ExportModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
+            className="flex-1 px-4 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleExport}
-            className="flex-1 px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-medium"
+            className="flex-1 px-4 py-2 min-h-[44px] bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-medium"
           >
             Download CSV
           </button>

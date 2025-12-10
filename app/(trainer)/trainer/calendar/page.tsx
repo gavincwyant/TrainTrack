@@ -71,7 +71,13 @@ export default function TrainerCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [view, setView] = useState<View>("week")
+  // Default to agenda view on mobile for better usability
+  const [view, setView] = useState<View>(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      return "agenda"
+    }
+    return "week"
+  })
   const [date, setDate] = useState(new Date())
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false)

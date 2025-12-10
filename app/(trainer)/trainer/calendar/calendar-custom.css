@@ -287,15 +287,83 @@
   .rbc-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
   }
 
   .rbc-toolbar-label {
     text-align: center;
     font-size: 1.25rem;
+    order: -1;
+    padding: 0.5rem 0;
   }
 
   .rbc-toolbar button {
     width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  .rbc-btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .rbc-btn-group button {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+  }
+
+  .rbc-event {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .rbc-event-content {
+    font-size: 0.75rem;
+  }
+
+  .rbc-month-row {
+    min-height: 4rem;
+  }
+
+  .rbc-date-cell {
+    padding: 0.25rem;
+  }
+
+  .rbc-date-cell > a {
+    font-size: 0.75rem;
+  }
+
+  /* Agenda view mobile improvements */
+  .rbc-agenda-date-cell,
+  .rbc-agenda-time-cell,
+  .rbc-agenda-event-cell {
+    padding: 0.75rem;
+  }
+
+  .rbc-agenda-table {
+    font-size: 0.875rem;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 640px) {
+  .rbc-toolbar-label {
+    font-size: 1.125rem;
+  }
+
+  .rbc-btn-group button {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .rbc-header {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.625rem;
   }
 }
 
