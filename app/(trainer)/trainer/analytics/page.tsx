@@ -77,8 +77,8 @@ export default function AnalyticsPage() {
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white shadow rounded-lg p-12 text-center">
-          <p className="text-gray-500">Loading analytics...</p>
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Loading analytics...</p>
         </div>
       </div>
     )
@@ -87,9 +87,9 @@ export default function AnalyticsPage() {
   if (error || !data) {
     return (
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white shadow rounded-lg p-12 text-center">
-          <h3 className="text-lg font-medium text-red-900 mb-2">Error</h3>
-          <p className="text-red-600">{error || "Failed to load analytics"}</p>
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+          <h3 className="text-lg font-medium text-red-900 dark:text-red-300 mb-2">Error</h3>
+          <p className="text-red-600 dark:text-red-400">{error || "Failed to load analytics"}</p>
         </div>
       </div>
     )
@@ -103,17 +103,17 @@ export default function AnalyticsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header with Date Range Selector and Export Button */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Analytics</h1>
 
         <div className="flex items-center gap-6">
           <button
             onClick={() => setShowExportModal(true)}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"
+            className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-medium text-sm"
           >
             Export for Taxes
           </button>
 
-          <div className="border-b border-gray-200">
+          <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex space-x-8">
               {(["week", "month", "year"] as DateRange[]).map((r) => (
                 <button
@@ -121,8 +121,8 @@ export default function AnalyticsPage() {
                   onClick={() => setRange(r)}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     range === r
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   {r === "week" ? "Last 7 Days" : r === "month" ? "Last 30 Days" : "Last Year"}
@@ -185,8 +185,8 @@ export default function AnalyticsPage() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Session Trends Chart */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Session Trends
           </h3>
           {hasSessionData ? (
@@ -214,15 +214,15 @@ export default function AnalyticsPage() {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               No session data for this period
             </div>
           )}
         </div>
 
         {/* Revenue Trends Chart */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Revenue Trends
           </h3>
           {hasRevenueData ? (
@@ -236,15 +236,15 @@ export default function AnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               No revenue data for this period
             </div>
           )}
         </div>
 
         {/* Invoice Status Pie Chart */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Invoice Status Breakdown
           </h3>
           {data.invoiceMetrics.paid.count + data.invoiceMetrics.sent.count +
@@ -276,15 +276,15 @@ export default function AnalyticsPage() {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               No invoices for this period
             </div>
           )}
         </div>
 
         {/* Top Clients by Revenue */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Top Clients by Revenue
           </h3>
           {data.clientMetrics.topByRevenue.length > 0 ? (
@@ -301,7 +301,7 @@ export default function AnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               No client revenue data
             </div>
           )}
@@ -313,22 +313,22 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Clients by Revenue Table */}
           {data.clientMetrics.topByRevenue.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Revenue Leaders
               </h3>
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 text-gray-900">Client</th>
-                    <th className="text-right py-2 text-gray-900">Revenue</th>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left py-2 text-gray-900 dark:text-gray-100">Client</th>
+                    <th className="text-right py-2 text-gray-900 dark:text-gray-100">Revenue</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.clientMetrics.topByRevenue.slice(0, 10).map((client, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="py-2 text-gray-900">{client.name}</td>
-                      <td className="text-right py-2 font-semibold text-gray-900">
+                    <tr key={index} className="border-b border-gray-200 dark:border-gray-700">
+                      <td className="py-2 text-gray-900 dark:text-gray-100">{client.name}</td>
+                      <td className="text-right py-2 font-semibold text-gray-900 dark:text-gray-100">
                         ${client.revenue.toFixed(2)}
                       </td>
                     </tr>
@@ -340,22 +340,22 @@ export default function AnalyticsPage() {
 
           {/* Top Clients by Sessions Table */}
           {data.clientMetrics.topBySessions.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Most Active Clients
               </h3>
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 text-gray-900">Client</th>
-                    <th className="text-right py-2 text-gray-900">Sessions</th>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left py-2 text-gray-900 dark:text-gray-100">Client</th>
+                    <th className="text-right py-2 text-gray-900 dark:text-gray-100">Sessions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.clientMetrics.topBySessions.slice(0, 10).map((client, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="py-2 text-gray-900">{client.name}</td>
-                      <td className="text-right py-2 font-semibold text-gray-900">
+                    <tr key={index} className="border-b border-gray-200 dark:border-gray-700">
+                      <td className="py-2 text-gray-900 dark:text-gray-100">{client.name}</td>
+                      <td className="text-right py-2 font-semibold text-gray-900 dark:text-gray-100">
                         {client.sessions}
                       </td>
                     </tr>
@@ -383,19 +383,19 @@ function StatCard({
   color: "blue" | "green" | "red" | "yellow"
 }) {
   const colorClasses = {
-    blue: "text-blue-600",
-    green: "text-green-600",
-    red: "text-red-600",
-    yellow: "text-yellow-600",
+    blue: "text-blue-600 dark:text-blue-400",
+    green: "text-green-600 dark:text-green-400",
+    red: "text-red-600 dark:text-red-400",
+    yellow: "text-yellow-600 dark:text-yellow-400",
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <p className="text-sm font-medium text-gray-500">{title}</p>
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
       <p className={`text-3xl font-bold mt-2 ${colorClasses[color]}`}>
         {value}
       </p>
-      <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
     </div>
   )
 }
@@ -444,18 +444,18 @@ function ExportModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 border border-gray-200 dark:border-gray-700 max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
           Export Payment Data
         </h2>
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
           Export paid invoices as CSV for tax purposes. Only includes payments that have been received.
         </p>
 
         {/* Export Type Selection */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Export Period
           </label>
           <div className="flex gap-4">
@@ -463,8 +463,8 @@ function ExportModal({ onClose }: { onClose: () => void }) {
               onClick={() => setExportType("month")}
               className={`flex-1 py-2 px-4 rounded-md font-medium ${
                 exportType === "month"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
             >
               Specific Month
@@ -473,8 +473,8 @@ function ExportModal({ onClose }: { onClose: () => void }) {
               onClick={() => setExportType("year")}
               className={`flex-1 py-2 px-4 rounded-md font-medium ${
                 exportType === "year"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
             >
               Calendar Year
@@ -485,14 +485,14 @@ function ExportModal({ onClose }: { onClose: () => void }) {
         {/* Month Selection */}
         {exportType === "month" && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Select Month
             </label>
             <div className="grid grid-cols-2 gap-4">
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
               >
                 {months.map((month) => (
                   <option key={month.value} value={month.value}>
@@ -503,7 +503,7 @@ function ExportModal({ onClose }: { onClose: () => void }) {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
               >
                 {years.map((year) => (
                   <option key={year} value={year}>
@@ -518,13 +518,13 @@ function ExportModal({ onClose }: { onClose: () => void }) {
         {/* Year Selection */}
         {exportType === "year" && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Select Year
             </label>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
             >
               {years.map((year) => (
                 <option key={year} value={year}>
@@ -536,11 +536,11 @@ function ExportModal({ onClose }: { onClose: () => void }) {
         )}
 
         {/* Export Details */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md p-4 mb-6">
+          <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
             CSV will include:
           </h3>
-          <ul className="text-sm text-blue-800 space-y-1">
+          <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
             <li>• Payment Date</li>
             <li>• Client Name and Email</li>
             <li>• Amount Paid</li>
@@ -555,13 +555,13 @@ function ExportModal({ onClose }: { onClose: () => void }) {
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleExport}
-            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+            className="flex-1 px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-medium"
           >
             Download CSV
           </button>

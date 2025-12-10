@@ -159,12 +159,12 @@ export default function InvoicesPage() {
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <span className="text-gray-400 ml-1">↕</span>
+      return <span className="text-gray-400 dark:text-gray-500 ml-1">↕</span>
     }
     return sortOrder === "asc" ? (
-      <span className="ml-1">↑</span>
+      <span className="ml-1 text-gray-700 dark:text-gray-200">↑</span>
     ) : (
-      <span className="ml-1">↓</span>
+      <span className="ml-1 text-gray-700 dark:text-gray-200">↓</span>
     )
   }
 
@@ -370,15 +370,15 @@ export default function InvoicesPage() {
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "PAID":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300"
       case "OVERDUE":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300"
       case "SENT":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300"
       case "DRAFT":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
     }
   }
 
@@ -386,19 +386,19 @@ export default function InvoicesPage() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-          <p className="mt-2 text-gray-600">View and manage your client invoices</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Invoices</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">View and manage your client invoices</p>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white shadow rounded-xl border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         <div className="space-y-4">
           {/* Search Input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg
-                className="h-5 w-5 text-gray-400"
+                className="h-5 w-5 text-gray-400 dark:text-gray-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -416,12 +416,12 @@ export default function InvoicesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by client name, email, invoice ID, or amount..."
-              className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all placeholder-gray-500 dark:placeholder-gray-400"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600:text-gray-300 transition-colors"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                   <path
@@ -436,15 +436,15 @@ export default function InvoicesPage() {
 
           {/* Date Filter Pills */}
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-sm font-medium text-gray-700">Date:</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Date:</span>
             {["all", "today", "week", "month", "custom"].map((period) => (
               <button
                 key={period}
                 onClick={() => setDateFilter(period as typeof dateFilter)}
                 className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
                   dateFilter === period
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200:bg-gray-700"
+                    ? "bg-blue-600 dark:bg-blue-500 text-white shadow-sm"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                 }`}
               >
                 {period === "all"
@@ -467,14 +467,14 @@ export default function InvoicesPage() {
                 type="date"
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm"
               />
-              <span className="text-gray-500">to</span>
+              <span className="text-gray-500 dark:text-gray-400">to</span>
               <input
                 type="date"
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm"
               />
             </div>
           )}
@@ -482,14 +482,14 @@ export default function InvoicesPage() {
           {/* Results Summary */}
           {(searchQuery || dateFilter !== "all") && (
             <div className="flex items-center gap-2 pt-1">
-              <svg className="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="h-4 w-4 text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                   clipRule="evenodd"
                 />
               </svg>
-              <p className="text-sm text-gray-700 font-medium">
+              <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
                 Showing {filteredInvoices.length} of {invoices.length} invoice
                 {filteredInvoices.length !== 1 ? "s" : ""}
               </p>
@@ -499,7 +499,7 @@ export default function InvoicesPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="flex space-x-8">
           {[
             { value: "all", label: "All" },
@@ -513,8 +513,8 @@ export default function InvoicesPage() {
               onClick={() => setFilter(tab.value)}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 filter === tab.value
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700:text-gray-300 hover:border-gray-300:border-gray-600"
+                  ? "border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
               }`}
             >
               {tab.label}
@@ -526,13 +526,13 @@ export default function InvoicesPage() {
 
       {/* Invoice list */}
       {isLoading ? (
-        <div className="bg-white shadow rounded-lg p-12 text-center">
-          <p className="text-gray-500">Loading invoices...</p>
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Loading invoices...</p>
         </div>
       ) : filteredInvoices.length === 0 ? (
-        <div className="bg-white shadow rounded-lg p-12 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices found</h3>
-          <p className="text-gray-600">
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No invoices found</h3>
+          <p className="text-gray-600 dark:text-gray-400">
             {searchQuery
               ? `No invoices match "${searchQuery}"`
               : filter === "all"
@@ -541,13 +541,13 @@ export default function InvoicesPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th
                   onClick={() => handleSort("client")}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100:bg-gray-700"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center">
                     Client
@@ -556,7 +556,7 @@ export default function InvoicesPage() {
                 </th>
                 <th
                   onClick={() => handleSort("amount")}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100:bg-gray-700"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center">
                     Amount
@@ -565,7 +565,7 @@ export default function InvoicesPage() {
                 </th>
                 <th
                   onClick={() => handleSort("createdAt")}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100:bg-gray-700"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center">
                     Created
@@ -574,7 +574,7 @@ export default function InvoicesPage() {
                 </th>
                 <th
                   onClick={() => handleSort("dueDate")}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100:bg-gray-700"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center">
                     Due Date
@@ -583,7 +583,7 @@ export default function InvoicesPage() {
                 </th>
                 <th
                   onClick={() => handleSort("status")}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100:bg-gray-700"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center">
                     Status
@@ -591,7 +591,7 @@ export default function InvoicesPage() {
                   </div>
                 </th>
                 {filteredInvoices.some((inv) => inv.status !== "PAID") && (
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     <button
                       onClick={handleMarkAllAsPaid}
                       disabled={isMarkingAllPaid || showMassiveCelebration}
@@ -600,8 +600,8 @@ export default function InvoicesPage() {
                         transition-all duration-200
                         ${
                           isMarkingAllPaid || showMassiveCelebration
-                            ? "border border-gray-300 text-gray-400 cursor-wait"
-                            : "border border-green-500 text-green-600 hover:bg-green-50:bg-green-900/20 hover:border-green-600:border-green-500"
+                            ? "border border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-wait"
+                            : "border border-green-500 dark:border-green-400 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-600 dark:hover:border-green-500"
                         }
                       `}
                     >
@@ -640,27 +640,27 @@ export default function InvoicesPage() {
                     </button>
                   </th>
                 )}
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   View
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50:bg-gray-800">
+                <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {invoice.client.fullName}
                     </div>
-                    <div className="text-sm text-gray-500">{invoice.client.email}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{invoice.client.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
                     ${Number(invoice.amount).toFixed(2)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {new Date(invoice.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {new Date(invoice.dueDate).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -683,10 +683,10 @@ export default function InvoicesPage() {
                             transition-all duration-200 transform
                             ${
                               updatingInvoiceId === invoice.id
-                                ? "bg-gray-300 text-gray-500 cursor-wait"
+                                ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-wait"
                                 : celebratingInvoiceId === invoice.id
-                                ? "bg-green-600 text-white scale-110 shadow-lg"
-                                : "bg-green-500 text-white hover:bg-green-600:bg-green-700 hover:scale-105 hover:shadow-md active:scale-95"
+                                ? "bg-green-600 dark:bg-green-500 text-white scale-110 shadow-lg"
+                                : "bg-green-500 dark:bg-green-600 text-white hover:bg-green-600 dark:hover:bg-green-700 hover:scale-105 hover:shadow-md active:scale-95"
                             }
                           `}
                         >
@@ -725,14 +725,14 @@ export default function InvoicesPage() {
                           )}
                         </button>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-gray-400 dark:text-gray-500">—</span>
                       )}
                     </td>
                   )}
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                     <Link
                       href={`/trainer/invoices/${invoice.id}`}
-                      className="text-blue-600 hover:text-blue-900:text-blue-300 font-medium"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium"
                     >
                       View
                     </Link>
