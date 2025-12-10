@@ -89,7 +89,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+          className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-5xl w-full h-[600px] max-h-[90vh] overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -139,9 +139,9 @@ export function SettingsModal({ isOpen, onClose }: Props) {
           )}
 
           {/* Content Area with Sidebar */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 overflow-hidden min-h-0">
             {/* Sidebar */}
-            <div className="w-48 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4">
+            <div className="w-48 flex-shrink-0 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
               <nav className="space-y-1">
                 <button
                   onClick={() => setActiveCategory("scheduling")}
