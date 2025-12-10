@@ -117,13 +117,13 @@ export default function PendingAppointmentsPage() {
   const getConfidenceBadgeColor = (confidence: string) => {
     switch (confidence) {
       case "high":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300"
       case "medium":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300"
       case "low":
-        return "bg-orange-100 text-orange-800"
+        return "bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
     }
   }
 
@@ -131,27 +131,27 @@ export default function PendingAppointmentsPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Pending Reviews</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Pending Reviews</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             Review calendar events and client profiles detected from your Google Calendar
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab("appointments")}
             className={`${
               activeTab === "appointments"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm relative`}
           >
             Pending Appointments
             {pendingAppointments.length > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+              <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 dark:bg-red-500 rounded-full">
                 {pendingAppointments.length}
               </span>
             )}
@@ -160,13 +160,13 @@ export default function PendingAppointmentsPage() {
             onClick={() => setActiveTab("clients")}
             className={`${
               activeTab === "clients"
-                ? "border-purple-500 text-purple-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "border-purple-500 dark:border-purple-400 text-purple-600 dark:text-purple-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm relative`}
           >
             Pending Client Profiles
             {pendingProfilesCount > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+              <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 dark:bg-red-500 rounded-full">
                 {pendingProfilesCount}
               </span>
             )}
@@ -178,18 +178,18 @@ export default function PendingAppointmentsPage() {
       {activeTab === "appointments" ? (
         <div className="space-y-6">
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
+            <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+              <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
             </div>
           )}
 
           {isLoading ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">Loading pending appointments...</p>
+              <p className="text-gray-600 dark:text-gray-400">Loading pending appointments...</p>
             </div>
           ) : pendingAppointments.length === 0 ? (
-            <div className="bg-white shadow rounded-lg p-8 text-center">
-              <div className="text-gray-400 mb-4">
+            <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
+              <div className="text-gray-400 dark:text-gray-500 mb-4">
                 <svg
                   className="mx-auto h-12 w-12"
                   fill="none"
@@ -204,20 +204,20 @@ export default function PendingAppointmentsPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">All caught up!</h3>
-              <p className="text-gray-600">No pending appointments to review.</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">All caught up!</h3>
+              <p className="text-gray-600 dark:text-gray-400">No pending appointments to review.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {pendingAppointments.map((pending) => (
                 <div
                   key={pending.id}
-                  className="bg-white shadow rounded-lg p-6 border-l-4 border-blue-500"
+                  className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6 border-l-4 border-blue-500 dark:border-blue-400"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                           {pending.externalEventTitle}
                         </h3>
                         <span
@@ -229,7 +229,7 @@ export default function PendingAppointmentsPage() {
                         </span>
                       </div>
 
-                      <div className="space-y-2 text-sm text-gray-600">
+                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center gap-2">
                           <svg
                             className="w-4 h-4"
@@ -268,7 +268,7 @@ export default function PendingAppointmentsPage() {
                             <span>
                               <strong>Suggested Client:</strong> {pending.suggestedClient.fullName}
                               {pending.suggestedClient.clientProfile && (
-                                <span className="ml-2 text-gray-500">
+                                <span className="ml-2 text-gray-500 dark:text-gray-400">
                                   (${pending.suggestedClient.clientProfile.sessionRate}/session)
                                 </span>
                               )}
@@ -277,8 +277,8 @@ export default function PendingAppointmentsPage() {
                         )}
 
                         {pending.matchReason && (
-                          <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3">
-                            <p className="text-xs text-blue-800">
+                          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded p-3 mt-3">
+                            <p className="text-xs text-blue-800 dark:text-blue-300">
                               <strong>Why this match?</strong> {pending.matchReason}
                             </p>
                           </div>
@@ -295,22 +295,22 @@ export default function PendingAppointmentsPage() {
                           )
                         }
                         disabled={processingId === pending.id || !pending.suggestedClient}
-                        className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white text-sm rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {processingId === pending.id ? "Processing..." : "Approve"}
                       </button>
                       <button
                         onClick={() => handleReject(pending.id)}
                         disabled={processingId === pending.id}
-                        className="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-red-600 dark:bg-red-500 text-white text-sm rounded-md hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Reject
                       </button>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-500">
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       <strong>What happens:</strong>
                       <br />
                       • <strong>Approve:</strong> Converts to billable appointment with{" "}
@@ -324,11 +324,11 @@ export default function PendingAppointmentsPage() {
           )}
 
           {!isLoading && pendingAppointments.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-yellow-900 mb-2">
+            <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-300 mb-2">
                 Important Notes:
               </h3>
-              <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
+              <ul className="text-sm text-yellow-800 dark:text-yellow-300 space-y-1 list-disc list-inside">
                 <li>Approved appointments will be added to client invoices</li>
                 <li>High confidence matches are very likely correct</li>
                 <li>Medium/low confidence matches should be reviewed carefully</li>
