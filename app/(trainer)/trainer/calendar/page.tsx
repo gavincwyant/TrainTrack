@@ -206,6 +206,31 @@ export default function TrainerCalendarPage() {
     fetchData()
   }, [fetchData])
 
+  // Lock body scroll and calendar scroll when action choice modal is open
+  useEffect(() => {
+    if (showActionChoice) {
+      const originalStyle = window.getComputedStyle(document.body).overflow
+      document.body.style.overflow = "hidden"
+
+      // Also disable calendar scroll container with touch-action for mobile
+      const calendarContent = document.querySelector('.rbc-time-content') as HTMLElement
+      const originalCalendarOverflow = calendarContent?.style.overflow
+      const originalTouchAction = calendarContent?.style.touchAction
+      if (calendarContent) {
+        calendarContent.style.overflow = "hidden"
+        calendarContent.style.touchAction = "none"
+      }
+
+      return () => {
+        document.body.style.overflow = originalStyle
+        if (calendarContent) {
+          calendarContent.style.overflow = originalCalendarOverflow || ""
+          calendarContent.style.touchAction = originalTouchAction || ""
+        }
+      }
+    }
+  }, [showActionChoice])
+
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     setSelectedSlot({ start, end })
     setShowActionChoice(true)
@@ -707,8 +732,18 @@ export default function TrainerCalendarPage() {
 
       {/* Action Choice Modal */}
       {showActionChoice && selectedSlot && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700">
+        <div
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+          style={{ touchAction: "none" }}
+          onClick={() => {
+            setShowActionChoice(false)
+            setSelectedSlot(null)
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               What would you like to do?
             </h3>
