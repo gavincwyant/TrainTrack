@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 
 type BlockedTime = {
@@ -26,6 +26,31 @@ export default function BlockedTimeDetailModal({
 }: BlockedTimeDetailModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Lock body scroll and calendar scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow
+      document.body.style.overflow = "hidden"
+
+      // Also disable calendar scroll container with touch-action for mobile
+      const calendarContent = document.querySelector('.rbc-time-content') as HTMLElement
+      const originalCalendarOverflow = calendarContent?.style.overflow
+      const originalTouchAction = calendarContent?.style.touchAction
+      if (calendarContent) {
+        calendarContent.style.overflow = "hidden"
+        calendarContent.style.touchAction = "none"
+      }
+
+      return () => {
+        document.body.style.overflow = originalStyle
+        if (calendarContent) {
+          calendarContent.style.overflow = originalCalendarOverflow || ""
+          calendarContent.style.touchAction = originalTouchAction || ""
+        }
+      }
+    }
+  }, [isOpen])
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this blocked time?")) {
@@ -57,8 +82,15 @@ export default function BlockedTimeDetailModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 max-w-md w-full border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
+      style={{ touchAction: "none" }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 max-w-md w-full border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-4 sm:p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Blocked Time Details</h2>
