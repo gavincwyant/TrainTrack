@@ -172,7 +172,7 @@ export default function LogWorkoutPage() {
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto">
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
       </div>
     )
   }
@@ -180,29 +180,29 @@ export default function LogWorkoutPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Log Workout Session</h1>
-        <p className="mt-2 text-gray-600">Record exercises and metrics from a completed session</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Log Workout Session</h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">Record exercises and metrics from a completed session</p>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-800">{error}</div>
+        <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+          <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Appointment Selection */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Session Details</h2>
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Session Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="appointmentId" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="appointmentId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Select Completed Appointment *
               </label>
               <select
                 {...register("appointmentId")}
                 id="appointmentId"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               >
                 <option value="">-- Select an appointment --</option>
                 {appointments.map((apt) => (
@@ -216,46 +216,46 @@ export default function LogWorkoutPage() {
                 ))}
               </select>
               {errors.appointmentId && (
-                <p className="mt-1 text-sm text-red-600">{errors.appointmentId.message}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.appointmentId.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Session Date *
               </label>
               <input
                 {...register("date")}
                 type="date"
                 id="date"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
-              {errors.date && <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>}
+              {errors.date && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.date.message}</p>}
             </div>
           </div>
 
           <div className="mt-4">
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Session Notes
             </label>
             <textarea
               {...register("notes")}
               id="notes"
               rows={3}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="Overall session observations, client feedback, etc."
             />
           </div>
         </div>
 
         {/* Exercises */}
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Exercises</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Exercises</h2>
             <button
               type="button"
               onClick={() => append({ name: "", sets: 3, reps: 10, weight: 0, notes: "" })}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-3 py-1 text-sm bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
             >
               + Add Exercise
             </button>
@@ -263,14 +263,14 @@ export default function LogWorkoutPage() {
 
           <div className="space-y-4">
             {fields.map((field, index) => (
-              <div key={field.id} className="border border-gray-200 rounded-md p-4">
+              <div key={field.id} className="border border-gray-200 dark:border-gray-700 rounded-md p-4">
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-sm font-medium text-gray-700">Exercise {index + 1}</h3>
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Exercise {index + 1}</h3>
                   {fields.length > 1 && (
                     <button
                       type="button"
                       onClick={() => remove(index)}
-                      className="text-sm text-red-600 hover:text-red-700"
+                      className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                     >
                       Remove
                     </button>
@@ -279,62 +279,62 @@ export default function LogWorkoutPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="md:col-span-2 lg:col-span-1">
-                    <label className="block text-xs font-medium text-gray-700">Exercise Name *</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Exercise Name *</label>
                     <input
                       {...register(`exercises.${index}.name`)}
                       type="text"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       placeholder="e.g., Bench Press"
                     />
                     {errors.exercises?.[index]?.name && (
-                      <p className="mt-1 text-xs text-red-600">{errors.exercises[index]?.name?.message}</p>
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.exercises[index]?.name?.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">Sets *</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Sets *</label>
                     <input
                       {...register(`exercises.${index}.sets`, { valueAsNumber: true })}
                       type="number"
                       min="1"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
                     {errors.exercises?.[index]?.sets && (
-                      <p className="mt-1 text-xs text-red-600">{errors.exercises[index]?.sets?.message}</p>
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.exercises[index]?.sets?.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">Reps *</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Reps *</label>
                     <input
                       {...register(`exercises.${index}.reps`, { valueAsNumber: true })}
                       type="number"
                       min="1"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
                     {errors.exercises?.[index]?.reps && (
-                      <p className="mt-1 text-xs text-red-600">{errors.exercises[index]?.reps?.message}</p>
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.exercises[index]?.reps?.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">Weight (lbs)</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Weight (lbs)</label>
                     <input
                       {...register(`exercises.${index}.weight`, { valueAsNumber: true })}
                       type="number"
                       min="0"
                       step="0.5"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  <label className="block text-xs font-medium text-gray-700">Exercise Notes</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Exercise Notes</label>
                   <input
                     {...register(`exercises.${index}.notes`)}
                     type="text"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     placeholder="Form observations, difficulty, etc."
                   />
                 </div>
@@ -345,34 +345,34 @@ export default function LogWorkoutPage() {
 
         {/* Custom Metrics */}
         {customMetrics.length > 0 && (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Custom Metrics</h2>
+          <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Custom Metrics</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {customMetrics.map((metric) => (
                 <div key={metric.id}>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     {metric.name}
-                    {metric.unit && <span className="text-gray-500 text-xs ml-1">({metric.unit})</span>}
+                    {metric.unit && <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">({metric.unit})</span>}
                   </label>
                   {metric.dataType === "NUMBER" && (
                     <input
                       {...register(`customMetrics.${metric.id}`)}
                       type="number"
                       step="any"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
                   )}
                   {metric.dataType === "TEXT" && (
                     <input
                       {...register(`customMetrics.${metric.id}`)}
                       type="text"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
                   )}
                   {metric.dataType === "BOOLEAN" && (
                     <select
                       {...register(`customMetrics.${metric.id}`)}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     >
                       <option value="">-- Select --</option>
                       <option value="true">Yes</option>
@@ -390,14 +390,14 @@ export default function LogWorkoutPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Logging Session..." : "Log Workout Session"}
           </button>

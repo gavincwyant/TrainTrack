@@ -145,7 +145,7 @@ export default function ClientProgressPage() {
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto">
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
       </div>
     )
   }
@@ -153,8 +153,8 @@ export default function ClientProgressPage() {
   if (error || !client) {
     return (
       <div className="max-w-6xl mx-auto">
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-800">{error || "Client not found"}</div>
+        <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+          <div className="text-sm text-red-800 dark:text-red-300">{error || "Client not found"}</div>
         </div>
       </div>
     )
@@ -165,23 +165,23 @@ export default function ClientProgressPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{client.fullName}&apos;s Progress</h1>
-          <p className="mt-2 text-gray-600">Visualize workout progress and metrics over time</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{client.fullName}&apos;s Progress</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Visualize workout progress and metrics over time</p>
         </div>
         <Link
           href={`/trainer/clients/${clientId}`}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
         >
           ← Back to Profile
         </Link>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="bg-white shadow rounded-lg p-12 text-center">
-          <p className="text-gray-600 mb-4">No workout sessions logged yet for this client.</p>
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">No workout sessions logged yet for this client.</p>
           <Link
             href="/trainer/workouts/log"
-            className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="inline-block px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
           >
             Log First Workout
           </Link>
@@ -190,18 +190,18 @@ export default function ClientProgressPage() {
         <>
           {/* Exercise Progress */}
           {uniqueExercises.length > 0 && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Exercise Progress</h2>
+            <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Exercise Progress</h2>
 
               <div className="mb-6">
-                <label htmlFor="exerciseSelect" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="exerciseSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Select Exercise
                 </label>
                 <select
                   id="exerciseSelect"
                   value={selectedExercise}
                   onChange={(e) => setSelectedExercise(e.target.value)}
-                  className="block w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full md:w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   <option value="">-- Select an exercise --</option>
                   {uniqueExercises.map((exercise) => (
@@ -216,7 +216,7 @@ export default function ClientProgressPage() {
                 <div className="space-y-8">
                   {/* Weight Progress */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Weight Progression</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Weight Progression</h3>
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={exerciseProgressData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -237,7 +237,7 @@ export default function ClientProgressPage() {
 
                   {/* Volume Progress */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                       Total Volume (Sets × Reps × Weight)
                     </h3>
                     <ResponsiveContainer width="100%" height={300}>
@@ -254,7 +254,7 @@ export default function ClientProgressPage() {
 
                   {/* Sets and Reps */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Sets & Reps</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sets & Reps</h3>
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={exerciseProgressData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -281,27 +281,27 @@ export default function ClientProgressPage() {
                   </div>
                 </div>
               ) : selectedExercise ? (
-                <p className="text-gray-600">No data available for this exercise.</p>
+                <p className="text-gray-600 dark:text-gray-400">No data available for this exercise.</p>
               ) : (
-                <p className="text-gray-600">Select an exercise to view progress charts.</p>
+                <p className="text-gray-600 dark:text-gray-400">Select an exercise to view progress charts.</p>
               )}
             </div>
           )}
 
           {/* Custom Metrics Progress */}
           {uniqueMetrics.length > 0 && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Custom Metrics Progress</h2>
+            <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Custom Metrics Progress</h2>
 
               <div className="mb-6">
-                <label htmlFor="metricSelect" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="metricSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Select Metric
                 </label>
                 <select
                   id="metricSelect"
                   value={selectedMetric}
                   onChange={(e) => setSelectedMetric(e.target.value)}
-                  className="block w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full md:w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   <option value="">-- Select a metric --</option>
                   {uniqueMetrics.map((metric) => (
@@ -332,28 +332,28 @@ export default function ClientProgressPage() {
                   </ResponsiveContainer>
                 </div>
               ) : selectedMetric ? (
-                <p className="text-gray-600">No data available for this metric.</p>
+                <p className="text-gray-600 dark:text-gray-400">No data available for this metric.</p>
               ) : (
-                <p className="text-gray-600">Select a metric to view progress chart.</p>
+                <p className="text-gray-600 dark:text-gray-400">Select a metric to view progress chart.</p>
               )}
             </div>
           )}
 
           {/* Summary Stats */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Summary</h2>
+          <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Summary</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-700">Total Sessions</p>
-                <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Sessions</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{sessions.length}</p>
               </div>
-              <div className="p-4 bg-green-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-700">Exercises Tracked</p>
-                <p className="text-2xl font-bold text-gray-900">{uniqueExercises.length}</p>
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Exercises Tracked</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{uniqueExercises.length}</p>
               </div>
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-700">Metrics Tracked</p>
-                <p className="text-2xl font-bold text-gray-900">{uniqueMetrics.length}</p>
+              <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Metrics Tracked</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{uniqueMetrics.length}</p>
               </div>
             </div>
           </div>

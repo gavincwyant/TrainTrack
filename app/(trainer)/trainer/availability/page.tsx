@@ -137,30 +137,30 @@ export default function AvailabilityPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Availability</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Availability</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             Set your recurring weekly availability for client bookings
           </p>
         </div>
         <Link
           href="/trainer/calendar"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="px-4 py-2 min-h-[44px] flex items-center justify-center bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
         >
           View Calendar
         </Link>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-800">{error}</div>
+        <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+          <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
         </div>
       )}
 
       {/* Add Availability Form */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Add Availability Block
         </h2>
 
@@ -169,13 +169,13 @@ export default function AvailabilityPage() {
             <div>
               <label
                 htmlFor="dayOfWeek"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Day of Week
               </label>
               <select
                 {...register("dayOfWeek")}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-base sm:text-sm"
               >
                 {DAYS_OF_WEEK.map((day, index) => (
                   <option key={index} value={index}>
@@ -184,7 +184,7 @@ export default function AvailabilityPage() {
                 ))}
               </select>
               {errors.dayOfWeek && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.dayOfWeek.message}
                 </p>
               )}
@@ -193,17 +193,17 @@ export default function AvailabilityPage() {
             <div>
               <label
                 htmlFor="startTime"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Start Time
               </label>
               <input
                 {...register("startTime")}
                 type="time"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-base sm:text-sm"
               />
               {errors.startTime && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.startTime.message}
                 </p>
               )}
@@ -212,17 +212,17 @@ export default function AvailabilityPage() {
             <div>
               <label
                 htmlFor="endTime"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 End Time
               </label>
               <input
                 {...register("endTime")}
                 type="time"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-base sm:text-sm"
               />
               {errors.endTime && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.endTime.message}
                 </p>
               )}
@@ -232,7 +232,7 @@ export default function AvailabilityPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 min-h-[44px] bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Adding..." : "Add Availability"}
           </button>
@@ -240,15 +240,15 @@ export default function AvailabilityPage() {
       </div>
 
       {/* Current Availability */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Current Availability
         </h2>
 
         {isLoading ? (
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         ) : availability.length === 0 ? (
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             No availability set. Add your first availability block above.
           </p>
         ) : (
@@ -258,20 +258,20 @@ export default function AvailabilityPage() {
               if (dayBlocks.length === 0) return null
 
               return (
-                <div key={dayIndex} className="border-b border-gray-200 pb-4">
-                  <h3 className="font-medium text-gray-900 mb-2">{day}</h3>
+                <div key={dayIndex} className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">{day}</h3>
                   <div className="space-y-2">
                     {dayBlocks.map((block) => (
                       <div
                         key={block.id}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
+                        className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md"
                       >
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
                           {block.startTime} - {block.endTime}
                         </span>
                         <button
                           onClick={() => handleDelete(block.id)}
-                          className="text-sm text-red-600 hover:text-red-700"
+                          className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 min-h-[44px] px-2"
                         >
                           Delete
                         </button>

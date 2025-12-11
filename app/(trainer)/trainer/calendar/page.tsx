@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar"
-import { format, parse, startOfWeek, getDay } from "date-fns"
+import { format, parse, startOfWeek, endOfWeek, getDay, addDays, addWeeks, addMonths } from "date-fns"
 import { enUS } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "./calendar-custom.css"
@@ -11,6 +11,8 @@ import AppointmentModal from "@/components/AppointmentModal"
 import BlockTimeModal from "@/components/BlockTimeModal"
 import AppointmentDetailModal from "@/components/AppointmentDetailModal"
 import BlockedTimeDetailModal from "@/components/BlockedTimeDetailModal"
+import { useCalendarSwipe } from "@/hooks/useCalendarSwipe"
+import { CustomAgenda } from "@/components/calendar/CustomAgenda"
 
 const locales = {
   "en-US": enUS,
@@ -71,6 +73,7 @@ export default function TrainerCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Default to week view on all devices
   const [view, setView] = useState<View>("week")
   const [date, setDate] = useState(new Date())
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -115,7 +118,7 @@ export default function TrainerCalendarPage() {
       // Convert to calendar events
       const appointmentEvents: CalendarEvent[] = appointmentsData.appointments.map((apt: Appointment) => ({
         id: apt.id,
-        title: `${apt.client.fullName} - ${apt.status}`,
+        title: apt.client.fullName,
         start: new Date(apt.startTime),
         end: new Date(apt.endTime),
         resource: apt,
@@ -275,19 +278,52 @@ export default function TrainerCalendarPage() {
 
   const { min, max } = getCalendarHours()
 
+  // Swipe gesture handlers for mobile calendar navigation
+  const swipeHandlers = useCalendarSwipe(date, setDate, view)
+
+  // Create wrapped agenda component with navigation handlers
+  const WrappedAgenda = useMemo(() => {
+    const AgendaWithNav = (props: React.ComponentProps<typeof CustomAgenda>) => (
+      <CustomAgenda
+        {...props}
+        onNavigate={setDate}
+        onView={setView}
+      />
+    )
+    // Copy static properties from CustomAgenda
+    AgendaWithNav.title = CustomAgenda.title
+    AgendaWithNav.navigate = CustomAgenda.navigate
+    AgendaWithNav.range = CustomAgenda.range
+    return AgendaWithNav
+  }, [setDate, setView])
+
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-start">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-[var(--text-primary)]">Calendar</h1>
-          <p className="mt-3 text-lg text-[var(--text-secondary)]">View and manage your appointments</p>
+          <h1 className="text-2xl sm:text-4xl font-bold text-[var(--text-primary)]">Calendar</h1>
+          <p className="mt-2 sm:mt-3 text-base sm:text-lg text-[var(--text-secondary)]">View and manage your appointments</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <button
+            onClick={() => {
+              setSelectedSlot(null)
+              setIsModalOpen(true)
+            }}
+            className="order-first sm:order-last px-4 sm:px-6 py-2.5 min-h-[44px] bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl hover:shadow-blue-600/30 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span className="sm:hidden">New</span>
+            <span className="hidden sm:inline">New Appointment</span>
+          </button>
           <Link
             href="/trainer/availability"
-            className="px-5 py-2.5 border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-blue-500/30 transition-all duration-200 font-medium"
+            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-blue-500/30 transition-all duration-200 font-medium flex items-center justify-center"
           >
-            Manage Availability
+            <span className="hidden sm:inline">Manage Availability</span>
+            <span className="sm:hidden">Availability</span>
           </Link>
           <button
             onClick={async () => {
@@ -299,24 +335,12 @@ export default function TrainerCalendarPage() {
                 setError(err instanceof Error ? err.message : "Sync failed")
               }
             }}
-            className="px-5 py-2.5 border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-green-500/30 transition-all duration-200 font-medium flex items-center gap-2"
+            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-green-500/30 transition-all duration-200 font-medium flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Sync
-          </button>
-          <button
-            onClick={() => {
-              setSelectedSlot(null)
-              setIsModalOpen(true)
-            }}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl hover:shadow-blue-600/30 hover:-translate-y-0.5 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            New Appointment
           </button>
         </div>
       </div>
@@ -327,71 +351,184 @@ export default function TrainerCalendarPage() {
         </div>
       )}
 
-      {/* Filter Controls */}
-      <div className="bg-[var(--surface)] p-6 rounded-2xl shadow-lg border-1 border-[var(--border)]">
+      {/* Mobile: Filters Card */}
+      <div className="md:hidden bg-[var(--surface)] px-3 py-2 rounded-2xl shadow-lg border border-[var(--border)]">
+        <div className="flex gap-1.5 justify-between">
+          <button
+            onClick={() => toggleFilter("SCHEDULED")}
+            className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
+              activeFilters.includes("SCHEDULED")
+                ? "bg-blue-500 text-white border-blue-600"
+                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+            }`}
+          >
+            Sched
+          </button>
+          <button
+            onClick={() => toggleFilter("COMPLETED")}
+            className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
+              activeFilters.includes("COMPLETED")
+                ? "bg-green-500 text-white border-green-600"
+                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+            }`}
+          >
+            Done
+          </button>
+          <button
+            onClick={() => toggleFilter("CANCELLED")}
+            className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
+              activeFilters.includes("CANCELLED")
+                ? "bg-red-500 text-white border-red-600"
+                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+            }`}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => toggleFilter("RESCHEDULED")}
+            className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
+              activeFilters.includes("RESCHEDULED")
+                ? "bg-orange-500 text-white border-orange-600"
+                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+            }`}
+          >
+            Resched
+          </button>
+          <button
+            onClick={() => toggleFilter("BLOCKED")}
+            className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
+              activeFilters.includes("BLOCKED")
+                ? "bg-gray-500 text-white border-gray-600"
+                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+            }`}
+          >
+            Block
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile: Controls Card */}
+      <div className="md:hidden bg-[var(--surface)] p-4 rounded-2xl shadow-lg border border-[var(--border)]">
+        <div className="flex flex-col gap-3">
+          {/* Date Label */}
+          <h2 className="text-xl font-bold text-center text-[var(--text-primary)]">
+            {view === "day" || view === "agenda"
+              ? format(date, "EEEE, MMMM d, yyyy")
+              : view === "week"
+              ? `${format(startOfWeek(date, { weekStartsOn: 0 }), "MMM d")} - ${format(endOfWeek(date, { weekStartsOn: 0 }), "MMM d, yyyy")}`
+              : format(date, "MMMM yyyy")}
+          </h2>
+
+          {/* View Switcher */}
+          <div className="flex rounded-xl border-2 border-[var(--border)] overflow-hidden">
+            {(["day", "agenda", "week", "month"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`flex-1 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-200 ${
+                  view === v
+                    ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white"
+                    : "bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]"
+                }`}
+              >
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Navigation */}
+          <div className="flex justify-between items-center gap-2">
+            <button
+              onClick={() => setDate(view === "month" ? addMonths(date, -1) : view === "week" ? addWeeks(date, -1) : addDays(date, -1))}
+              className="p-3 min-h-[44px] min-w-[44px] border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] transition-all duration-200 flex items-center justify-center"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setDate(new Date())}
+              className="px-6 py-2.5 min-h-[44px] border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] transition-all duration-200 font-medium"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => setDate(view === "month" ? addMonths(date, 1) : view === "week" ? addWeeks(date, 1) : addDays(date, 1))}
+              className="p-3 min-h-[44px] min-w-[44px] border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] transition-all duration-200 flex items-center justify-center"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: Filter Controls */}
+      <div className="hidden md:block bg-[var(--surface)] p-6 rounded-2xl shadow-lg border-1 border-[var(--border)]">
         <h3 className="text-base font-semibold text-[var(--text-primary)] mb-4">Filter Calendar View</h3>
         <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => toggleFilter("SCHEDULED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("SCHEDULED")
                 ? "bg-blue-500 text-white border-blue-600 shadow-lg shadow-blue-500/30"
                 : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-500/30"
             }`}
           >
-            <span className="flex items-center gap-2.5">
+            <span className="flex items-center gap-2">
               <span className={`w-3 h-3 rounded-full ${activeFilters.includes("SCHEDULED") ? "bg-blue-200" : "bg-blue-500"}`}></span>
               Scheduled
             </span>
           </button>
           <button
             onClick={() => toggleFilter("COMPLETED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("COMPLETED")
                 ? "bg-green-500 text-white border-green-600 shadow-lg shadow-green-500/30"
                 : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-500/30"
             }`}
           >
-            <span className="flex items-center gap-2.5">
+            <span className="flex items-center gap-2">
               <span className={`w-3 h-3 rounded-full ${activeFilters.includes("COMPLETED") ? "bg-green-200" : "bg-green-500"}`}></span>
               Completed
             </span>
           </button>
           <button
             onClick={() => toggleFilter("CANCELLED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("CANCELLED")
                 ? "bg-red-500 text-white border-red-600 shadow-lg shadow-red-500/30"
                 : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-500/30"
             }`}
           >
-            <span className="flex items-center gap-2.5">
+            <span className="flex items-center gap-2">
               <span className={`w-3 h-3 rounded-full ${activeFilters.includes("CANCELLED") ? "bg-red-200" : "bg-red-500"}`}></span>
               Cancelled
             </span>
           </button>
           <button
             onClick={() => toggleFilter("RESCHEDULED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("RESCHEDULED")
                 ? "bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/30"
                 : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-500/30"
             }`}
           >
-            <span className="flex items-center gap-2.5">
+            <span className="flex items-center gap-2">
               <span className={`w-3 h-3 rounded-full ${activeFilters.includes("RESCHEDULED") ? "bg-orange-200" : "bg-orange-500"}`}></span>
               Rescheduled
             </span>
           </button>
           <button
             onClick={() => toggleFilter("BLOCKED")}
-            className={`px-4 py-2.5 text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("BLOCKED")
                 ? "bg-gray-500 text-white border-gray-600 shadow-lg shadow-gray-500/30"
                 : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-500/30"
             }`}
           >
-            <span className="flex items-center gap-2.5">
+            <span className="flex items-center gap-2">
               <span className={`w-3 h-3 rounded-full ${activeFilters.includes("BLOCKED") ? "bg-gray-200" : "bg-gray-500"}`}></span>
               Blocked Time
             </span>
@@ -402,40 +539,15 @@ export default function TrainerCalendarPage() {
         </p>
       </div>
 
-      {/* Legacy Legend - keeping for reference */}
-      <div className="bg-white p-4 rounded-lg shadow hidden">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Status Legend:</h3>
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-blue-500"></div>
-            <span className="text-sm text-gray-600">Scheduled</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-green-500"></div>
-            <span className="text-sm text-gray-600">Completed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-gray-400"></div>
-            <span className="text-sm text-gray-600">Cancelled</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-amber-500"></div>
-            <span className="text-sm text-gray-600">Rescheduled</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-red-500 border-2 border-red-600"></div>
-            <span className="text-sm text-gray-600">Blocked Time</span>
-          </div>
-        </div>
-        {settings && (
-          <p className="mt-2 text-xs text-gray-500">
-            Calendar hours: {settings.dayStartTime} - {settings.dayEndTime}
-          </p>
-        )}
-      </div>
-
-      {/* Calendar */}
-      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-xl border-1 border-[var(--border)]" style={{ height: "750px" }}>
+      {/* Calendar - edge-to-edge on mobile for max space */}
+      <div
+        {...swipeHandlers()}
+        className={`bg-[var(--surface)] p-1 sm:p-4 md:p-6 lg:p-8 rounded-2xl shadow-lg sm:shadow-xl border border-[var(--border)] -mx-4 sm:mx-0 touch-pan-y overflow-hidden ${
+          view === "month"
+            ? "h-auto min-h-[300px] sm:h-[calc(100vh-200px)] md:h-[750px]"
+            : "h-[calc(100vh-280px)] sm:h-[calc(100vh-200px)] md:h-[750px] min-h-[400px] max-h-[1000px]"
+        }`}
+      >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4">
@@ -458,12 +570,21 @@ export default function TrainerCalendarPage() {
             selectable
             eventPropGetter={eventStyleGetter}
             style={{ height: "100%" }}
-            views={["month", "week", "day", "agenda"]}
+            views={{
+              month: true,
+              week: true,
+              day: true,
+              agenda: WrappedAgenda,
+            }}
             defaultView="week"
             step={30}
             timeslots={2}
             min={min}
             max={max}
+            formats={{
+              selectRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
+                `${format(start, "h:mm a")} –\n${format(end, "h:mm a")}`,
+            }}
           />
         )}
       </div>
