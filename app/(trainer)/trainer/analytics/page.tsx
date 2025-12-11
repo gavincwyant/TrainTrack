@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -42,12 +42,16 @@ type AnalyticsData = {
   }
 }
 
+const INITIAL_LOAD_MIN_DURATION = 1250 // 1.25 seconds minimum for initial skeleton
+
 export default function AnalyticsPage() {
   const [range, setRange] = useState<DateRange>("month")
   const [data, setData] = useState<AnalyticsData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showExportModal, setShowExportModal] = useState(false)
+  const isInitialLoad = useRef(true)
 
   useEffect(() => {
     fetchAnalytics()
@@ -55,8 +59,17 @@ export default function AnalyticsPage() {
   }, [range])
 
   const fetchAnalytics = async () => {
-    setIsLoading(true)
+    const isFirstLoad = isInitialLoad.current
+
+    if (isFirstLoad) {
+      setIsInitialLoading(true)
+    } else {
+      setIsRefreshing(true)
+    }
+
     setError(null)
+    const startTime = Date.now()
+
     try {
       const response = await fetch(`/api/analytics?range=${range}`)
       const result = await response.json()
@@ -65,20 +78,68 @@ export default function AnalyticsPage() {
         throw new Error(result.error || "Failed to fetch analytics")
       }
 
+      // For initial load, ensure minimum skeleton duration for smooth UX
+      if (isFirstLoad) {
+        const elapsed = Date.now() - startTime
+        const remainingTime = INITIAL_LOAD_MIN_DURATION - elapsed
+        if (remainingTime > 0) {
+          await new Promise(resolve => setTimeout(resolve, remainingTime))
+        }
+        isInitialLoad.current = false
+      }
+
       setData(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
       console.error("Failed to fetch analytics:", err)
     } finally {
-      setIsLoading(false)
+      setIsInitialLoading(false)
+      setIsRefreshing(false)
     }
   }
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400">Loading analytics...</p>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="h-9 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <div className="h-11 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <div className="flex space-x-4 sm:space-x-8">
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-10 w-28 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Session Summary Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+
+        {/* Revenue Summary Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+
+        {/* Charts Section Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartCardSkeleton />
+          <ChartCardSkeleton />
+          <ChartCardSkeleton />
+          <ChartCardSkeleton />
+        </div>
+
+        {/* Tables Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TableCardSkeleton />
+          <TableCardSkeleton />
         </div>
       </div>
     )
@@ -103,7 +164,13 @@ export default function AnalyticsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header with Date Range Selector and Export Button */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Analytics</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Analytics</h1>
+          {/* Subtle loading indicator when refreshing */}
+          {isRefreshing && (
+            <div className="h-5 w-5 border-2 border-blue-500 dark:border-blue-400 border-t-transparent rounded-full animate-spin" />
+          )}
+        </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           <button
@@ -119,11 +186,12 @@ export default function AnalyticsPage() {
                 <button
                   key={r}
                   onClick={() => setRange(r)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap min-h-[44px] ${
+                  disabled={isRefreshing}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap min-h-[44px] transition-colors ${
                     range === r
                       ? "border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
                       : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                  }`}
+                  } ${isRefreshing ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {r === "week" ? "Last 7 Days" : r === "month" ? "Last 30 Days" : "Last Year"}
                 </button>
@@ -138,7 +206,9 @@ export default function AnalyticsPage() {
         <ExportModal onClose={() => setShowExportModal(false)} />
       )}
 
-      {/* Session Summary Cards */}
+      {/* Content wrapper with transition */}
+      <div className={`space-y-6 transition-opacity duration-300 ${isRefreshing ? "opacity-60" : "opacity-100"}`}>
+        {/* Session Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Total Sessions"
@@ -366,6 +436,7 @@ export default function AnalyticsPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   )
 }
@@ -567,6 +638,77 @@ function ExportModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// Skeleton Components
+function StatCardSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+      <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      <div className="h-9 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-2" />
+      <div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-1" />
+    </div>
+  )
+}
+
+function ChartCardSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+      <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+      <div className="h-[300px] flex flex-col justify-end">
+        {/* Fake chart bars/lines */}
+        <div className="flex items-end justify-around h-full gap-2 px-4">
+          <div className="w-full h-[40%] bg-gray-200 dark:bg-gray-700 rounded-t animate-pulse" style={{ animationDelay: '0ms' }} />
+          <div className="w-full h-[65%] bg-gray-200 dark:bg-gray-700 rounded-t animate-pulse" style={{ animationDelay: '100ms' }} />
+          <div className="w-full h-[45%] bg-gray-200 dark:bg-gray-700 rounded-t animate-pulse" style={{ animationDelay: '200ms' }} />
+          <div className="w-full h-[80%] bg-gray-200 dark:bg-gray-700 rounded-t animate-pulse" style={{ animationDelay: '300ms' }} />
+          <div className="w-full h-[55%] bg-gray-200 dark:bg-gray-700 rounded-t animate-pulse" style={{ animationDelay: '400ms' }} />
+          <div className="w-full h-[70%] bg-gray-200 dark:bg-gray-700 rounded-t animate-pulse" style={{ animationDelay: '500ms' }} />
+          <div className="w-full h-[50%] bg-gray-200 dark:bg-gray-700 rounded-t animate-pulse" style={{ animationDelay: '600ms' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TableCardSkeleton() {
+  const rowWidths = ['80%', '65%', '90%', '70%', '75%']
+
+  return (
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+      <div className="h-5 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+      <table className="min-w-full">
+        <thead>
+          <tr className="border-b border-gray-200 dark:border-gray-700">
+            <th className="text-left py-2">
+              <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </th>
+            <th className="text-right py-2">
+              <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse ml-auto" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rowWidths.map((width, index) => (
+            <tr key={index} className="border-b border-gray-200 dark:border-gray-700">
+              <td className="py-2">
+                <div
+                  className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+                  style={{ width, animationDelay: `${index * 100}ms` }}
+                />
+              </td>
+              <td className="text-right py-2">
+                <div
+                  className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse ml-auto"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
