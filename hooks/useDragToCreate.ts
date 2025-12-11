@@ -371,17 +371,121 @@ export function useDragToCreate({
       cancelDragRef.current()
     }
 
-    // Add listeners with { passive: false } to allow preventDefault
+    // Mouse event handlers for desktop
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!optionsRef.current.enabled) return
+      if (e.button !== 0) return // Only left click
+
+      const target = e.target as HTMLElement
+
+      // Don't intercept clicks on events
+      if (target.closest(".rbc-event")) return
+
+      // Only handle clicks within the time content area (the actual calendar grid)
+      // This prevents clicks on buttons, toolbar, all-day section, or other parts of the calendar card
+      if (!target.closest(".rbc-time-content") && !target.closest(".rbc-day-slot")) return
+
+      // Don't handle clicks on the all-day section
+      if (target.closest(".rbc-allday-cell") || target.closest(".rbc-row-bg")) return
+
+      const columnInfo = getDayColumnAtXRef.current(e.clientX)
+      if (!columnInfo) return
+
+      // On desktop, start drag immediately (no hold delay)
+      gestureRef.current.startPosition = { x: e.clientX, y: e.clientY }
+      gestureRef.current.isHolding = true
+      gestureRef.current.gestureDecided = true
+      gestureRef.current.isDragging = true
+      gestureRef.current.columnInfo = columnInfo
+      setIsDragging(true)
+
+      // Capture gutter info when drag starts
+      setGutterInfo(getGutterInfoRef.current())
+
+      const time = yPositionToTimeRef.current(e.clientY)
+      if (time) {
+        gestureRef.current.startTime = time
+        const endTime = new Date(time)
+        endTime.setMinutes(endTime.getMinutes() + optionsRef.current.step)
+
+        setSelectionState({
+          startTime: time,
+          endTime,
+          bounds: calculateBoundsRef.current(time, endTime),
+        })
+      }
+
+      e.preventDefault()
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!optionsRef.current.enabled) return
+      if (!gestureRef.current.isDragging) return
+
+      if (gestureRef.current.startTime) {
+        const currentTime = yPositionToTimeRef.current(e.clientY)
+        if (currentTime) {
+          const startTime = gestureRef.current.startTime
+          const [selStart, selEnd] = currentTime < startTime
+            ? [currentTime, startTime]
+            : [startTime, currentTime]
+
+          const minEnd = new Date(selStart)
+          minEnd.setMinutes(minEnd.getMinutes() + optionsRef.current.step)
+          const finalEnd = selEnd < minEnd ? minEnd : selEnd
+
+          setSelectionState({
+            startTime: selStart,
+            endTime: finalEnd,
+            bounds: calculateBoundsRef.current(selStart, finalEnd),
+          })
+        }
+      }
+    }
+
+    const handleMouseUp = () => {
+      if (!optionsRef.current.enabled) return
+
+      // If we have a valid selection, trigger the callback
+      if (gestureRef.current.isDragging && gestureRef.current.startTime) {
+        setSelectionState(current => {
+          if (current.startTime && current.endTime) {
+            setTimeout(() => {
+              onSelectionCompleteRef.current(current.startTime!, current.endTime!)
+            }, 0)
+          }
+          return { startTime: null, endTime: null, bounds: null }
+        })
+      }
+
+      // Reset state
+      gestureRef.current.isHolding = false
+      gestureRef.current.isDragging = false
+      gestureRef.current.gestureDecided = false
+      gestureRef.current.startTime = null
+      gestureRef.current.columnInfo = null
+      setIsDragging(false)
+    }
+
+    // Add touch listeners with { passive: false } to allow preventDefault
     container.addEventListener("touchstart", handleTouchStart, { passive: true })
     container.addEventListener("touchmove", handleTouchMove, { passive: false })
     container.addEventListener("touchend", handleTouchEnd, { passive: true })
     container.addEventListener("touchcancel", handleTouchCancel, { passive: true })
+
+    // Add mouse listeners for desktop
+    container.addEventListener("mousedown", handleMouseDown)
+    document.addEventListener("mousemove", handleMouseMove)
+    document.addEventListener("mouseup", handleMouseUp)
 
     return () => {
       container.removeEventListener("touchstart", handleTouchStart)
       container.removeEventListener("touchmove", handleTouchMove)
       container.removeEventListener("touchend", handleTouchEnd)
       container.removeEventListener("touchcancel", handleTouchCancel)
+      container.removeEventListener("mousedown", handleMouseDown)
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
     }
   }, [containerRef, containerMounted])
 
