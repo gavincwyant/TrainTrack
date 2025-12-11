@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar"
 import { format, parse, startOfWeek, endOfWeek, getDay, addDays, addWeeks, addMonths } from "date-fns"
 import { enUS } from "date-fns/locale"
@@ -12,7 +12,9 @@ import BlockTimeModal from "@/components/BlockTimeModal"
 import AppointmentDetailModal from "@/components/AppointmentDetailModal"
 import BlockedTimeDetailModal from "@/components/BlockedTimeDetailModal"
 import { useCalendarSwipe } from "@/hooks/useCalendarSwipe"
+import { useDragToCreate } from "@/hooks/useDragToCreate"
 import { CustomAgenda } from "@/components/calendar/CustomAgenda"
+import { DragSelectionOverlay } from "@/components/calendar/DragSelectionOverlay"
 
 const locales = {
   "en-US": enUS,
@@ -278,8 +280,25 @@ export default function TrainerCalendarPage() {
 
   const { min, max } = getCalendarHours()
 
+  // Ref for the calendar container (used by drag-to-create)
+  const calendarContainerRef = useRef<HTMLDivElement>(null)
+
   // Swipe gesture handlers for mobile calendar navigation
   const swipeHandlers = useCalendarSwipe(date, setDate, view)
+
+  // Drag-to-create gesture handlers for mobile appointment creation
+  const { dragHandlers, isDragging, selectionState, gutterInfo } = useDragToCreate({
+    containerRef: calendarContainerRef,
+    dayStartTime: settings?.dayStartTime || "06:00",
+    dayEndTime: settings?.dayEndTime || "22:00",
+    step: 30,
+    onSelectionComplete: (start: Date, end: Date) => {
+      setSelectedSlot({ start, end })
+      setShowActionChoice(true)
+    },
+    enabled: view === "day" || view === "week",
+    currentDate: date,
+  })
 
   // Create wrapped agenda component with navigation handlers
   const WrappedAgenda = useMemo(() => {
@@ -541,12 +560,14 @@ export default function TrainerCalendarPage() {
 
       {/* Calendar - edge-to-edge on mobile for max space */}
       <div
+        ref={calendarContainerRef}
         {...swipeHandlers()}
-        className={`bg-white dark:bg-gray-900 p-1 sm:p-4 md:p-6 lg:p-8 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 sm:shadow-xl border border-gray-200 dark:border-gray-700 -mx-4 sm:mx-0 touch-pan-y overflow-hidden ${
+        {...dragHandlers()}
+        className={`bg-white dark:bg-gray-900 p-1 sm:p-4 md:p-6 lg:p-8 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 sm:shadow-xl border border-gray-200 dark:border-gray-700 -mx-4 sm:mx-0 overflow-hidden ${
           view === "month"
             ? "h-auto min-h-[300px] sm:h-[calc(100vh-200px)] md:h-[750px]"
             : "h-[calc(100vh-280px)] sm:h-[calc(100vh-200px)] md:h-[750px] min-h-[400px] max-h-[1000px]"
-        }`}
+        } ${isDragging ? "calendar-dragging" : ""}`}
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -556,36 +577,46 @@ export default function TrainerCalendarPage() {
             </div>
           </div>
         ) : (
-          <Calendar
-            localizer={localizer}
-            events={filteredEvents}
-            startAccessor="start"
-            endAccessor="end"
-            view={view}
-            onView={setView}
-            date={date}
-            onNavigate={setDate}
-            onSelectSlot={handleSelectSlot}
-            onSelectEvent={handleSelectEvent}
-            selectable
-            eventPropGetter={eventStyleGetter}
-            style={{ height: "100%" }}
-            views={{
-              month: true,
-              week: true,
-              day: true,
-              agenda: WrappedAgenda,
-            }}
-            defaultView="week"
-            step={30}
-            timeslots={2}
-            min={min}
-            max={max}
-            formats={{
-              selectRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
-                `${format(start, "h:mm a")} –\n${format(end, "h:mm a")}`,
-            }}
-          />
+          <>
+            <Calendar
+              localizer={localizer}
+              events={filteredEvents}
+              startAccessor="start"
+              endAccessor="end"
+              view={view}
+              onView={setView}
+              date={date}
+              onNavigate={setDate}
+              onSelectSlot={handleSelectSlot}
+              onSelectEvent={handleSelectEvent}
+              selectable={!isDragging}
+              eventPropGetter={eventStyleGetter}
+              style={{ height: "100%" }}
+              views={{
+                month: true,
+                week: true,
+                day: true,
+                agenda: WrappedAgenda,
+              }}
+              defaultView="week"
+              step={30}
+              timeslots={2}
+              min={min}
+              max={max}
+              formats={{
+                selectRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
+                  `${format(start, "h:mm a")}\u000A${format(end, "h:mm a")}`,
+              }}
+            />
+            <DragSelectionOverlay
+              bounds={selectionState.bounds}
+              startTime={selectionState.startTime}
+              endTime={selectionState.endTime}
+              isActive={isDragging}
+              gutterInfo={gutterInfo}
+              containerRef={calendarContainerRef}
+            />
+          </>
         )}
       </div>
 
