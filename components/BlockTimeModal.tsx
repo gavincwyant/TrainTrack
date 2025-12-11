@@ -65,6 +65,31 @@ export default function BlockTimeModal({
     }
   }, [isOpen, preselectedDate, preselectedEndDate, setValue])
 
+  // Lock body scroll and calendar scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow
+      document.body.style.overflow = "hidden"
+
+      // Also disable calendar scroll container with touch-action for mobile
+      const calendarContent = document.querySelector('.rbc-time-content') as HTMLElement
+      const originalCalendarOverflow = calendarContent?.style.overflow
+      const originalTouchAction = calendarContent?.style.touchAction
+      if (calendarContent) {
+        calendarContent.style.overflow = "hidden"
+        calendarContent.style.touchAction = "none"
+      }
+
+      return () => {
+        document.body.style.overflow = originalStyle
+        if (calendarContent) {
+          calendarContent.style.overflow = originalCalendarOverflow || ""
+          calendarContent.style.touchAction = originalTouchAction || ""
+        }
+      }
+    }
+  }, [isOpen])
+
   const onSubmit = async (data: BlockTimeFormData) => {
     setIsLoading(true)
     setError(null)
@@ -126,8 +151,15 @@ export default function BlockTimeModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 max-w-md w-full border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
+      style={{ touchAction: "none" }}
+      onClick={handleClose}
+    >
+      <div
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 max-w-md w-full border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-4 sm:p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Block Time</h2>
