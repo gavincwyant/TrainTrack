@@ -127,18 +127,18 @@ export function PendingClientsTab({ onCountChange }: Props) {
     <>
       <div className="space-y-6">
         {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="text-sm text-red-800">{error}</div>
+          <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+            <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
           </div>
         )}
 
         {isLoading ? (
           <div className="text-center py-12">
-            <p className="text-gray-600">Loading pending client profiles...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading pending client profiles...</p>
           </div>
         ) : pendingProfiles.length === 0 ? (
-          <div className="bg-white shadow rounded-lg p-8 text-center">
-            <div className="text-gray-400 mb-4">
+          <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
+            <div className="text-gray-400 dark:text-gray-500 mb-4">
               <svg
                 className="mx-auto h-12 w-12"
                 fill="none"
@@ -153,8 +153,8 @@ export function PendingClientsTab({ onCountChange }: Props) {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No pending client profiles</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No pending client profiles</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               Sync your calendar to automatically detect potential clients.
             </p>
           </div>
@@ -172,11 +172,11 @@ export function PendingClientsTab({ onCountChange }: Props) {
               ))}
             </div>
 
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-purple-900 mb-2">
+            <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-purple-900 dark:text-purple-300 mb-2">
                 Important Notes:
               </h3>
-              <ul className="text-sm text-purple-800 space-y-1 list-disc list-inside">
+              <ul className="text-sm text-purple-800 dark:text-purple-300 space-y-1 list-disc list-inside">
                 <li>High confidence detections are very likely real clients</li>
                 <li>Multiple occurrences indicate recurring appointments</li>
                 <li>Review and edit details before approving</li>
