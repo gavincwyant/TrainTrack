@@ -301,8 +301,8 @@ export default function TrainerCalendarPage() {
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-2xl sm:text-4xl font-bold text-[var(--text-primary)]">Calendar</h1>
-          <p className="mt-2 sm:mt-3 text-base sm:text-lg text-[var(--text-secondary)]">View and manage your appointments</p>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">Calendar</h1>
+          <p className="mt-2 sm:mt-3 text-base sm:text-lg text-gray-600 dark:text-gray-400">View and manage your appointments</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
@@ -320,7 +320,7 @@ export default function TrainerCalendarPage() {
           </button>
           <Link
             href="/trainer/availability"
-            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-blue-500/30 transition-all duration-200 font-medium flex items-center justify-center"
+            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-500/30 transition-all duration-200 font-medium flex items-center justify-center"
           >
             <span className="hidden sm:inline">Manage Availability</span>
             <span className="sm:hidden">Availability</span>
@@ -335,7 +335,7 @@ export default function TrainerCalendarPage() {
                 setError(err instanceof Error ? err.message : "Sync failed")
               }
             }}
-            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-[var(--border)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] hover:border-green-500/30 transition-all duration-200 font-medium flex items-center justify-center gap-2"
+            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-green-500/30 transition-all duration-200 font-medium flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -352,14 +352,14 @@ export default function TrainerCalendarPage() {
       )}
 
       {/* Mobile: Filters Card */}
-      <div className="md:hidden bg-[var(--surface)] px-3 py-2 rounded-2xl shadow-lg border border-[var(--border)]">
+      <div className="md:hidden bg-white dark:bg-gray-900 px-3 py-2 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
         <div className="flex gap-1.5 justify-between">
           <button
             onClick={() => toggleFilter("SCHEDULED")}
             className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
               activeFilters.includes("SCHEDULED")
                 ? "bg-blue-500 text-white border-blue-600"
-                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+                : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
             }`}
           >
             Sched
@@ -369,7 +369,7 @@ export default function TrainerCalendarPage() {
             className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
               activeFilters.includes("COMPLETED")
                 ? "bg-green-500 text-white border-green-600"
-                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+                : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
             }`}
           >
             Done
@@ -379,7 +379,7 @@ export default function TrainerCalendarPage() {
             className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
               activeFilters.includes("CANCELLED")
                 ? "bg-red-500 text-white border-red-600"
-                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+                : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
             }`}
           >
             Cancel
@@ -389,7 +389,7 @@ export default function TrainerCalendarPage() {
             className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
               activeFilters.includes("RESCHEDULED")
                 ? "bg-orange-500 text-white border-orange-600"
-                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+                : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
             }`}
           >
             Resched
@@ -399,7 +399,7 @@ export default function TrainerCalendarPage() {
             className={`px-2 py-1.5 text-xs rounded-lg border transition-all duration-200 font-medium ${
               activeFilters.includes("BLOCKED")
                 ? "bg-gray-500 text-white border-gray-600"
-                : "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]"
+                : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
             }`}
           >
             Block
@@ -408,10 +408,10 @@ export default function TrainerCalendarPage() {
       </div>
 
       {/* Mobile: Controls Card */}
-      <div className="md:hidden bg-[var(--surface)] p-4 rounded-2xl shadow-lg border border-[var(--border)]">
+      <div className="md:hidden bg-white dark:bg-gray-900 p-4 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col gap-3">
           {/* Date Label */}
-          <h2 className="text-xl font-bold text-center text-[var(--text-primary)]">
+          <h2 className="text-xl font-bold text-center text-gray-900 dark:text-gray-100">
             {view === "day" || view === "agenda"
               ? format(date, "EEEE, MMMM d, yyyy")
               : view === "week"
@@ -420,7 +420,7 @@ export default function TrainerCalendarPage() {
           </h2>
 
           {/* View Switcher */}
-          <div className="flex rounded-xl border-2 border-[var(--border)] overflow-hidden">
+          <div className="flex rounded-lg border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
             {(["day", "agenda", "week", "month"] as const).map((v) => (
               <button
                 key={v}
@@ -428,7 +428,7 @@ export default function TrainerCalendarPage() {
                 className={`flex-1 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-200 ${
                   view === v
                     ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white"
-                    : "bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]"
+                    : "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
                 {v.charAt(0).toUpperCase() + v.slice(1)}
@@ -440,7 +440,7 @@ export default function TrainerCalendarPage() {
           <div className="flex justify-between items-center gap-2">
             <button
               onClick={() => setDate(view === "month" ? addMonths(date, -1) : view === "week" ? addWeeks(date, -1) : addDays(date, -1))}
-              className="p-3 min-h-[44px] min-w-[44px] border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] transition-all duration-200 flex items-center justify-center"
+              className="p-3 min-h-[44px] min-w-[44px] border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 flex items-center justify-center"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -448,13 +448,13 @@ export default function TrainerCalendarPage() {
             </button>
             <button
               onClick={() => setDate(new Date())}
-              className="px-6 py-2.5 min-h-[44px] border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] transition-all duration-200 font-medium"
+              className="px-6 py-2.5 min-h-[44px] border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 font-medium"
             >
               Today
             </button>
             <button
               onClick={() => setDate(view === "month" ? addMonths(date, 1) : view === "week" ? addWeeks(date, 1) : addDays(date, 1))}
-              className="p-3 min-h-[44px] min-w-[44px] border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-secondary)] transition-all duration-200 flex items-center justify-center"
+              className="p-3 min-h-[44px] min-w-[44px] border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 flex items-center justify-center"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -465,15 +465,15 @@ export default function TrainerCalendarPage() {
       </div>
 
       {/* Desktop: Filter Controls */}
-      <div className="hidden md:block bg-[var(--surface)] p-6 rounded-2xl shadow-lg border-1 border-[var(--border)]">
-        <h3 className="text-base font-semibold text-[var(--text-primary)] mb-4">Filter Calendar View</h3>
+      <div className="hidden md:block bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Filter Calendar View</h3>
         <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => toggleFilter("SCHEDULED")}
-            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-lg border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("SCHEDULED")
                 ? "bg-blue-500 text-white border-blue-600 shadow-lg shadow-blue-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-500/30"
+                : "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-500/30"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -483,10 +483,10 @@ export default function TrainerCalendarPage() {
           </button>
           <button
             onClick={() => toggleFilter("COMPLETED")}
-            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-lg border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("COMPLETED")
                 ? "bg-green-500 text-white border-green-600 shadow-lg shadow-green-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-500/30"
+                : "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 hover:bg-green-50 dark:hover:bg-green-950/30 hover:border-green-500/30"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -496,10 +496,10 @@ export default function TrainerCalendarPage() {
           </button>
           <button
             onClick={() => toggleFilter("CANCELLED")}
-            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-lg border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("CANCELLED")
                 ? "bg-red-500 text-white border-red-600 shadow-lg shadow-red-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-500/30"
+                : "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-500/30"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -509,10 +509,10 @@ export default function TrainerCalendarPage() {
           </button>
           <button
             onClick={() => toggleFilter("RESCHEDULED")}
-            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-lg border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("RESCHEDULED")
                 ? "bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-500/30"
+                : "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-500/30"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -522,10 +522,10 @@ export default function TrainerCalendarPage() {
           </button>
           <button
             onClick={() => toggleFilter("BLOCKED")}
-            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-xl border-2 transition-all duration-200 font-medium ${
+            className={`px-4 py-2.5 min-h-[44px] text-sm rounded-lg border-2 transition-all duration-200 font-medium ${
               activeFilters.includes("BLOCKED")
                 ? "bg-gray-500 text-white border-gray-600 shadow-lg shadow-gray-500/30"
-                : "bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)] hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-500/30"
+                : "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-500/30"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -534,15 +534,15 @@ export default function TrainerCalendarPage() {
             </span>
           </button>
         </div>
-        <p className="text-sm text-[var(--text-secondary)] mt-4">
-          Click to toggle filters. Showing <span className="font-semibold text-[var(--text-primary)]">{filteredAppointmentCount}</span> of <span className="font-semibold text-[var(--text-primary)]">{appointmentCount}</span> appointments.
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
+          Click to toggle filters. Showing <span className="font-semibold text-gray-900 dark:text-gray-100">{filteredAppointmentCount}</span> of <span className="font-semibold text-gray-900 dark:text-gray-100">{appointmentCount}</span> appointments.
         </p>
       </div>
 
       {/* Calendar - edge-to-edge on mobile for max space */}
       <div
         {...swipeHandlers()}
-        className={`bg-[var(--surface)] p-1 sm:p-4 md:p-6 lg:p-8 rounded-2xl shadow-lg sm:shadow-xl border border-[var(--border)] -mx-4 sm:mx-0 touch-pan-y overflow-hidden ${
+        className={`bg-white dark:bg-gray-900 p-1 sm:p-4 md:p-6 lg:p-8 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 sm:shadow-xl border border-gray-200 dark:border-gray-700 -mx-4 sm:mx-0 touch-pan-y overflow-hidden ${
           view === "month"
             ? "h-auto min-h-[300px] sm:h-[calc(100vh-200px)] md:h-[750px]"
             : "h-[calc(100vh-280px)] sm:h-[calc(100vh-200px)] md:h-[750px] min-h-[400px] max-h-[1000px]"
@@ -552,7 +552,7 @@ export default function TrainerCalendarPage() {
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-[var(--text-secondary)] font-medium">Loading calendar...</p>
+              <p className="text-gray-600 dark:text-gray-400 font-medium">Loading calendar...</p>
             </div>
           </div>
         ) : (
@@ -590,12 +590,12 @@ export default function TrainerCalendarPage() {
       </div>
 
       {/* Upcoming Appointments List */}
-      <div className="bg-[var(--surface)] p-8 rounded-2xl shadow-lg border-1 border-[var(--border)]">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Upcoming Appointments</h2>
+      <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Upcoming Appointments</h2>
         {appointments.filter((apt) =>
           new Date(apt.startTime) > new Date() && apt.status === "SCHEDULED"
         ).length === 0 ? (
-          <p className="text-[var(--text-secondary)] text-center py-8">No upcoming appointments</p>
+          <p className="text-gray-600 dark:text-gray-400 text-center py-8">No upcoming appointments</p>
         ) : (
           <div className="space-y-4">
             {appointments
@@ -604,11 +604,11 @@ export default function TrainerCalendarPage() {
               .map((apt) => (
                 <div
                   key={apt.id}
-                  className="group flex justify-between items-center p-5 border-2 border-[var(--border)] rounded-xl hover:border-blue-500/30 hover:shadow-lg transition-all duration-200 bg-[var(--surface-secondary)]"
+                  className="group flex justify-between items-center p-5 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500/30 hover:shadow-lg transition-all duration-200 bg-gray-50 dark:bg-gray-800"
                 >
                   <div>
-                    <div className="font-semibold text-lg text-[var(--text-primary)]">{apt.client.fullName}</div>
-                    <div className="text-sm text-[var(--text-secondary)] mt-1 flex items-center gap-2">
+                    <div className="font-semibold text-lg text-gray-900 dark:text-gray-100">{apt.client.fullName}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>

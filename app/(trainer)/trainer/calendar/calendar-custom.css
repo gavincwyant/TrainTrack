@@ -1,4 +1,5 @@
 /* Modern Calendar Styling */
+/* Colors matched to Tailwind gray scale for consistency with app */
 
 /* Override React Big Calendar defaults with modern design */
 .rbc-calendar {
@@ -19,9 +20,9 @@
 
 .rbc-toolbar button {
   padding: 0.625rem 1.25rem;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-primary);
+  border: 1px solid rgb(229, 231, 235); /* gray-200 */
+  background: white;
+  color: rgb(17, 24, 39); /* gray-900 */
   border-radius: 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -30,7 +31,7 @@
 }
 
 .rbc-toolbar button:hover {
-  background: var(--surface-secondary);
+  background: rgb(249, 250, 251); /* gray-50 */
   border-color: #3b82f6;
   box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
   transform: translateY(-1px);
@@ -47,7 +48,7 @@
 .rbc-toolbar-label {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: rgb(17, 24, 39); /* gray-900 */
   padding: 0.5rem 1rem;
 }
 
@@ -56,7 +57,7 @@
   border: none;
   border-radius: 0;
   overflow: auto;
-  background: var(--surface);
+  background: white;
   box-shadow: none;
   flex: 0 0 auto;
 }
@@ -74,17 +75,17 @@
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  border-bottom: 2px solid var(--border);
-  background: var(--surface-secondary);
+  color: rgb(107, 114, 128); /* gray-500 */
+  border-bottom: 2px solid rgb(229, 231, 235); /* gray-200 */
+  background: rgb(249, 250, 251); /* gray-50 */
 }
 
 .rbc-header + .rbc-header {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 .rbc-month-row {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgb(229, 231, 235); /* gray-200 */
   min-height: 6rem;
 }
 
@@ -97,7 +98,7 @@
 }
 
 .rbc-off-range-bg {
-  background-color: var(--surface-secondary);
+  background-color: rgb(249, 250, 251); /* gray-50 */
   opacity: 0.5;
 }
 
@@ -111,7 +112,7 @@
 }
 
 .rbc-date-cell > a {
-  color: var(--text-primary);
+  color: rgb(17, 24, 39); /* gray-900 */
   font-weight: 500;
   font-size: 0.875rem;
 }
@@ -130,19 +131,19 @@
   border: none;
   border-radius: 0;
   overflow: auto;
-  background: var(--surface);
+  background: white;
   box-shadow: none;
   flex: 1;
   min-height: 0;
 }
 
 .rbc-time-header {
-  background: var(--surface-secondary);
-  border-bottom: 2px solid var(--border);
+  background: rgb(249, 250, 251); /* gray-50 */
+  border-bottom: 2px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 .rbc-time-header-content {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 .rbc-time-content {
@@ -150,18 +151,18 @@
 }
 
 .rbc-time-slot {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 .rbc-timeslot-group {
   min-height: 3.5rem;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 .rbc-time-gutter {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: rgb(156, 163, 175); /* gray-400 */
 }
 
 .rbc-current-time-indicator {
@@ -185,7 +186,7 @@
 }
 
 .rbc-allday-cell {
-  background: var(--surface-secondary);
+  background: rgb(249, 250, 251); /* gray-50 */
 }
 
 /* Events */
@@ -225,7 +226,7 @@
   border: none !important;
   border-radius: 0;
   overflow: auto;
-  background: var(--surface);
+  background: white;
   box-shadow: none !important;
   flex: 1;
   min-height: 0;
@@ -240,8 +241,8 @@
 
 /* Table header */
 .rbc-agenda-view table thead {
-  background: var(--surface-secondary);
-  border-bottom: 2px solid var(--border);
+  background: rgb(249, 250, 251); /* gray-50 */
+  border-bottom: 2px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 .rbc-agenda-view table thead th {
@@ -250,7 +251,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-secondary);
+  color: rgb(107, 114, 128); /* gray-500 */
   text-align: left;
 }
 
@@ -259,9 +260,9 @@
   padding: 1rem;
   font-weight: 700;
   font-size: 0.9375rem;
-  color: var(--text-primary);
-  background: var(--surface-secondary);
-  border-right: 2px solid var(--border);
+  color: rgb(17, 24, 39); /* gray-900 */
+  background: rgb(249, 250, 251); /* gray-50 */
+  border-right: 2px solid rgb(229, 231, 235); /* gray-200 */
   white-space: nowrap;
   vertical-align: middle;
   min-width: 120px;
@@ -272,7 +273,7 @@
   padding: 1rem;
   font-weight: 500;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: rgb(107, 114, 128); /* gray-500 */
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -281,23 +282,23 @@
 .rbc-agenda-event-cell {
   padding: 1rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: rgb(17, 24, 39); /* gray-900 */
   vertical-align: middle;
 }
 
 /* Row borders - only between time/event cells, not cutting through date spans */
 .rbc-agenda-table tbody > tr > td + td {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 /* Lighter borders between rows within same date group */
 .rbc-agenda-table tbody > tr + tr > td:not(.rbc-agenda-date-cell) {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 /* Stronger border when date cell starts (new date group) */
 .rbc-agenda-table tbody > tr > td.rbc-agenda-date-cell {
-  border-top: 2px solid var(--border);
+  border-top: 2px solid rgb(229, 231, 235); /* gray-200 */
 }
 
 /* First row doesn't need top border on date cell */
@@ -337,9 +338,9 @@
 
 /* Overlay (for show more modal) */
 .rbc-overlay {
-  border: 2px solid var(--border);
+  border: 2px solid rgb(229, 231, 235); /* gray-200 */
   border-radius: 1rem;
-  background: var(--surface);
+  background: white;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   padding: 1rem;
   min-width: 16rem;
@@ -347,10 +348,10 @@
 
 .rbc-overlay-header {
   padding: 0.5rem 0 1rem;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid rgb(229, 231, 235); /* gray-200 */
   font-weight: 700;
   font-size: 1rem;
-  color: var(--text-primary);
+  color: rgb(17, 24, 39); /* gray-900 */
   margin-bottom: 0.75rem;
 }
 
@@ -740,6 +741,68 @@
 
 /* Dark mode enhancements */
 @media (prefers-color-scheme: dark) {
+  /* Base calendar backgrounds */
+  .rbc-calendar {
+    color: rgb(243, 244, 246); /* gray-100 */
+  }
+
+  .rbc-month-view,
+  .rbc-time-view,
+  .rbc-agenda-view {
+    background: rgb(17, 24, 39) !important; /* gray-900 */
+    border: 1px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  /* Toolbar */
+  .rbc-toolbar button {
+    background: rgb(17, 24, 39); /* gray-900 */
+    border-color: rgb(55, 65, 81); /* gray-700 */
+    color: rgb(243, 244, 246); /* gray-100 */
+  }
+
+  .rbc-toolbar button:hover {
+    background: rgb(31, 41, 55); /* gray-800 */
+  }
+
+  .rbc-toolbar-label {
+    color: rgb(243, 244, 246); /* gray-100 */
+  }
+
+  /* Headers */
+  .rbc-header {
+    background: rgb(31, 41, 55) !important; /* gray-800 */
+    color: rgb(156, 163, 175) !important; /* gray-400 */
+    border-bottom: 1px solid rgb(55, 65, 81) !important; /* gray-700 */
+  }
+
+  .rbc-header + .rbc-header {
+    border-left: 1px solid rgb(55, 65, 81) !important; /* gray-700 */
+  }
+
+  /* Time view */
+  .rbc-time-header {
+    background: rgb(31, 41, 55) !important; /* gray-800 */
+    border-bottom: 2px solid rgb(55, 65, 81) !important; /* gray-700 */
+  }
+
+  .rbc-time-gutter {
+    color: rgb(156, 163, 175); /* gray-400 */
+  }
+
+  .rbc-allday-cell {
+    background: rgb(31, 41, 55) !important; /* gray-800 */
+  }
+
+  /* Date cells */
+  .rbc-date-cell > a {
+    color: rgb(243, 244, 246); /* gray-100 */
+  }
+
+  .rbc-off-range-bg {
+    background-color: rgb(31, 41, 55) !important; /* gray-800 */
+  }
+
+  /* Events */
   .rbc-event {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
@@ -752,7 +815,7 @@
     box-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
   }
 
-  /* Softer, more subtle borders for time slots in dark mode */
+  /* Borders */
   .rbc-time-slot {
     border-top: 1px solid rgba(55, 65, 81, 0.4) !important;
   }
@@ -777,29 +840,28 @@
     border-left: 1px solid rgba(55, 65, 81, 0.4) !important;
   }
 
-  .rbc-header + .rbc-header {
-    border-left: 1px solid rgba(75, 85, 99, 0.5) !important;
-  }
-
-  .rbc-header {
-    border-bottom: 1px solid #4b556380 !important;
-  }
-
-  .rbc-month-view,
-  .rbc-time-view,
-  .rbc-agenda-view {
-    border: 1px solid rgba(75, 85, 99, 0.5) !important;
-  }
-
   /* Agenda view dark mode */
   .rbc-agenda-view table thead {
-    background: var(--surface-secondary);
+    background: rgb(31, 41, 55) !important; /* gray-800 */
     border-bottom: 2px solid rgba(75, 85, 99, 0.5) !important;
   }
 
+  .rbc-agenda-view table thead th {
+    color: rgb(156, 163, 175); /* gray-400 */
+  }
+
   .rbc-agenda-date-cell {
-    background: var(--surface-secondary);
+    background: rgb(31, 41, 55) !important; /* gray-800 */
+    color: rgb(243, 244, 246) !important; /* gray-100 */
     border-right: 2px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  .rbc-agenda-time-cell {
+    color: rgb(156, 163, 175); /* gray-400 */
+  }
+
+  .rbc-agenda-event-cell {
+    color: rgb(243, 244, 246); /* gray-100 */
   }
 
   .rbc-agenda-table tbody > tr > td + td {
@@ -816,6 +878,22 @@
 
   .rbc-agenda-table tbody > tr:first-child > td.rbc-agenda-date-cell {
     border-top: none !important;
+  }
+
+  /* Overlay dark mode */
+  .rbc-overlay {
+    background: rgb(17, 24, 39); /* gray-900 */
+    border-color: rgb(55, 65, 81); /* gray-700 */
+  }
+
+  .rbc-overlay-header {
+    color: rgb(243, 244, 246); /* gray-100 */
+    border-bottom-color: rgb(55, 65, 81); /* gray-700 */
+  }
+
+  /* Today highlight - subtle in dark mode */
+  .rbc-today {
+    background-color: rgba(59, 130, 246, 0.15) !important;
   }
 }
 
