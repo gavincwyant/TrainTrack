@@ -1,7 +1,8 @@
-import { auth, signOut } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ClientMobileNav } from "./_components/ClientMobileNav"
+import { ClientNav } from "./_components/ClientNav"
 
 export default async function ClientLayout({
   children,
@@ -38,38 +39,27 @@ export default async function ClientLayout({
                   Dashboard
                 </Link>
                 <Link
-                  href="/client/schedule"
+                  href="/client/appointments"
                   className="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                 >
-                  Schedule
+                  Appointments
                 </Link>
                 <Link
-                  href="/client/history"
+                  href="/client/workouts"
                   className="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                 >
-                  History
+                  Workouts
                 </Link>
                 <Link
-                  href="/client/profile"
+                  href="/client/invoices"
                   className="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                 >
-                  Profile
+                  Invoices
                 </Link>
               </div>
             </div>
             <div className="hidden sm:flex items-center">
-              <span className="text-sm text-gray-700 dark:text-gray-300 mr-4">{session.user.email}</span>
-              <form action={async () => {
-                "use server"
-                await signOut({ redirectTo: "/login" })
-              }}>
-                <button
-                  type="submit"
-                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                >
-                  Sign out
-                </button>
-              </form>
+              <ClientNav clientName={session.user.name || session.user.email || "Client"} />
             </div>
           </div>
         </div>

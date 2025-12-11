@@ -24,6 +24,7 @@ model Workspace {
 
   users                     User[]                     @relation("WorkspaceMembers")
   clientProfiles            ClientProfile[]
+  clientTrainers            ClientTrainer[]
   appointments              Appointment[]
   workoutSessions           WorkoutSession[]
   invoices                  Invoice[]
@@ -70,6 +71,10 @@ model User {
   trainerPendingClientProfiles PendingClientProfile[] @relation("TrainerPendingClientProfiles")
   convertedFromPendingClient   PendingClientProfile?  @relation("ConvertedFromPendingClient")
 
+  // Client-Trainer relationships
+  clientTrainers               ClientTrainer[]        @relation("ClientTrainers")
+  trainerClients               ClientTrainer[]        @relation("TrainerClients")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -104,6 +109,29 @@ model ClientProfile {
 enum BillingFrequency {
   PER_SESSION
   MONTHLY
+}
+
+model ClientTrainer {
+  id          String    @id @default(uuid())
+  clientId    String    @map("client_id")
+  client      User      @relation("ClientTrainers", fields: [clientId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation("TrainerClients", fields: [trainerId], references: [id], onDelete: Cascade)
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  isActive    Boolean   @default(true) @map("is_active")
+  startDate   DateTime  @default(now()) @map("start_date")
+  endDate     DateTime? @map("end_date")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([clientId, trainerId, workspaceId])
+  @@index([clientId])
+  @@index([trainerId])
+  @@index([workspaceId])
+  @@map("client_trainers")
 }
 
 // ============================================================================
