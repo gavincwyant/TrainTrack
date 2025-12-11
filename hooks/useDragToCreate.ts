@@ -72,8 +72,6 @@ export function useDragToCreate({
     startTime: null as Date | null,
     gestureDecided: false,
     columnInfo: null as { left: number; width: number; date: Date } | null,
-    timeSlotContainer: null as HTMLElement | null,
-    lastY: 0, // For manual scroll passthrough
   })
 
   // Keep options in ref for native event listener access
@@ -235,10 +233,6 @@ export function useDragToCreate({
       const touch = e.touches[0]
       const target = e.target as HTMLElement
 
-      // Always capture the scroll container for potential scroll passthrough
-      gestureRef.current.timeSlotContainer = getTimeSlotContainerRef.current()
-      gestureRef.current.lastY = touch.clientY
-
       // Don't intercept touches on events
       if (target.closest(".rbc-event")) return
 
@@ -281,22 +275,10 @@ export function useDragToCreate({
       if (!optionsRef.current.enabled) return
 
       const touch = e.touches[0]
-      const scrollContainer = gestureRef.current.timeSlotContainer
 
-      // Helper to perform scroll
-      const doScroll = () => {
-        if (scrollContainer) {
-          const deltaY = touch.clientY - gestureRef.current.lastY
-          // Negative delta means finger moved up, so scroll content down (increase scrollTop)
-          scrollContainer.scrollTop -= deltaY
-          gestureRef.current.lastY = touch.clientY
-        }
-      }
-
-      // If not holding (touch started outside valid drag area), just scroll
+      // If not holding (touch started outside valid drag area), let native scroll handle it
       if (!gestureRef.current.isHolding) {
-        doScroll()
-        return
+        return // Native scroll will work automatically
       }
 
       const deltaX = Math.abs(touch.clientX - gestureRef.current.startPosition.x)
@@ -311,12 +293,11 @@ export function useDragToCreate({
             clearTimeout(gestureRef.current.holdTimer)
             gestureRef.current.holdTimer = null
           }
-          // Switch to scroll mode
+          // Switch to scroll mode - let native handle it
           gestureRef.current.gestureDecided = true
           gestureRef.current.isDragging = false
           gestureRef.current.isHolding = false
-          doScroll()
-          return
+          return // Native scroll will handle it
         }
         // Still waiting for hold threshold, don't scroll yet
         return
@@ -324,8 +305,7 @@ export function useDragToCreate({
 
       // Gesture was decided - either scrolling or dragging
       if (!gestureRef.current.isDragging) {
-        // Scroll mode
-        doScroll()
+        // Scroll mode - let native handle it
         return
       }
 
