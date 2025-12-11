@@ -3,10 +3,14 @@
 /* Override React Big Calendar defaults with modern design */
 .rbc-calendar {
   font-family: inherit;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Toolbar */
 .rbc-toolbar {
+  flex-shrink: 0;
   padding: 1rem 0;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
@@ -54,6 +58,14 @@
   overflow: auto;
   background: var(--surface);
   box-shadow: none;
+  flex: 0 0 auto;
+}
+
+@media (min-width: 768px) {
+  .rbc-month-view {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .rbc-header {
@@ -120,6 +132,8 @@
   overflow: auto;
   background: var(--surface);
   box-shadow: none;
+  flex: 1;
+  min-height: 0;
 }
 
 .rbc-time-header {
@@ -208,34 +222,87 @@
 
 /* Agenda view */
 .rbc-agenda-view {
-  border: none;
+  border: none !important;
   border-radius: 0;
   overflow: auto;
   background: var(--surface);
-  box-shadow: none;
+  box-shadow: none !important;
+  flex: 1;
+  min-height: 0;
 }
 
 .rbc-agenda-view table {
-  border: none;
+  border: none !important;
+  border-collapse: collapse;
+  width: 100%;
+  box-shadow: none !important;
 }
 
-.rbc-agenda-date-cell,
+/* Table header */
+.rbc-agenda-view table thead {
+  background: var(--surface-secondary);
+  border-bottom: 2px solid var(--border);
+}
+
+.rbc-agenda-view table thead th {
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+/* Date column - spans multiple rows, vertically centered */
+.rbc-agenda-date-cell {
+  padding: 1rem;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+  border-right: 2px solid var(--border);
+  white-space: nowrap;
+  vertical-align: middle;
+  min-width: 120px;
+}
+
+/* Time column */
 .rbc-agenda-time-cell {
   padding: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
+/* Event cell */
 .rbc-agenda-event-cell {
   padding: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  vertical-align: middle;
 }
 
+/* Row borders - only between time/event cells, not cutting through date spans */
 .rbc-agenda-table tbody > tr > td + td {
   border-left: 1px solid var(--border);
 }
 
-.rbc-agenda-table tbody > tr + tr {
+/* Lighter borders between rows within same date group */
+.rbc-agenda-table tbody > tr + tr > td:not(.rbc-agenda-date-cell) {
   border-top: 1px solid var(--border);
+}
+
+/* Stronger border when date cell starts (new date group) */
+.rbc-agenda-table tbody > tr > td.rbc-agenda-date-cell {
+  border-top: 2px solid var(--border);
+}
+
+/* First row doesn't need top border on date cell */
+.rbc-agenda-table tbody > tr:first-child > td.rbc-agenda-date-cell {
+  border-top: none;
 }
 
 /* Selection styling */
@@ -343,14 +410,30 @@
   }
 
   /* Agenda view mobile improvements */
-  .rbc-agenda-date-cell,
-  .rbc-agenda-time-cell,
+  .rbc-agenda-view table thead th {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.625rem;
+  }
+
+  .rbc-agenda-date-cell {
+    padding: 0.625rem;
+    font-size: 0.75rem;
+    min-width: 80px;
+  }
+
+  .rbc-agenda-time-cell {
+    padding: 0.625rem;
+    font-size: 0.6875rem;
+    min-width: 90px;
+  }
+
   .rbc-agenda-event-cell {
-    padding: 0.75rem;
+    padding: 0.625rem;
+    font-size: 0.75rem;
   }
 
   .rbc-agenda-table {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
   }
 
   /* ========================================
@@ -404,29 +487,30 @@
     letter-spacing: -0.02em;
   }
 
-  /* Make events in time view more compact */
+  /* Make events in time view more readable */
   .rbc-time-view .rbc-event {
-    padding: 0.125rem 0.125rem;
-    font-size: 0.625rem;
-    min-height: 24px;
+    padding: 0.625rem 0.25rem 0.25rem 0.625rem;
+    font-size: 1.25rem;
+    min-height: 40px;
     border-radius: 0.25rem;
   }
 
   .rbc-time-view .rbc-event-content {
-    font-size: 0.625rem;
-    line-height: 1.2;
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1.3;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    word-wrap: break-word;
   }
 
   .rbc-time-view .rbc-event-label {
     display: none !important; /* Hide time labels on events to save space */
   }
 
-  /* Reduce time slot height for more compact view */
+  /* Time slot height */
   .rbc-timeslot-group {
-    min-height: 2.5rem;
+    min-height: 3.5rem;
   }
 
   /* Day column improvements - events use full width */
@@ -488,17 +572,18 @@
   }
 
   .rbc-time-view .rbc-event {
-    min-height: 20px;
-    font-size: 0.5625rem;
-    padding: 0.0625rem 0.125rem;
+    min-height: 29px;
+    font-size: 0.75rem;
+    padding: 0.375rem 0.15rem 0.15rem 0.375rem;
   }
 
   .rbc-time-view .rbc-event-content {
-    font-size: 0.5625rem;
+    font-size: 0.75rem;
+    font-weight: 900;
   }
 
   .rbc-timeslot-group {
-    min-height: 2rem;
+    min-height: 2.1rem;
   }
 }
 
@@ -558,27 +643,47 @@
     text-align: left !important;
   }
 
-  /* Time view events - ultra compact */
+  /* Time view events - readable on small phones */
   .rbc-time-view .rbc-event {
-    min-height: 18px;
-    font-size: 0.5rem;
-    padding: 0 0.0625rem;
+    min-height: 29px;
+    font-size: 0.675rem;
+    padding: 0.3rem 0.15rem 0.15rem 0.3rem;
   }
 
   .rbc-time-view .rbc-event-content {
-    font-size: 0.5rem;
+    font-size: 0.675rem;
+    font-weight: 900;
+  }
+
+  .rbc-timeslot-group {
+    min-height: 1.95rem;
   }
 
   /* Agenda view on extra small */
-  .rbc-agenda-date-cell,
-  .rbc-agenda-time-cell,
+  .rbc-agenda-view table thead th {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.5rem;
+  }
+
+  .rbc-agenda-date-cell {
+    padding: 0.5rem;
+    font-size: 0.625rem;
+    min-width: 65px;
+  }
+
+  .rbc-agenda-time-cell {
+    padding: 0.5rem;
+    font-size: 0.5625rem;
+    min-width: 70px;
+  }
+
   .rbc-agenda-event-cell {
     padding: 0.5rem;
-    font-size: 0.75rem;
+    font-size: 0.625rem;
   }
 
   .rbc-agenda-table {
-    font-size: 0.75rem;
+    font-size: 0.625rem;
   }
 
   .rbc-time-gutter {
@@ -686,13 +791,31 @@
     border: 1px solid rgba(75, 85, 99, 0.5) !important;
   }
 
-  /* Table borders in agenda view */
+  /* Agenda view dark mode */
+  .rbc-agenda-view table thead {
+    background: var(--surface-secondary);
+    border-bottom: 2px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  .rbc-agenda-date-cell {
+    background: var(--surface-secondary);
+    border-right: 2px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
   .rbc-agenda-table tbody > tr > td + td {
     border-left: 1px solid rgba(55, 65, 81, 0.4) !important;
   }
 
-  .rbc-agenda-table tbody > tr + tr {
+  .rbc-agenda-table tbody > tr + tr > td:not(.rbc-agenda-date-cell) {
     border-top: 1px solid rgba(55, 65, 81, 0.4) !important;
+  }
+
+  .rbc-agenda-table tbody > tr > td.rbc-agenda-date-cell {
+    border-top: 2px solid rgba(75, 85, 99, 0.5) !important;
+  }
+
+  .rbc-agenda-table tbody > tr:first-child > td.rbc-agenda-date-cell {
+    border-top: none !important;
   }
 }
 
