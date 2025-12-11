@@ -31,13 +31,13 @@ export function PendingClientCard({ profile, onApprove, onReject, isProcessing }
   const getConfidenceBadgeColor = (confidence: string) => {
     switch (confidence) {
       case "high":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300"
       case "medium":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300"
       case "low":
-        return "bg-orange-100 text-orange-800"
+        return "bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
     }
   }
 
@@ -45,11 +45,11 @@ export function PendingClientCard({ profile, onApprove, onReject, isProcessing }
   const displayEmail = profile.reviewedEmail || profile.extractedEmail
 
   return (
-    <div className="bg-white shadow rounded-lg p-6 border-l-4 border-purple-500">
+    <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6 border-l-4 border-purple-500 dark:border-purple-400">
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">{displayName}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{displayName}</h3>
             <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${getConfidenceBadgeColor(
                 profile.extractionConfidence
@@ -58,13 +58,13 @@ export function PendingClientCard({ profile, onApprove, onReject, isProcessing }
               {profile.extractionConfidence} confidence
             </span>
             {profile.occurrenceCount > 1 && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">
                 {profile.occurrenceCount} occurrences
               </span>
             )}
           </div>
 
-          <div className="space-y-2 text-sm text-gray-600">
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
             {displayEmail && (
               <div className="flex items-center gap-2">
                 <svg
@@ -140,8 +140,8 @@ export function PendingClientCard({ profile, onApprove, onReject, isProcessing }
             </div>
 
             {isExpanded && (
-              <div className="bg-purple-50 border border-purple-200 rounded p-3 mt-3">
-                <p className="text-xs text-purple-800">
+              <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded p-3 mt-3">
+                <p className="text-xs text-purple-800 dark:text-purple-300">
                   <strong>Why detected:</strong> {profile.extractionReason}
                 </p>
               </div>
@@ -150,7 +150,7 @@ export function PendingClientCard({ profile, onApprove, onReject, isProcessing }
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-3 text-xs text-purple-600 hover:text-purple-800 font-medium"
+            className="mt-3 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium"
           >
             {isExpanded ? "Show less" : "Show detection details"}
           </button>
@@ -160,22 +160,22 @@ export function PendingClientCard({ profile, onApprove, onReject, isProcessing }
           <button
             onClick={() => onApprove(profile.id)}
             disabled={isProcessing}
-            className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white text-sm rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isProcessing ? "Processing..." : "Edit & Approve"}
           </button>
           <button
             onClick={() => onReject(profile.id)}
             disabled={isProcessing}
-            className="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-red-600 dark:bg-red-500 text-white text-sm rounded-md hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Reject
           </button>
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500">
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           <strong>What happens:</strong>
           <br />
           • <strong>Edit & Approve:</strong> Review details and create client profile

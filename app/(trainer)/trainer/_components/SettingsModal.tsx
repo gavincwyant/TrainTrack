@@ -89,7 +89,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-5xl w-full h-[600px] max-h-[90vh] overflow-hidden flex flex-col"
+          className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl mx-4 sm:mx-auto min-h-0 max-h-[90vh] md:h-[600px] overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -139,9 +139,26 @@ export function SettingsModal({ isOpen, onClose }: Props) {
           )}
 
           {/* Content Area with Sidebar */}
-          <div className="flex flex-1 overflow-hidden min-h-0">
-            {/* Sidebar */}
-            <div className="w-48 flex-shrink-0 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
+            {/* Mobile Tab Pills - visible on mobile only */}
+            <div className="md:hidden flex overflow-x-auto gap-2 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
+              {(["scheduling", "calendar", "pricing", "invoicing"] as const).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium min-h-[44px] transition-colors ${
+                    activeCategory === cat
+                      ? "bg-blue-600 dark:bg-blue-500 text-white"
+                      : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                  }`}
+                >
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop Sidebar - hidden on mobile */}
+            <div className="hidden md:block w-48 flex-shrink-0 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
               <nav className="space-y-1">
                 <button
                   onClick={() => setActiveCategory("scheduling")}
@@ -187,7 +204,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
               {activeCategory === "scheduling" && (
                 <SchedulingSettings
                   settings={settings}

@@ -146,7 +146,7 @@ export default function WorkoutHistoryPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Workout History</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">View and manage all logged workout sessions</p>
@@ -155,14 +155,14 @@ export default function WorkoutHistoryPage() {
           {sessions.length > 0 && (
             <button
               onClick={exportToCSV}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="px-4 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Export CSV
             </button>
           )}
           <Link
             href="/trainer/workouts/log"
-            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
+            className="px-4 py-2 min-h-[44px] flex items-center bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
           >
             + Log Workout
           </Link>

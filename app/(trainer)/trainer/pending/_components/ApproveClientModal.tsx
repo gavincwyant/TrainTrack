@@ -90,13 +90,13 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/30 border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Review & Approve Client</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Review & Approve Client</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               disabled={isSubmitting}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,13 +108,13 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
+            <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
+              <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
             </div>
           )}
 
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Full Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -123,12 +123,12 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email
             </label>
             <input
@@ -136,16 +136,16 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="optional"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               If no email provided, a placeholder will be used (client won&apos;t have login access)
             </p>
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Phone
             </label>
             <input
@@ -153,21 +153,21 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
               id="phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="optional"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="billingFrequency" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="billingFrequency" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Billing Frequency <span className="text-red-500">*</span>
               </label>
               <select
                 id="billingFrequency"
                 value={billingFrequency}
                 onChange={(e) => setBillingFrequency(e.target.value as "PER_SESSION" | "MONTHLY")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="PER_SESSION">Per Session</option>
                 <option value="MONTHLY">Monthly</option>
@@ -175,11 +175,11 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
             </div>
 
             <div>
-              <label htmlFor="sessionRate" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="sessionRate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Session Rate <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-500">$</span>
+                <span className="absolute left-3 top-2 text-gray-500 dark:text-gray-400">$</span>
                 <input
                   type="number"
                   id="sessionRate"
@@ -188,14 +188,14 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
                   required
                   min="0"
                   step="0.01"
-                  className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Notes
             </label>
             <textarea
@@ -203,7 +203,7 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Optional notes about this client"
             />
           </div>
@@ -214,26 +214,26 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
               id="autoInvoiceEnabled"
               checked={autoInvoiceEnabled}
               onChange={(e) => setAutoInvoiceEnabled(e.target.checked)}
-              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
             />
-            <label htmlFor="autoInvoiceEnabled" className="ml-2 block text-sm text-gray-700">
+            <label htmlFor="autoInvoiceEnabled" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
               Auto-invoice enabled (automatically add completed appointments to invoices)
             </label>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+              className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50"
             >
               {isSubmitting ? "Creating Client..." : "Save & Approve"}
             </button>

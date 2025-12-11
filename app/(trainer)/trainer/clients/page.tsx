@@ -119,14 +119,14 @@ export default function ClientsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Clients</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Manage your training clients</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Clients</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">Manage your training clients</p>
         </div>
         <Link
           href="/trainer/clients/new"
-          className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 font-medium"
+          className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 font-medium text-center min-h-[44px] flex items-center justify-center sm:w-auto"
         >
           + Add Client
         </Link>
@@ -145,65 +145,134 @@ export default function ClientsPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Phone
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Billing
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-              {clients.map((client: ClientWithProfile) => (
-                <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{client.fullName}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{client.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{client.phone || "—"}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {clients.map((client: ClientWithProfile) => (
+              <div
+                key={client.id}
+                className="bg-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 overflow-hidden"
+              >
+                {/* Card Header */}
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                      {client.fullName}
+                    </h3>
+                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 flex-shrink-0">
                       {client.clientProfile?.billingFrequency === "PER_SESSION"
                         ? "Per Session"
                         : "Monthly"}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <dl className="px-4 py-3 space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <dt className="text-gray-500 dark:text-gray-400">Email</dt>
+                    <dd className="text-gray-900 dark:text-gray-100 font-medium text-right truncate ml-2 max-w-[60%]">
+                      {client.email}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <dt className="text-gray-500 dark:text-gray-400">Phone</dt>
+                    <dd className="text-gray-900 dark:text-gray-100 font-medium">
+                      {client.phone || "—"}
+                    </dd>
+                  </div>
+                  {client.clientProfile?.sessionRate && (
+                    <div className="flex justify-between items-center text-sm">
+                      <dt className="text-gray-500 dark:text-gray-400">Rate</dt>
+                      <dd className="text-gray-900 dark:text-gray-100 font-medium">
+                        ${String(client.clientProfile.sessionRate)}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+
+                {/* Card Actions */}
+                <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex gap-2">
                     <Link
                       href={`/trainer/clients/${client.id}`}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-4"
+                      className="flex-1 px-3 py-2 text-sm font-medium text-center rounded-md bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 min-h-[44px] flex items-center justify-center"
                     >
                       View
                     </Link>
                     <button
                       onClick={() => handleEditClick(client)}
-                      className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                      className="flex-1 px-3 py-2 text-sm font-medium text-center rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 min-h-[44px] flex items-center justify-center"
                     >
                       Edit
                     </button>
-                  </td>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Billing
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                {clients.map((client: ClientWithProfile) => (
+                  <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{client.fullName}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{client.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{client.phone || "—"}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">
+                        {client.clientProfile?.billingFrequency === "PER_SESSION"
+                          ? "Per Session"
+                          : "Monthly"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <Link
+                        href={`/trainer/clients/${client.id}`}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-4"
+                      >
+                        View
+                      </Link>
+                      <button
+                        onClick={() => handleEditClick(client)}
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Edit Modal */}
