@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar"
 import { format, parse, startOfWeek, endOfWeek, getDay, addDays, addWeeks, addMonths } from "date-fns"
 import { enUS } from "date-fns/locale"
@@ -12,6 +12,7 @@ import BlockTimeModal from "@/components/BlockTimeModal"
 import AppointmentDetailModal from "@/components/AppointmentDetailModal"
 import BlockedTimeDetailModal from "@/components/BlockedTimeDetailModal"
 import { useCalendarSwipe } from "@/hooks/useCalendarSwipe"
+import { CustomAgenda } from "@/components/calendar/CustomAgenda"
 
 const locales = {
   "en-US": enUS,
@@ -280,6 +281,22 @@ export default function TrainerCalendarPage() {
   // Swipe gesture handlers for mobile calendar navigation
   const swipeHandlers = useCalendarSwipe(date, setDate, view)
 
+  // Create wrapped agenda component with navigation handlers
+  const WrappedAgenda = useMemo(() => {
+    const AgendaWithNav = (props: React.ComponentProps<typeof CustomAgenda>) => (
+      <CustomAgenda
+        {...props}
+        onNavigate={setDate}
+        onView={setView}
+      />
+    )
+    // Copy static properties from CustomAgenda
+    AgendaWithNav.title = CustomAgenda.title
+    AgendaWithNav.navigate = CustomAgenda.navigate
+    AgendaWithNav.range = CustomAgenda.range
+    return AgendaWithNav
+  }, [setDate, setView])
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
@@ -525,7 +542,11 @@ export default function TrainerCalendarPage() {
       {/* Calendar - edge-to-edge on mobile for max space */}
       <div
         {...swipeHandlers()}
-        className="bg-[var(--surface)] p-1 sm:p-4 md:p-6 lg:p-8 rounded-2xl shadow-lg sm:shadow-xl border border-[var(--border)] -mx-4 sm:mx-0 h-[calc(100vh-280px)] sm:h-[calc(100vh-200px)] md:h-[750px] min-h-[400px] max-h-[1000px] touch-pan-y overflow-hidden"
+        className={`bg-[var(--surface)] p-1 sm:p-4 md:p-6 lg:p-8 rounded-2xl shadow-lg sm:shadow-xl border border-[var(--border)] -mx-4 sm:mx-0 touch-pan-y overflow-hidden ${
+          view === "month"
+            ? "h-auto min-h-[300px] sm:h-[calc(100vh-200px)] md:h-[750px]"
+            : "h-[calc(100vh-280px)] sm:h-[calc(100vh-200px)] md:h-[750px] min-h-[400px] max-h-[1000px]"
+        }`}
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -549,7 +570,12 @@ export default function TrainerCalendarPage() {
             selectable
             eventPropGetter={eventStyleGetter}
             style={{ height: "100%" }}
-            views={["month", "week", "day", "agenda"]}
+            views={{
+              month: true,
+              week: true,
+              day: true,
+              agenda: WrappedAgenda,
+            }}
             defaultView="week"
             step={30}
             timeslots={2}
