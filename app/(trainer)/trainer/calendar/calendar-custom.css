@@ -1,6 +1,19 @@
 /* Modern Calendar Styling */
 /* Colors matched to Tailwind gray scale for consistency with app */
 
+/* Hide page scrollbar on mobile - touch scrolling doesn't need it */
+@media (max-width: 768px) {
+  html, body {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+}
+
 /* Override React Big Calendar defaults with modern design */
 .rbc-calendar {
   font-family: inherit;
@@ -148,6 +161,38 @@
 
 .rbc-time-content {
   border-top: none;
+  background-color: white;
+  -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
+  overscroll-behavior: auto; /* Allow smooth rubber band effect */
+  position: relative;
+  /* Hide scrollbar but keep scrolling */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.rbc-time-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Ensure overscroll areas have consistent background */
+.rbc-time-view {
+  background-color: white;
+  /* Extend background beyond bounds for overscroll */
+  position: relative;
+}
+
+/* Smooth overscroll appearance */
+.rbc-time-content > .rbc-time-gutter {
+  background-color: white;
+}
+
+/* Ensure day columns also have matching background */
+.rbc-time-content > .rbc-day-slot {
+  background-color: white;
+}
+
+.rbc-time-header {
+  background-color: white;
 }
 
 .rbc-time-slot {
@@ -486,30 +531,32 @@
     letter-spacing: -0.02em;
   }
 
-  /* Make events in time view more readable */
+  /* Make events in time view more readable - ENHANCED */
   .rbc-time-view .rbc-event {
-    padding: 0.625rem 0.25rem 0.25rem 0.625rem;
-    font-size: 1.25rem;
-    min-height: 40px;
-    border-radius: 0.25rem;
+    padding: 10px 12px;
+    font-size: 0.9375rem; /* 15px - optimal for mobile readability */
+    min-height: 48px;
+    border-radius: 6px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
   .rbc-time-view .rbc-event-content {
-    font-size: 1.25rem;
-    font-weight: 900;
+    font-size: 0.84375rem; /* 13.5px - 10% smaller */
+    font-weight: 700;
     line-height: 1.3;
+    letter-spacing: -0.01em;
     overflow: hidden;
-    white-space: normal;
+    white-space: normal; /* Allow wrapping */
     word-wrap: break-word;
   }
 
   .rbc-time-view .rbc-event-label {
-    display: none !important; /* Hide time labels on events to save space */
+    display: none !important; /* Hide time labels on events - tap for details */
   }
 
-  /* Time slot height */
+  /* Time slot height - increased for better touch targets */
   .rbc-timeslot-group {
-    min-height: 3.5rem;
+    min-height: 4rem;
   }
 
   /* Day column improvements - events use full width */
@@ -536,6 +583,84 @@
 
   .rbc-row-segment {
     padding: 0 1px;
+  }
+
+  /* ========================================
+     Day View Mobile Enhancements
+     ======================================== */
+
+  /* Wider time gutter in day view for better readability */
+  .rbc-day-view .rbc-time-gutter {
+    min-width: 52px !important;
+    max-width: 52px !important;
+    font-size: 0.6875rem; /* 11px */
+  }
+
+  .rbc-day-view .rbc-label {
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 500;
+    padding: 0 4px !important;
+  }
+
+  /* Larger event cards in day view */
+  .rbc-day-view .rbc-event {
+    min-height: 56px;
+    padding: 12px 16px;
+    border-radius: 8px;
+  }
+
+  .rbc-day-view .rbc-event-content {
+    font-size: 1rem; /* 16px - larger for day view */
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  /* Full width time slots in day view */
+  .rbc-day-view .rbc-day-slot {
+    width: 100% !important;
+  }
+
+  /* Larger time slots in day view */
+  .rbc-day-view .rbc-timeslot-group {
+    min-height: 4.5rem;
+  }
+
+  /* ========================================
+     Compact 7-Day Week View
+     ======================================== */
+
+  /* Optimize week view for all 7 days to fit */
+  .rbc-time-view .rbc-day-slot {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  /* Compact event cards for week view */
+  .rbc-week-view .rbc-event,
+  .rbc-time-view .rbc-event {
+    padding: 4px 6px;
+    min-height: 36px;
+    border-radius: 4px;
+  }
+
+  .rbc-week-view .rbc-event-content,
+  .rbc-time-view .rbc-event-content {
+    font-size: 0.675rem; /* 10.8px - 10% smaller */
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    white-space: normal; /* Allow text to wrap */
+    word-wrap: break-word;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Max 3 lines before truncating */
+    -webkit-box-orient: vertical;
+  }
+
+  /* Narrower time gutter to maximize day column space */
+  .rbc-time-gutter {
+    min-width: 34px !important;
+    max-width: 34px !important;
   }
 }
 
@@ -642,20 +767,25 @@
     text-align: left !important;
   }
 
-  /* Time view events - readable on small phones */
+  /* Time view events - ENHANCED readability on small phones */
   .rbc-time-view .rbc-event {
-    min-height: 29px;
-    font-size: 0.675rem;
-    padding: 0.3rem 0.15rem 0.15rem 0.3rem;
+    min-height: 44px;
+    font-size: 0.8125rem; /* 13px - still readable on small screens */
+    padding: 8px 10px;
+    border-radius: 6px;
   }
 
   .rbc-time-view .rbc-event-content {
-    font-size: 0.675rem;
-    font-weight: 900;
+    font-size: 0.73rem; /* 11.7px - 10% smaller */
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    white-space: normal; /* Allow wrapping */
+    word-wrap: break-word;
+    overflow: hidden;
   }
 
   .rbc-timeslot-group {
-    min-height: 1.95rem;
+    min-height: 3.5rem; /* Increased from 1.95rem */
   }
 
   /* Agenda view on extra small */
@@ -690,24 +820,25 @@
   }
 }
 
-/* Touch-friendly improvements */
+/* Touch-friendly improvements - ENHANCED */
 @media (hover: none) and (pointer: coarse) {
   /* Ensure all interactive elements have proper touch targets */
   .rbc-event,
   .rbc-toolbar button,
   .rbc-show-more {
-    min-height: 44px;
+    min-height: 48px;
   }
 
-  /* Active state feedback for touch */
+  /* Active state feedback for touch - satisfying press animation */
   .rbc-toolbar button:active {
     transform: scale(0.95);
     transition: transform 0.1s ease;
   }
 
   .rbc-event:active {
-    transform: scale(0.98);
-    transition: transform 0.1s ease;
+    transform: scale(0.97);
+    opacity: 0.9;
+    transition: transform 0.1s ease, opacity 0.1s ease;
   }
 
   /* Remove hover effects that don't work well on touch */
@@ -721,7 +852,7 @@
 
   /* Better touch feedback for show more */
   .rbc-show-more {
-    min-height: 44px;
+    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -779,10 +910,27 @@
     border-left: 1px solid rgb(55, 65, 81) !important; /* gray-700 */
   }
 
-  /* Time view */
+  /* Time view - consistent backgrounds for smooth overscroll */
+  .rbc-time-view {
+    background: rgb(17, 24, 39) !important; /* gray-900 */
+  }
+
   .rbc-time-header {
     background: rgb(31, 41, 55) !important; /* gray-800 */
     border-bottom: 2px solid rgb(55, 65, 81) !important; /* gray-700 */
+  }
+
+  .rbc-time-content {
+    background: rgb(17, 24, 39) !important; /* gray-900 */
+  }
+
+  /* Dark mode overscroll backgrounds */
+  .rbc-time-content > .rbc-time-gutter {
+    background-color: rgb(17, 24, 39) !important; /* gray-900 */
+  }
+
+  .rbc-time-content > .rbc-day-slot {
+    background-color: rgb(17, 24, 39) !important; /* gray-900 */
   }
 
   .rbc-time-gutter {
@@ -1013,5 +1161,53 @@
   .rbc-label.drag-time-highlight {
     color: #60a5fa !important;
     font-weight: 900 !important;
+  }
+}
+
+/* ===============================================
+   Mobile Calendar Visual Polish - Final Enhancements
+   =============================================== */
+
+/* Smooth transitions for all events */
+.rbc-event {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.15s ease;
+}
+
+/* Enhanced dark mode event appearance */
+@media (prefers-color-scheme: dark) {
+  .rbc-time-view .rbc-event {
+    filter: brightness(1.05);
+  }
+
+  /* Softer time slot borders in dark mode */
+  .rbc-time-slot {
+    border-top-color: rgba(55, 65, 81, 0.25) !important;
+  }
+}
+
+/* Focus state for accessibility */
+.rbc-event:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+}
+
+/* View transition smoothness */
+.rbc-calendar {
+  transition: opacity 0.15s ease;
+}
+
+/* Blocked time diagonal pattern for visual distinction */
+@media (max-width: 768px) {
+  .rbc-time-view .rbc-event[style*="107, 114, 128"] {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      rgba(0,0,0,0.05) 3px,
+      rgba(0,0,0,0.05) 6px
+    ) !important;
   }
 }

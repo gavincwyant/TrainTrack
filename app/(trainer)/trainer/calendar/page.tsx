@@ -224,43 +224,50 @@ export default function TrainerCalendarPage() {
     if (event.type === "blocked") {
       return {
         style: {
-          backgroundColor: "#6b7280", // grey for blocked
-          borderRadius: "5px",
-          opacity: 0.8,
+          backgroundColor: "rgba(107, 114, 128, 0.85)", // grey for blocked
+          borderRadius: "6px",
+          opacity: 1,
           color: "white",
-          border: "2px solid #4b5563",
+          borderLeft: "4px solid #4b5563",
           display: "block",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         },
       }
     }
 
-    // Appointment styling
+    // Appointment styling with status indicator border
     const status = (event.resource as Appointment).status
-    let backgroundColor = "#3174ad"
+    let backgroundColor = "#3b82f6"
+    let borderColor = "#2563eb"
 
     switch (status) {
       case "SCHEDULED":
-        backgroundColor = "#3b82f6" // blue
+        backgroundColor = "rgba(59, 130, 246, 0.9)" // blue
+        borderColor = "#2563eb" // blue-600
         break
       case "COMPLETED":
-        backgroundColor = "#10b981" // green
+        backgroundColor = "rgba(16, 185, 129, 0.9)" // green
+        borderColor = "#059669" // emerald-600
         break
       case "CANCELLED":
-        backgroundColor = "#ef4444" // red
+        backgroundColor = "rgba(239, 68, 68, 0.85)" // red
+        borderColor = "#dc2626" // red-600
         break
       case "RESCHEDULED":
-        backgroundColor = "#f59e0b" // amber
+        backgroundColor = "rgba(245, 158, 11, 0.9)" // amber
+        borderColor = "#d97706" // amber-600
         break
     }
 
     return {
       style: {
         backgroundColor,
-        borderRadius: "5px",
-        opacity: 0.8,
+        borderRadius: "6px",
+        opacity: 1,
         color: "white",
-        border: "0px",
+        borderLeft: `4px solid ${borderColor}`,
         display: "block",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
       },
     }
   }
