@@ -14,6 +14,8 @@ const settingsSchema = z.object({
   // Pricing settings
   defaultIndividualSessionRate: z.number().min(0).optional(),
   defaultGroupSessionRate: z.number().min(0).optional(),
+  // Group session settings
+  groupSessionMatchingLogic: z.enum(["EXACT_MATCH", "START_MATCH", "END_MATCH", "ANY_OVERLAP"]).optional(),
   // Client sync settings
   autoClientSyncEnabled: z.boolean().optional(),
   clientSyncLookbackDays: z.number().int().min(1).max(365).optional(),
@@ -128,6 +130,7 @@ export async function PUT(request: Request) {
     if (data.defaultInvoiceDueDays !== undefined) updateData.defaultInvoiceDueDays = data.defaultInvoiceDueDays
     if (data.defaultIndividualSessionRate !== undefined) updateData.defaultIndividualSessionRate = data.defaultIndividualSessionRate
     if (data.defaultGroupSessionRate !== undefined) updateData.defaultGroupSessionRate = data.defaultGroupSessionRate
+    if (data.groupSessionMatchingLogic !== undefined) updateData.groupSessionMatchingLogic = data.groupSessionMatchingLogic
     if (data.autoClientSyncEnabled !== undefined) updateData.autoClientSyncEnabled = data.autoClientSyncEnabled
     if (data.clientSyncLookbackDays !== undefined) updateData.clientSyncLookbackDays = data.clientSyncLookbackDays
     if (data.hasCompletedInitialClientSync !== undefined) updateData.hasCompletedInitialClientSync = data.hasCompletedInitialClientSync

@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react"
 
+export type GroupSessionMatchingLogic = "EXACT_MATCH" | "START_MATCH" | "END_MATCH" | "ANY_OVERLAP"
+
 export type Settings = {
   dayStartTime: string
   dayEndTime: string
@@ -13,6 +15,7 @@ export type Settings = {
   defaultInvoiceDueDays: number
   defaultIndividualSessionRate: number | null
   defaultGroupSessionRate: number | null
+  groupSessionMatchingLogic: GroupSessionMatchingLogic
   autoClientSyncEnabled: boolean
   darkModeEnabled: boolean
 }
@@ -123,6 +126,10 @@ export function useTrainerSettings() {
     return await updateSettings({ defaultGroupSessionRate: rate })
   }
 
+  const handleGroupSessionMatchingLogicChange = async (logic: GroupSessionMatchingLogic) => {
+    return await updateSettings({ groupSessionMatchingLogic: logic })
+  }
+
   const handleManualSync = async () => {
     setIsSyncing(true)
     setError(null)
@@ -163,6 +170,7 @@ export function useTrainerSettings() {
     handleDefaultDueDaysChange,
     handleIndividualSessionRateChange,
     handleGroupSessionRateChange,
+    handleGroupSessionMatchingLogicChange,
     handleManualSync,
     clearError: () => setError(null),
   }

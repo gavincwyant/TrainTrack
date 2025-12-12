@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -13,6 +13,7 @@ const clientSchema = z.object({
   phone: z.string().optional(),
   billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]),
   sessionRate: z.string().min(1, "Session rate is required"),
+  groupSessionRate: z.string().optional(),
   notes: z.string().optional(),
   createAccount: z.enum(["invite", "manual"]),
   autoInvoiceEnabled: z.boolean(),
@@ -20,16 +21,23 @@ const clientSchema = z.object({
 
 type ClientFormData = z.infer<typeof clientSchema>
 
+type TrainerDefaults = {
+  defaultIndividualSessionRate: number | null
+  defaultGroupSessionRate: number | null
+}
+
 export default function NewClientPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [trainerDefaults, setTrainerDefaults] = useState<TrainerDefaults | null>(null)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
@@ -38,6 +46,34 @@ export default function NewClientPage() {
       autoInvoiceEnabled: true,
     },
   })
+
+  // Fetch trainer default rates
+  useEffect(() => {
+    const fetchDefaults = async () => {
+      try {
+        const response = await fetch("/api/trainer-settings")
+        if (response.ok) {
+          const data = await response.json()
+          const settings = data.settings
+          setTrainerDefaults({
+            defaultIndividualSessionRate: settings.defaultIndividualSessionRate,
+            defaultGroupSessionRate: settings.defaultGroupSessionRate,
+          })
+          // Pre-populate the form with trainer defaults
+          if (settings.defaultIndividualSessionRate) {
+            setValue("sessionRate", settings.defaultIndividualSessionRate.toString())
+          }
+          if (settings.defaultGroupSessionRate) {
+            setValue("groupSessionRate", settings.defaultGroupSessionRate.toString())
+          }
+        }
+      } catch (err) {
+        // Silently fail - defaults are optional
+        console.error("Failed to fetch trainer defaults:", err)
+      }
+    }
+    fetchDefaults()
+  }, [setValue])
 
   const createAccount = watch("createAccount")
 
@@ -193,7 +229,7 @@ export default function NewClientPage() {
 
               <div>
                 <label htmlFor="sessionRate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Session Rate (USD) *
+                  Individual Session Rate (USD) *
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -209,6 +245,37 @@ export default function NewClientPage() {
                 </div>
                 {errors.sessionRate && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.sessionRate.message}</p>
+                )}
+                {trainerDefaults?.defaultIndividualSessionRate && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Your default: ${Number(trainerDefaults.defaultIndividualSessionRate).toFixed(2)}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="groupSessionRate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Group Session Rate (USD)
+                </label>
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400 sm:text-sm">$</span>
+                  </div>
+                  <input
+                    {...register("groupSessionRate")}
+                    type="number"
+                    step="0.01"
+                    className="block w-full pl-7 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
+                    placeholder="Leave blank to use your default"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Rate for group training sessions. If blank, uses your default group rate, then falls back to individual rate.
+                </p>
+                {trainerDefaults?.defaultGroupSessionRate && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Your default: ${Number(trainerDefaults.defaultGroupSessionRate).toFixed(2)}
+                  </p>
                 )}
               </div>
 

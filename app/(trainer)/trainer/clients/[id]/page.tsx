@@ -30,6 +30,14 @@ export default async function ClientDetailPage({
     notFound()
   }
 
+  // Fetch trainer settings for default rates
+  const trainerSettings = await prisma.trainerSettings.findUnique({
+    where: { trainerId: session.user.id },
+  })
+
+  const trainerDefaultGroupRate = trainerSettings?.defaultGroupSessionRate
+  const trainerDefaultIndividualRate = trainerSettings?.defaultIndividualSessionRate
+
   // Fetch recent appointments
   const appointments = await prisma.appointment.findMany({
     where: {
@@ -103,9 +111,22 @@ export default async function ClientDetailPage({
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-400">Session Rate</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-400">Individual Session Rate</p>
             <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-              ${client.clientProfile.sessionRate.toFixed(2)}
+              ${Number(client.clientProfile.sessionRate).toFixed(2)}
+              {trainerDefaultIndividualRate &&
+                Number(client.clientProfile.sessionRate) === Number(trainerDefaultIndividualRate) &&
+                " (default)"}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-400">Group Session Rate</p>
+            <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {client.clientProfile.groupSessionRate
+                ? `$${Number(client.clientProfile.groupSessionRate).toFixed(2)}`
+                : trainerDefaultGroupRate
+                  ? `$${Number(trainerDefaultGroupRate).toFixed(2)} (default)`
+                  : "Not set"}
             </p>
           </div>
           <div>

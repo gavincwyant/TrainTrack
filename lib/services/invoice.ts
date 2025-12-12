@@ -1,12 +1,90 @@
 import { prisma } from "@/lib/db"
 import { EmailService } from "./email"
-import { Prisma } from "@prisma/client"
+import { Prisma, ClientProfile, TrainerSettings, Appointment } from "@prisma/client"
+
+type GroupSessionMatchingLogic = "EXACT_MATCH" | "START_MATCH" | "END_MATCH" | "ANY_OVERLAP"
 
 export class InvoiceService {
   private emailService: EmailService
 
   constructor() {
     this.emailService = new EmailService()
+  }
+
+  /**
+   * Check if an appointment is part of a group session based on the trainer's matching logic
+   * Returns whether it's a group session and the count of participants
+   */
+  private async getGroupSessionInfo(
+    appointment: Appointment,
+    matchingLogic: GroupSessionMatchingLogic
+  ): Promise<{ isGroupSession: boolean; participantCount: number }> {
+    // Build the overlap condition based on matching logic
+    let overlapCondition: Prisma.AppointmentWhereInput
+
+    switch (matchingLogic) {
+      case "START_MATCH":
+        overlapCondition = { startTime: appointment.startTime }
+        break
+      case "END_MATCH":
+        overlapCondition = { endTime: appointment.endTime }
+        break
+      case "ANY_OVERLAP":
+        // Any overlap: appointment A overlaps with B if A.start < B.end AND A.end > B.start
+        overlapCondition = {
+          AND: [
+            { startTime: { lt: appointment.endTime } },
+            { endTime: { gt: appointment.startTime } },
+          ],
+        }
+        break
+      case "EXACT_MATCH":
+      default:
+        overlapCondition = {
+          startTime: appointment.startTime,
+          endTime: appointment.endTime,
+        }
+    }
+
+    const overlappingAppointments = await prisma.appointment.findMany({
+      where: {
+        trainerId: appointment.trainerId,
+        workspaceId: appointment.workspaceId,
+        status: { in: ["SCHEDULED", "COMPLETED"] },
+        id: { not: appointment.id }, // Exclude the current appointment
+        ...overlapCondition,
+      },
+    })
+
+    // +1 to include the current appointment in the count
+    const participantCount = overlappingAppointments.length + 1
+    return {
+      isGroupSession: participantCount > 1,
+      participantCount,
+    }
+  }
+
+  /**
+   * Determine the session rate for billing based on whether it's a group session
+   * Fallback chain: client group rate → trainer default group rate → client individual rate
+   */
+  private getSessionRate(
+    clientProfile: ClientProfile,
+    trainerSettings: TrainerSettings | null,
+    isGroupSession: boolean
+  ): Prisma.Decimal {
+    if (isGroupSession) {
+      // Try client's group rate first
+      if (clientProfile.groupSessionRate) {
+        return new Prisma.Decimal(clientProfile.groupSessionRate)
+      }
+      // Try trainer's default group rate
+      if (trainerSettings?.defaultGroupSessionRate) {
+        return new Prisma.Decimal(trainerSettings.defaultGroupSessionRate)
+      }
+    }
+    // Fall back to individual session rate
+    return new Prisma.Decimal(clientProfile.sessionRate)
   }
 
   /**
@@ -66,7 +144,7 @@ export class InvoiceService {
       return
     }
 
-    // Get trainer settings for due date default
+    // Get trainer settings for due date default and group session matching logic
     const trainerSettings = await prisma.trainerSettings.findUnique({
       where: { trainerId: appointment.trainerId },
     })
@@ -75,8 +153,17 @@ export class InvoiceService {
     const dueDate = new Date()
     dueDate.setDate(dueDate.getDate() + dueDays)
 
+    // Check if this is a group session
+    const matchingLogic = (trainerSettings?.groupSessionMatchingLogic || "EXACT_MATCH") as GroupSessionMatchingLogic
+    const { isGroupSession } = await this.getGroupSessionInfo(appointment, matchingLogic)
+
+    // Determine the appropriate rate
+    const sessionRate = this.getSessionRate(clientProfile, trainerSettings, isGroupSession)
+    const sessionType = isGroupSession ? "Group training session" : "Training session"
+
+    console.log(`📊 Session type: ${isGroupSession ? "GROUP" : "INDIVIDUAL"}, Rate: $${sessionRate}`)
+
     // Create invoice
-    const sessionRate = clientProfile.sessionRate
     const invoice = await prisma.invoice.create({
       data: {
         workspaceId: appointment.workspaceId,
@@ -88,7 +175,7 @@ export class InvoiceService {
         lineItems: {
           create: {
             appointmentId: appointment.id,
-            description: `Training session on ${new Date(appointment.startTime).toLocaleDateString()}`,
+            description: `${sessionType} on ${new Date(appointment.startTime).toLocaleDateString()}`,
             quantity: 1,
             unitPrice: sessionRate,
             total: sessionRate,
@@ -203,9 +290,35 @@ export class InvoiceService {
     const dueDate = new Date()
     dueDate.setDate(dueDate.getDate() + dueDays)
 
-    // Calculate total
-    const sessionRate = client.clientProfile.sessionRate
-    const totalAmount = new Prisma.Decimal(sessionRate).mul(appointments.length)
+    // Determine group session status and rate for each appointment
+    const matchingLogic = (trainerSettings?.groupSessionMatchingLogic || "EXACT_MATCH") as GroupSessionMatchingLogic
+
+    const lineItemsData = await Promise.all(
+      appointments.map(async (apt) => {
+        const { isGroupSession } = await this.getGroupSessionInfo(apt, matchingLogic)
+        const rate = this.getSessionRate(client.clientProfile!, trainerSettings, isGroupSession)
+        const sessionType = isGroupSession ? "Group training session" : "Training session"
+
+        return {
+          appointmentId: apt.id,
+          description: `${sessionType} on ${new Date(apt.startTime).toLocaleDateString()}`,
+          quantity: 1,
+          unitPrice: rate,
+          total: rate,
+          isGroupSession,
+        }
+      })
+    )
+
+    // Calculate total from individual line items (since rates may vary)
+    const totalAmount = lineItemsData.reduce(
+      (sum, item) => sum.add(item.total),
+      new Prisma.Decimal(0)
+    )
+
+    const groupCount = lineItemsData.filter(item => item.isGroupSession).length
+    const individualCount = lineItemsData.length - groupCount
+    console.log(`📊 Sessions: ${groupCount} group, ${individualCount} individual, Total: $${totalAmount}`)
 
     // Create invoice with line items
     const invoice = await prisma.invoice.create({
@@ -218,12 +331,12 @@ export class InvoiceService {
         status: "SENT",
         notes: `Monthly invoice for ${firstDayLastMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`,
         lineItems: {
-          create: appointments.map((apt) => ({
-            appointmentId: apt.id,
-            description: `Training session on ${new Date(apt.startTime).toLocaleDateString()}`,
-            quantity: 1,
-            unitPrice: sessionRate,
-            total: sessionRate,
+          create: lineItemsData.map(({ appointmentId, description, quantity, unitPrice, total }) => ({
+            appointmentId,
+            description,
+            quantity,
+            unitPrice,
+            total,
           })),
         },
       },

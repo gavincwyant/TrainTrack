@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 
 const appointmentSchema = z.object({
-  clientId: z.string().min(1, "Please select a client"),
   date: z.string().min(1, "Date is required"),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
@@ -38,6 +37,7 @@ export default function AppointmentModal({
   preselectedClient,
 }: AppointmentModalProps) {
   const [clients, setClients] = useState<Client[]>([])
+  const [selectedClients, setSelectedClients] = useState<Client[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -50,7 +50,6 @@ export default function AppointmentModal({
   } = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      clientId: preselectedClient || "",
       date: preselectedDate
         ? preselectedDate.toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0],
@@ -77,11 +76,18 @@ export default function AppointmentModal({
         const endDate = preselectedEndDate || new Date(preselectedDate.getTime() + 60 * 60 * 1000)
         setValue("endTime", `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`)
       }
-      if (preselectedClient) {
-        setValue("clientId", preselectedClient)
+    }
+  }, [isOpen, preselectedDate, preselectedEndDate, setValue])
+
+  // Handle preselected client after clients are loaded
+  useEffect(() => {
+    if (preselectedClient && clients.length > 0) {
+      const client = clients.find(c => c.id === preselectedClient)
+      if (client && !selectedClients.some(sc => sc.id === client.id)) {
+        setSelectedClients([client])
       }
     }
-  }, [isOpen, preselectedDate, preselectedEndDate, preselectedClient, setValue])
+  }, [preselectedClient, clients, selectedClients])
 
   // Lock body scroll and calendar scroll when modal is open
   useEffect(() => {
@@ -123,7 +129,23 @@ export default function AppointmentModal({
     }
   }
 
+  const handleAddClient = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId)
+    if (client && !selectedClients.some(sc => sc.id === clientId)) {
+      setSelectedClients([...selectedClients, client])
+    }
+  }
+
+  const handleRemoveClient = (clientId: string) => {
+    setSelectedClients(selectedClients.filter(c => c.id !== clientId))
+  }
+
   const onSubmit = async (data: AppointmentFormData) => {
+    if (selectedClients.length === 0) {
+      setError("Please select at least one client")
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -139,23 +161,28 @@ export default function AppointmentModal({
         return
       }
 
-      const response = await fetch("/api/appointments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: data.clientId,
-          startTime: startDateTime.toISOString(),
-          endTime: endDateTime.toISOString(),
-        }),
-      })
+      // Create appointments for all selected clients
+      const appointmentPromises = selectedClients.map(client =>
+        fetch("/api/appointments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId: client.id,
+            startTime: startDateTime.toISOString(),
+            endTime: endDateTime.toISOString(),
+          }),
+        })
+      )
 
-      const result = await response.json()
+      const results = await Promise.all(appointmentPromises)
+      const failedResults = results.filter(r => !r.ok)
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to create appointment")
+      if (failedResults.length > 0) {
+        throw new Error(`Failed to create ${failedResults.length} appointment(s)`)
       }
 
       reset()
+      setSelectedClients([])
       onSuccess()
       onClose()
     } catch (err) {
@@ -167,6 +194,7 @@ export default function AppointmentModal({
 
   const handleClose = () => {
     reset()
+    setSelectedClients([])
     setError(null)
     onClose()
   }
@@ -214,24 +242,68 @@ export default function AppointmentModal({
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Client Selection */}
             <div>
-              <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Client *
+              <label htmlFor="clientSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {selectedClients.length > 1 ? "Clients *" : "Client *"}
               </label>
               <select
-                {...register("clientId")}
-                id="clientId"
+                id="clientSelect"
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleAddClient(e.target.value)
+                  }
+                }}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
               >
-                <option value="">Select a client</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.fullName}
-                  </option>
-                ))}
+                <option value="">
+                  {selectedClients.length === 0 ? "Select a client" : "Add another client"}
+                </option>
+                {clients
+                  .filter(client => !selectedClients.some(sc => sc.id === client.id))
+                  .map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.fullName}
+                    </option>
+                  ))}
               </select>
-              {errors.clientId && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.clientId.message}</p>
+
+              {/* Selected Clients List */}
+              {selectedClients.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {selectedClients.map((client) => (
+                    <div
+                      key={client.id}
+                      className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-md"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                          {client.fullName}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                          {client.email}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveClient(client.id)}
+                        className="ml-2 p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
+                        aria-label={`Remove ${client.fullName}`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {selectedClients.length > 1 && (
+                <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                  This will create a group session with {selectedClients.length} clients
+                </p>
               )}
             </div>
 
@@ -292,10 +364,14 @@ export default function AppointmentModal({
               </button>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || selectedClients.length === 0}
                 className="px-4 py-2 min-h-[44px] bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Scheduling..." : "Schedule Appointment"}
+                {isLoading
+                  ? "Scheduling..."
+                  : selectedClients.length > 1
+                    ? `Schedule Group Session (${selectedClients.length})`
+                    : "Schedule Appointment"}
               </button>
             </div>
           </form>
