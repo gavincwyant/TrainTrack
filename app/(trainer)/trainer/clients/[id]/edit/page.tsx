@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -14,40 +14,70 @@ const clientSchema = z.object({
   billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]),
   sessionRate: z.string().min(1, "Session rate is required"),
   notes: z.string().optional(),
-  createAccount: z.enum(["invite", "manual"]),
   autoInvoiceEnabled: z.boolean(),
 })
 
 type ClientFormData = z.infer<typeof clientSchema>
 
-export default function NewClientPage() {
+export default function EditClientPage() {
   const router = useRouter()
+  const params = useParams()
+  const id = params.id as string
+
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(true)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
+    reset,
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
-      createAccount: "manual",
       billingFrequency: "PER_SESSION",
       autoInvoiceEnabled: true,
     },
   })
 
-  const createAccount = watch("createAccount")
+  useEffect(() => {
+    const fetchClient = async () => {
+      try {
+        const response = await fetch(`/api/clients/${id}`)
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch client")
+        }
+
+        const client = data.client
+        reset({
+          fullName: client.fullName,
+          email: client.email,
+          phone: client.phone || "",
+          billingFrequency: client.clientProfile?.billingFrequency || "PER_SESSION",
+          sessionRate: client.clientProfile?.sessionRate?.toString() || "",
+          notes: client.clientProfile?.notes || "",
+          autoInvoiceEnabled: client.clientProfile?.autoInvoiceEnabled ?? true,
+        })
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load client")
+      } finally {
+        setIsFetching(false)
+      }
+    }
+
+    fetchClient()
+  }, [id, reset])
 
   const onSubmit = async (data: ClientFormData) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await fetch("/api/clients", {
-        method: "POST",
+      const response = await fetch(`/api/clients/${id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
@@ -55,10 +85,10 @@ export default function NewClientPage() {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to add client")
+        throw new Error(result.error || "Failed to update client")
       }
 
-      router.push("/trainer/clients")
+      router.push(`/trainer/clients/${id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -66,16 +96,26 @@ export default function NewClientPage() {
     }
   }
 
+  if (isFetching) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+          <p className="text-gray-600 dark:text-gray-400">Loading client...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <Link href="/trainer/clients" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-          ← Back to clients
+        <Link href={`/trainer/clients/${id}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+          ← Back to client
         </Link>
       </div>
 
       <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Add New Client</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Edit Client</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {error && (
@@ -84,45 +124,8 @@ export default function NewClientPage() {
             </div>
           )}
 
-          {/* Account Creation Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Account Creation Method
-            </label>
-            <div className="space-y-3">
-              <label className="flex items-start">
-                <input
-                  {...register("createAccount")}
-                  type="radio"
-                  value="manual"
-                  className="mr-3 mt-1"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Manual Entry (No Client Access)</span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Client profile for your records only. Client will not have login access. You manage all scheduling and billing.
-                  </p>
-                </div>
-              </label>
-              <label className="flex items-start">
-                <input
-                  {...register("createAccount")}
-                  type="radio"
-                  value="invite"
-                  className="mr-3 mt-1"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Send Email Invitation</span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Client receives an email to create their own account and password. They can manage their own bookings.
-                  </p>
-                </div>
-              </label>
-            </div>
-          </div>
-
           {/* Client Information */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Client Information</h3>
 
             <div className="space-y-4">
@@ -244,7 +247,7 @@ export default function NewClientPage() {
           {/* Submit */}
           <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
             <Link
-              href="/trainer/clients"
+              href={`/trainer/clients/${id}`}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Cancel
@@ -254,7 +257,7 @@ export default function NewClientPage() {
               disabled={isLoading}
               className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Adding..." : createAccount === "invite" ? "Send Invitation" : "Add Client"}
+              {isLoading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
