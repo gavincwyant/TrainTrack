@@ -24,6 +24,7 @@ model Workspace {
 
   users                     User[]                     @relation("WorkspaceMembers")
   clientProfiles            ClientProfile[]
+  clientTrainers            ClientTrainer[]
   appointments              Appointment[]
   workoutSessions           WorkoutSession[]
   invoices                  Invoice[]
@@ -70,6 +71,10 @@ model User {
   trainerPendingClientProfiles PendingClientProfile[] @relation("TrainerPendingClientProfiles")
   convertedFromPendingClient   PendingClientProfile?  @relation("ConvertedFromPendingClient")
 
+  // Client-Trainer relationships
+  clientTrainers               ClientTrainer[]        @relation("ClientTrainers")
+  trainerClients               ClientTrainer[]        @relation("TrainerClients")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -95,6 +100,14 @@ model ClientProfile {
   // Invoice Settings
   autoInvoiceEnabled Boolean @default(true) @map("auto_invoice_enabled") // Opt-out per client
 
+  // Group Session Permissions
+  groupSessionPermission   String  @default("NO_GROUP_SESSIONS") @map("group_session_permission") // NO_GROUP_SESSIONS, ALLOW_ALL_GROUP, ALLOW_SPECIFIC_CLIENTS
+  groupSessionDiscoverable Boolean @default(false) @map("group_session_discoverable") // Opt-in to be visible in other clients' allowed lists
+
+  // Relations for allowed clients (specific permissions)
+  allowedGroupClients GroupSessionAllowedClient[] @relation("AllowerProfile")
+  allowedByClients    GroupSessionAllowedClient[] @relation("AllowedProfile")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -104,6 +117,44 @@ model ClientProfile {
 enum BillingFrequency {
   PER_SESSION
   MONTHLY
+}
+
+model ClientTrainer {
+  id          String    @id @default(uuid())
+  clientId    String    @map("client_id")
+  client      User      @relation("ClientTrainers", fields: [clientId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation("TrainerClients", fields: [trainerId], references: [id], onDelete: Cascade)
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  isActive    Boolean   @default(true) @map("is_active")
+  startDate   DateTime  @default(now()) @map("start_date")
+  endDate     DateTime? @map("end_date")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([clientId, trainerId, workspaceId])
+  @@index([clientId])
+  @@index([trainerId])
+  @@index([workspaceId])
+  @@map("client_trainers")
+}
+
+model GroupSessionAllowedClient {
+  id               String        @id @default(uuid())
+  allowerProfileId String        @map("allower_profile_id")
+  allowerProfile   ClientProfile @relation("AllowerProfile", fields: [allowerProfileId], references: [id], onDelete: Cascade)
+  allowedProfileId String        @map("allowed_profile_id")
+  allowedProfile   ClientProfile @relation("AllowedProfile", fields: [allowedProfileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([allowerProfileId, allowedProfileId])
+  @@index([allowerProfileId])
+  @@index([allowedProfileId])
+  @@map("group_session_allowed_clients")
 }
 
 // ============================================================================
@@ -205,6 +256,10 @@ model Appointment {
   endTime            DateTime          @map("end_time")
   status             AppointmentStatus
   cancellationReason String?           @map("cancellation_reason") @db.Text
+
+  // Group session override - NULL means use client's default permission
+  // Values: "ALLOW_ALL", "ALLOW_SPECIFIC", "NO_GROUP"
+  groupSessionOverride String?         @map("group_session_override")
 
   workoutSession        WorkoutSession?
   invoiceLineItems      InvoiceLineItem[]

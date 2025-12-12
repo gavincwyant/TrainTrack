@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/db"
-import { requireWorkspace, requireUserId } from "@/lib/middleware/tenant"
+import { requireWorkspace, requireUserId, isTrainer } from "@/lib/middleware/tenant"
 
 const blockedTimeSchema = z.object({
   startTime: z.string().datetime(),
@@ -15,11 +15,44 @@ export async function GET() {
   try {
     const workspaceId = await requireWorkspace()
     const userId = await requireUserId()
+    const userIsTrainer = await isTrainer()
+
+    let trainerId = userId
+
+    // If user is a client, find their trainer's blocked times
+    if (!userIsTrainer) {
+      // First try to get trainer from ClientTrainer relationship
+      const clientTrainer = await prisma.clientTrainer.findFirst({
+        where: {
+          clientId: userId,
+          workspaceId,
+          isActive: true,
+        },
+        select: { trainerId: true },
+      })
+
+      if (clientTrainer) {
+        trainerId = clientTrainer.trainerId
+      } else {
+        // Fallback: get any trainer in the workspace
+        const trainer = await prisma.user.findFirst({
+          where: {
+            workspaceId,
+            role: "TRAINER",
+          },
+          select: { id: true },
+        })
+
+        if (trainer) {
+          trainerId = trainer.id
+        }
+      }
+    }
 
     const blockedTimes = await prisma.blockedTime.findMany({
       where: {
         workspaceId,
-        trainerId: userId,
+        trainerId,
       },
       orderBy: {
         startTime: "asc",

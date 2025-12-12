@@ -65,6 +65,8 @@ export async function cleanDatabase() {
       prisma.blockedTime.deleteMany(),
 
       // Client-related tables
+      prisma.groupSessionAllowedClient.deleteMany(),
+      prisma.clientTrainer.deleteMany(),
       prisma.pendingClientProfile.deleteMany(),
       prisma.clientProfile.deleteMany(),
 
