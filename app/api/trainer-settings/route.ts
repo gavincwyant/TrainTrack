@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/db"
-import { requireWorkspace, requireUserId } from "@/lib/middleware/tenant"
+import { requireWorkspace, requireUserId, isTrainer } from "@/lib/middleware/tenant"
 
 const settingsSchema = z.object({
   dayStartTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
@@ -26,19 +26,63 @@ export async function GET() {
   try {
     const workspaceId = await requireWorkspace()
     const userId = await requireUserId()
+    const userIsTrainer = await isTrainer()
+
+    let trainerId = userId
+
+    // If user is a client, find their trainer's settings
+    if (!userIsTrainer) {
+      // First try to get trainer from ClientTrainer relationship
+      const clientTrainer = await prisma.clientTrainer.findFirst({
+        where: {
+          clientId: userId,
+          workspaceId,
+          isActive: true,
+        },
+        select: { trainerId: true },
+      })
+
+      if (clientTrainer) {
+        trainerId = clientTrainer.trainerId
+      } else {
+        // Fallback: get any trainer in the workspace
+        const trainer = await prisma.user.findFirst({
+          where: {
+            workspaceId,
+            role: "TRAINER",
+          },
+          select: { id: true },
+        })
+
+        if (trainer) {
+          trainerId = trainer.id
+        }
+      }
+    }
 
     let settings = await prisma.trainerSettings.findUnique({
       where: {
-        trainerId: userId,
+        trainerId,
       },
     })
 
-    // Create default settings if they don't exist
-    if (!settings) {
+    // Create default settings if they don't exist (only for trainers)
+    if (!settings && userIsTrainer) {
       settings = await prisma.trainerSettings.create({
         data: {
           workspaceId,
-          trainerId: userId,
+          trainerId,
+          dayStartTime: "06:00",
+          dayEndTime: "22:00",
+          timezone: "America/New_York",
+        },
+      })
+    }
+
+    // Return default values if no settings found (for clients whose trainer has no settings)
+    if (!settings) {
+      return NextResponse.json({
+        settings: {
           dayStartTime: "06:00",
           dayEndTime: "22:00",
           timezone: "America/New_York",

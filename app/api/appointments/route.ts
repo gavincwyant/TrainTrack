@@ -9,7 +9,45 @@ const appointmentSchema = z.object({
   clientId: z.string().uuid().optional(), // Optional for client self-booking
   startTime: z.string().datetime(),
   endTime: z.string().datetime(),
+  groupSessionOverride: z.enum(["ALLOW_ALL", "ALLOW_SPECIFIC", "NO_GROUP"]).nullable().optional(),
 })
+
+// Helper to check if a client can book at a time with an existing appointment
+async function canClientBookWithAppointment(
+  clientProfileId: string,
+  existingAppointment: { clientId: string; groupSessionOverride: string | null }
+): Promise<boolean> {
+  // Get the existing appointment's client profile
+  const existingClientProfile = await prisma.clientProfile.findUnique({
+    where: { userId: existingAppointment.clientId },
+    include: {
+      allowedGroupClients: {
+        select: { allowedProfileId: true },
+      },
+    },
+  })
+
+  if (!existingClientProfile) {
+    return false // No profile = no group sessions allowed
+  }
+
+  // Determine effective permission (override takes precedence)
+  const effectivePermission = existingAppointment.groupSessionOverride || existingClientProfile.groupSessionPermission
+
+  if (effectivePermission === "ALLOW_ALL_GROUP" || effectivePermission === "ALLOW_ALL") {
+    return true
+  }
+
+  if (effectivePermission === "ALLOW_SPECIFIC_CLIENTS" || effectivePermission === "ALLOW_SPECIFIC") {
+    // Check if the booking client is in the allowed list
+    return existingClientProfile.allowedGroupClients.some(
+      (agc) => agc.allowedProfileId === clientProfileId
+    )
+  }
+
+  // NO_GROUP_SESSIONS or NO_GROUP
+  return false
+}
 
 export async function GET(request: Request) {
   try {
@@ -19,6 +57,118 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
+    const checkAvailability = searchParams.get("checkAvailability") === "true"
+    const startDate = searchParams.get("startDate")
+    const endDate = searchParams.get("endDate")
+
+    // If checkAvailability is true, get all trainer appointments for the client to check group session availability
+    if (checkAvailability && !userIsTrainer) {
+      // Get the client's profile
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { userId },
+      })
+
+      if (!clientProfile) {
+        return NextResponse.json(
+          { error: "Client profile not found" },
+          { status: 404 }
+        )
+      }
+
+      // Get the trainer for this workspace
+      const trainer = await prisma.user.findFirst({
+        where: { workspaceId, role: "TRAINER" },
+      })
+
+      if (!trainer) {
+        return NextResponse.json(
+          { error: "Trainer not found" },
+          { status: 404 }
+        )
+      }
+
+      // Build date filter - default to current week if no dates provided
+      const now = new Date()
+      const startOfWeek = new Date(now)
+      startOfWeek.setDate(now.getDate() - now.getDay()) // Sunday
+      startOfWeek.setHours(0, 0, 0, 0)
+
+      const dateFilter: Record<string, unknown> = {}
+      if (startDate) {
+        dateFilter.gte = new Date(startDate)
+      } else {
+        // Default: start from beginning of current week to show past appointments
+        dateFilter.gte = startOfWeek
+      }
+      if (endDate) {
+        dateFilter.lte = new Date(endDate)
+      }
+
+      // Get all trainer appointments including completed ones for the current week
+      // This shows both available slots and past sessions
+      const allTrainerAppointments = await prisma.appointment.findMany({
+        where: {
+          workspaceId,
+          trainerId: trainer.id,
+          status: { in: ["SCHEDULED", "RESCHEDULED", "COMPLETED"] },
+          startTime: dateFilter,
+        },
+        include: {
+          client: {
+            select: {
+              id: true,
+              fullName: true,
+              clientProfile: {
+                select: {
+                  id: true,
+                  groupSessionPermission: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { startTime: "asc" },
+      })
+
+      // Calculate availability for each appointment
+      const appointmentsWithAvailability = await Promise.all(
+        allTrainerAppointments.map(async (apt) => {
+          const isOwnAppointment = apt.clientId === userId
+          let isAvailableForGroupBooking = false
+          let displayType: "OWN" | "GROUP_AVAILABLE" | "UNAVAILABLE" = "UNAVAILABLE"
+
+          if (isOwnAppointment) {
+            displayType = "OWN"
+          } else if (apt.status === "COMPLETED") {
+            // Past appointments from other clients are always unavailable (can't book in the past)
+            displayType = "UNAVAILABLE"
+          } else {
+            // Check if current client can book at this time (only for active appointments)
+            isAvailableForGroupBooking = await canClientBookWithAppointment(
+              clientProfile.id,
+              { clientId: apt.clientId, groupSessionOverride: apt.groupSessionOverride }
+            )
+            displayType = isAvailableForGroupBooking ? "GROUP_AVAILABLE" : "UNAVAILABLE"
+          }
+
+          return {
+            id: apt.id,
+            startTime: apt.startTime,
+            endTime: apt.endTime,
+            status: apt.status,
+            isOwnAppointment,
+            isAvailableForGroupBooking,
+            displayType,
+            // Include client info for own appointments and group available slots
+            client: isOwnAppointment ? { id: apt.client.id, fullName: apt.client.fullName } : null,
+            // Include the name of the client whose slot is available for group booking
+            groupSessionWith: isAvailableForGroupBooking ? apt.client.fullName : null,
+          }
+        })
+      )
+
+      return NextResponse.json({ appointments: appointmentsWithAvailability })
+    }
 
     const where: Record<string, unknown> = {
       workspaceId,
@@ -131,41 +281,75 @@ export async function POST(request: Request) {
     }
 
     // Check for conflicting appointments
-    const conflicting = await prisma.appointment.findFirst({
-      where: {
-        workspaceId,
-        trainerId: userIsTrainer ? userId : undefined,
-        status: {
-          in: ["SCHEDULED", "RESCHEDULED"],
-        },
-        OR: [
-          {
-            AND: [
-              { startTime: { lte: startTime } },
-              { endTime: { gt: startTime } },
-            ],
-          },
-          {
-            AND: [
-              { startTime: { lt: endTime } },
-              { endTime: { gte: endTime } },
-            ],
-          },
-          {
-            AND: [
-              { startTime: { gte: startTime } },
-              { endTime: { lte: endTime } },
-            ],
-          },
-        ],
-      },
-    })
+    // Note: Trainers can book overlapping appointments (they bypass group session restrictions)
+    if (!userIsTrainer) {
+      // Get the client's profile for permission checking
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { userId },
+      })
 
-    if (conflicting) {
-      return NextResponse.json(
-        { error: "This time slot conflicts with an existing appointment" },
-        { status: 400 }
-      )
+      if (!clientProfile) {
+        return NextResponse.json(
+          { error: "Client profile not found" },
+          { status: 404 }
+        )
+      }
+
+      // Get the trainer ID for this workspace
+      const trainer = await prisma.user.findFirst({
+        where: { workspaceId, role: "TRAINER" },
+      })
+
+      if (!trainer) {
+        return NextResponse.json(
+          { error: "Trainer not found" },
+          { status: 404 }
+        )
+      }
+
+      // Find all overlapping appointments for this trainer
+      const overlappingAppointments = await prisma.appointment.findMany({
+        where: {
+          workspaceId,
+          trainerId: trainer.id,
+          status: { in: ["SCHEDULED", "RESCHEDULED"] },
+          OR: [
+            {
+              AND: [
+                { startTime: { lte: startTime } },
+                { endTime: { gt: startTime } },
+              ],
+            },
+            {
+              AND: [
+                { startTime: { lt: endTime } },
+                { endTime: { gte: endTime } },
+              ],
+            },
+            {
+              AND: [
+                { startTime: { gte: startTime } },
+                { endTime: { lte: endTime } },
+              ],
+            },
+          ],
+        },
+      })
+
+      // Check each overlapping appointment for group session permission
+      for (const apt of overlappingAppointments) {
+        const canBook = await canClientBookWithAppointment(
+          clientProfile.id,
+          { clientId: apt.clientId, groupSessionOverride: apt.groupSessionOverride }
+        )
+
+        if (!canBook) {
+          return NextResponse.json(
+            { error: "This time slot is not available for booking" },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // Determine clientId and trainerId based on who's booking
@@ -244,6 +428,7 @@ export async function POST(request: Request) {
         startTime,
         endTime,
         status: "SCHEDULED",
+        groupSessionOverride: data.groupSessionOverride ?? null,
       },
       include: {
         client: {
