@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react"
 
+export type GroupSessionPermission = "NO_GROUP_SESSIONS" | "ALLOW_ALL_GROUP" | "ALLOW_SPECIFIC_CLIENTS"
+
 export type ClientSettings = {
   fullName: string
   email: string
@@ -13,6 +15,9 @@ export type ClientSettings = {
     fullName: string
     email: string
   }>
+  // Group session settings
+  groupSessionPermission: GroupSessionPermission
+  groupSessionDiscoverable: boolean
 }
 
 export function useClientSettings() {
@@ -40,7 +45,11 @@ export function useClientSettings() {
     }
   }, [])
 
-  const updateSettings = async (updates: { phone?: string | null }) => {
+  const updateSettings = async (updates: {
+    phone?: string | null
+    groupSessionPermission?: GroupSessionPermission
+    groupSessionDiscoverable?: boolean
+  }) => {
     setIsSaving(true)
     setError(null)
     try {
@@ -60,7 +69,9 @@ export function useClientSettings() {
       if (settings) {
         setSettings({
           ...settings,
-          phone: result.settings.phone,
+          phone: result.settings.phone ?? settings.phone,
+          groupSessionPermission: result.settings.groupSessionPermission ?? settings.groupSessionPermission,
+          groupSessionDiscoverable: result.settings.groupSessionDiscoverable ?? settings.groupSessionDiscoverable,
         })
       }
 
@@ -77,6 +88,14 @@ export function useClientSettings() {
     return await updateSettings({ phone })
   }
 
+  const handleGroupSessionPermissionChange = async (permission: GroupSessionPermission) => {
+    return await updateSettings({ groupSessionPermission: permission })
+  }
+
+  const handleGroupSessionDiscoverableChange = async (discoverable: boolean) => {
+    return await updateSettings({ groupSessionDiscoverable: discoverable })
+  }
+
   return {
     settings,
     isLoading,
@@ -85,6 +104,8 @@ export function useClientSettings() {
     fetchSettings,
     updateSettings,
     handlePhoneChange,
+    handleGroupSessionPermissionChange,
+    handleGroupSessionDiscoverableChange,
     clearError: () => setError(null),
   }
 }

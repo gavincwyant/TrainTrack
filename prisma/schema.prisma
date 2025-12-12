@@ -100,6 +100,14 @@ model ClientProfile {
   // Invoice Settings
   autoInvoiceEnabled Boolean @default(true) @map("auto_invoice_enabled") // Opt-out per client
 
+  // Group Session Permissions
+  groupSessionPermission   String  @default("NO_GROUP_SESSIONS") @map("group_session_permission") // NO_GROUP_SESSIONS, ALLOW_ALL_GROUP, ALLOW_SPECIFIC_CLIENTS
+  groupSessionDiscoverable Boolean @default(false) @map("group_session_discoverable") // Opt-in to be visible in other clients' allowed lists
+
+  // Relations for allowed clients (specific permissions)
+  allowedGroupClients GroupSessionAllowedClient[] @relation("AllowerProfile")
+  allowedByClients    GroupSessionAllowedClient[] @relation("AllowedProfile")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -132,6 +140,21 @@ model ClientTrainer {
   @@index([trainerId])
   @@index([workspaceId])
   @@map("client_trainers")
+}
+
+model GroupSessionAllowedClient {
+  id               String        @id @default(uuid())
+  allowerProfileId String        @map("allower_profile_id")
+  allowerProfile   ClientProfile @relation("AllowerProfile", fields: [allowerProfileId], references: [id], onDelete: Cascade)
+  allowedProfileId String        @map("allowed_profile_id")
+  allowedProfile   ClientProfile @relation("AllowedProfile", fields: [allowedProfileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([allowerProfileId, allowedProfileId])
+  @@index([allowerProfileId])
+  @@index([allowedProfileId])
+  @@map("group_session_allowed_clients")
 }
 
 // ============================================================================
@@ -233,6 +256,10 @@ model Appointment {
   endTime            DateTime          @map("end_time")
   status             AppointmentStatus
   cancellationReason String?           @map("cancellation_reason") @db.Text
+
+  // Group session override - NULL means use client's default permission
+  // Values: "ALLOW_ALL", "ALLOW_SPECIFIC", "NO_GROUP"
+  groupSessionOverride String?         @map("group_session_override")
 
   workoutSession        WorkoutSession?
   invoiceLineItems      InvoiceLineItem[]

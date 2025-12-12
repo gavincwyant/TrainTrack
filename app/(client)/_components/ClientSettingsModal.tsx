@@ -4,13 +4,14 @@ import { useEffect, useState } from "react"
 import { useClientSettings } from "./useClientSettings"
 import { ProfileSettings } from "./settings/ProfileSettings"
 import { NotificationSettings } from "./settings/NotificationSettings"
+import { GroupSessionSettings } from "./settings/GroupSessionSettings"
 
 type Props = {
   isOpen: boolean
   onClose: () => void
 }
 
-type Category = "profile" | "notifications"
+type Category = "profile" | "groupSessions" | "notifications"
 
 export function ClientSettingsModal({ isOpen, onClose }: Props) {
   const [activeCategory, setActiveCategory] = useState<Category>("profile")
@@ -23,6 +24,8 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
     isSaving,
     fetchSettings,
     handlePhoneChange,
+    handleGroupSessionPermissionChange,
+    handleGroupSessionDiscoverableChange,
     clearError,
   } = useClientSettings()
 
@@ -129,17 +132,21 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
             {/* Mobile Tab Pills - visible on mobile only */}
             <div className="md:hidden flex overflow-x-auto gap-2 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
-              {(["profile", "notifications"] as const).map((cat) => (
+              {([
+                { key: "profile", label: "Profile" },
+                { key: "groupSessions", label: "Group Sessions" },
+                { key: "notifications", label: "Notifications" },
+              ] as const).map(({ key, label }) => (
                 <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
+                  key={key}
+                  onClick={() => setActiveCategory(key)}
                   className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium min-h-[44px] transition-colors ${
-                    activeCategory === cat
+                    activeCategory === key
                       ? "bg-blue-600 dark:bg-blue-500 text-white"
                       : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
                   }`}
                 >
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  {label}
                 </button>
               ))}
             </div>
@@ -156,6 +163,16 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
                   }`}
                 >
                   Profile
+                </button>
+                <button
+                  onClick={() => setActiveCategory("groupSessions")}
+                  className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeCategory === "groupSessions"
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  Group Sessions
                 </button>
                 <button
                   onClick={() => setActiveCategory("notifications")}
@@ -176,6 +193,20 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
                 <ProfileSettings
                   settings={settings}
                   onPhoneChange={(phone) => handleSuccessfulUpdate(() => handlePhoneChange(phone))}
+                  isLoading={isLoading}
+                  isSaving={isSaving}
+                />
+              )}
+
+              {activeCategory === "groupSessions" && (
+                <GroupSessionSettings
+                  settings={settings}
+                  onPermissionChange={(permission) =>
+                    handleSuccessfulUpdate(() => handleGroupSessionPermissionChange(permission))
+                  }
+                  onDiscoverableChange={(discoverable) =>
+                    handleSuccessfulUpdate(() => handleGroupSessionDiscoverableChange(discoverable))
+                  }
                   isLoading={isLoading}
                   isSaving={isSaving}
                 />

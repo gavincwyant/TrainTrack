@@ -11,10 +11,20 @@ type Appointment = {
   startTime: string
   endTime: string
   status: string
-  trainer: {
+  trainer?: {
     id: string
     fullName: string
   }
+  // Group session availability fields
+  isOwnAppointment?: boolean
+  isAvailableForGroupBooking?: boolean
+  displayType?: "OWN" | "GROUP_AVAILABLE" | "UNAVAILABLE"
+  client?: {
+    id: string
+    fullName: string
+  } | null
+  // Name of client for group sessions
+  groupSessionWith?: string | null
 }
 
 type BlockedTime = {
@@ -42,40 +52,77 @@ export function ClientCalendar() {
   const [success, setSuccess] = useState<string | null>(null)
   const [view, setView] = useState<View>("week")
   const [date, setDate] = useState(new Date())
-  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null)
+  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date; groupSessionWith?: string } | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>("calendar")
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [appointmentsRes, blockedTimesRes, settingsRes] = await Promise.all([
+      // Fetch availability-aware appointments for calendar + regular appointments for lists
+      const [calendarAppointmentsRes, myAppointmentsRes, blockedTimesRes, settingsRes] = await Promise.all([
+        fetch("/api/appointments?checkAvailability=true"),
         fetch("/api/appointments"),
         fetch("/api/blocked-times"),
         fetch("/api/trainer-settings"),
       ])
 
-      const [appointmentsData, blockedTimesData, settingsData] = await Promise.all([
-        appointmentsRes.json(),
+      const [calendarAppointmentsData, myAppointmentsData, blockedTimesData, settingsData] = await Promise.all([
+        calendarAppointmentsRes.json(),
+        myAppointmentsRes.json(),
         blockedTimesRes.json(),
         settingsRes.json(),
       ])
 
-      if (!appointmentsRes.ok || !blockedTimesRes.ok || !settingsRes.ok) {
+      if (!calendarAppointmentsRes.ok || !myAppointmentsRes.ok || !blockedTimesRes.ok || !settingsRes.ok) {
         throw new Error("Failed to fetch data")
       }
 
-      setAppointments(appointmentsData.appointments)
+      // Use my appointments for the list views
+      setAppointments(myAppointmentsData.appointments)
       setSettings(settingsData.settings)
 
-      // Convert to calendar events
-      const appointmentEvents: CalendarEvent[] = appointmentsData.appointments.map((apt: Appointment) => ({
-        id: apt.id,
-        title: `Training with ${apt.trainer.fullName}`,
-        start: new Date(apt.startTime),
-        end: new Date(apt.endTime),
-        resource: apt,
-        type: "appointment",
-      }))
+      // Create a map of appointment IDs to trainer names from the full appointments data
+      const trainerNameMap = new Map<string, string>()
+      myAppointmentsData.appointments.forEach((apt: Appointment) => {
+        if (apt.trainer?.fullName) {
+          trainerNameMap.set(apt.id, apt.trainer.fullName)
+        }
+      })
+
+      // Convert calendar appointments to events with group session awareness
+      const appointmentEvents: CalendarEvent[] = calendarAppointmentsData.appointments.map((apt: Appointment) => {
+        let title = "Unavailable"
+        if (apt.displayType === "OWN") {
+          // Use trainer name from the full appointments data
+          const trainerName = trainerNameMap.get(apt.id) || "Trainer"
+          title = `Training with ${trainerName}`
+        } else if (apt.displayType === "GROUP_AVAILABLE") {
+          // Show who the group session would be with
+          title = apt.groupSessionWith ? `Group with ${apt.groupSessionWith}` : "Group Available"
+        }
+
+        return {
+          id: apt.id,
+          title,
+          start: new Date(apt.startTime),
+          end: new Date(apt.endTime),
+          resource: apt,
+          type: apt.displayType === "OWN" ? "appointment" : apt.displayType === "GROUP_AVAILABLE" ? "groupAvailable" : "otherAppointment",
+        }
+      })
+
+      // Add past/completed own appointments that aren't in the calendar data
+      const calendarAppointmentIds = new Set(calendarAppointmentsData.appointments.map((apt: Appointment) => apt.id))
+      const pastOwnAppointments: CalendarEvent[] = myAppointmentsData.appointments
+        .filter((apt: Appointment) => !calendarAppointmentIds.has(apt.id))
+        .map((apt: Appointment) => ({
+          id: apt.id,
+          title: `Training with ${apt.trainer?.fullName || "Trainer"}`,
+          start: new Date(apt.startTime),
+          end: new Date(apt.endTime),
+          resource: apt,
+          type: "pastAppointment" as const,
+        }))
 
       // Generate blocked time events, including recurring instances
       const blockedEvents: CalendarEvent[] = []
@@ -125,7 +172,7 @@ export function ClientCalendar() {
         }
       })
 
-      setEvents([...appointmentEvents, ...blockedEvents])
+      setEvents([...appointmentEvents, ...pastOwnAppointments, ...blockedEvents])
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -144,15 +191,29 @@ export function ClientCalendar() {
       return
     }
 
-    const overlaps = events.some((event) => {
+    // Check for overlapping events
+    const overlappingEvents = events.filter((event) => {
       return (
         (isAfter(start, event.start) && isBefore(start, event.end)) ||
         (isAfter(end, event.start) && isBefore(end, event.end)) ||
-        (isBefore(start, event.start) && isAfter(end, event.end))
+        (isBefore(start, event.start) && isAfter(end, event.end)) ||
+        (start.getTime() === event.start.getTime())
       )
     })
 
-    if (overlaps) {
+    // Check if any overlapping event blocks booking
+    const hasBlockingEvent = overlappingEvents.some((event) => {
+      // Blocked times always block
+      if (event.type === "blocked") return true
+      // Own appointments block (can't double-book yourself)
+      if (event.type === "appointment") return true
+      // Other appointments block
+      if (event.type === "otherAppointment") return true
+      // Group available doesn't block
+      return false
+    })
+
+    if (hasBlockingEvent) {
       setError("This time slot is not available")
       setTimeout(() => setError(null), 3000)
       return
@@ -213,6 +274,7 @@ export function ClientCalendar() {
   }
 
   const handleSelectEvent = (event: CalendarEvent) => {
+    // Own appointment - offer to cancel
     if (event.type === "appointment") {
       const apt = event.resource as Appointment
       const canCancel = isAfter(new Date(apt.startTime), new Date()) && apt.status === "SCHEDULED"
@@ -220,6 +282,23 @@ export function ClientCalendar() {
       if (canCancel && confirm("Would you like to cancel this appointment?")) {
         handleCancelAppointment(apt.id)
       }
+    }
+
+    // Group available - open booking modal
+    if (event.type === "groupAvailable") {
+      if (isBefore(event.start, new Date())) {
+        setError("Cannot book appointments in the past")
+        setTimeout(() => setError(null), 3000)
+        return
+      }
+      const apt = event.resource as Appointment
+      setSelectedSlot({ start: event.start, end: event.end, groupSessionWith: apt.groupSessionWith || undefined })
+    }
+
+    // Other appointments (unavailable) - show message
+    if (event.type === "otherAppointment") {
+      setError("This time slot is not available for booking")
+      setTimeout(() => setError(null), 3000)
     }
   }
 
@@ -238,6 +317,61 @@ export function ClientCalendar() {
       }
     }
 
+    // Group available - teal color
+    if (event.type === "groupAvailable") {
+      return {
+        style: {
+          backgroundColor: "rgba(20, 184, 166, 0.85)",
+          borderRadius: "6px",
+          opacity: 1,
+          color: "white",
+          borderLeft: "4px solid #0d9488",
+          display: "block",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        },
+      }
+    }
+
+    // Other client appointments (unavailable)
+    if (event.type === "otherAppointment") {
+      return {
+        style: {
+          backgroundColor: "rgba(107, 114, 128, 0.85)",
+          borderRadius: "6px",
+          opacity: 1,
+          color: "white",
+          borderLeft: "4px solid #4b5563",
+          display: "block",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        },
+      }
+    }
+
+    // Past own appointments (completed/cancelled)
+    if (event.type === "pastAppointment") {
+      const status = (event.resource as Appointment).status
+      let backgroundColor = "rgba(16, 185, 129, 0.7)" // Default green for completed
+      let borderColor = "#059669"
+
+      if (status === "CANCELLED") {
+        backgroundColor = "rgba(239, 68, 68, 0.7)"
+        borderColor = "#dc2626"
+      }
+
+      return {
+        style: {
+          backgroundColor,
+          borderRadius: "6px",
+          opacity: 0.8,
+          color: "white",
+          borderLeft: `4px solid ${borderColor}`,
+          display: "block",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        },
+      }
+    }
+
+    // Own appointments
     if (event.type === "appointment") {
       const status = (event.resource as Appointment).status
       let backgroundColor = "#3b82f6"
@@ -330,8 +464,16 @@ export function ClientCalendar() {
             className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Book Appointment</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              {selectedSlot.groupSessionWith ? "Book Group Session" : "Book Appointment"}
+            </h3>
             <div className="space-y-3 mb-6">
+              {selectedSlot.groupSessionWith && (
+                <div className="p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200 dark:border-teal-800">
+                  <span className="text-sm font-medium text-teal-700 dark:text-teal-300">Group Session With:</span>
+                  <p className="text-teal-900 dark:text-teal-100 font-medium">{selectedSlot.groupSessionWith}</p>
+                </div>
+              )}
               <div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Date:</span>
                 <p className="text-gray-900 dark:text-gray-100">{format(selectedSlot.start, "EEEE, MMMM d, yyyy")}</p>
@@ -400,11 +542,15 @@ export function ClientCalendar() {
             <div className="flex gap-4 flex-wrap">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded bg-blue-500 border-l-4 border-blue-700"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Scheduled</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">My Appointments</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-500 border-l-4 border-green-700"></div>
+                <div className="w-4 h-4 rounded bg-green-500 border-l-4 border-green-700 opacity-80"></div>
                 <span className="text-sm text-gray-600 dark:text-gray-400">Completed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-teal-500 border-l-4 border-teal-700"></div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Group Session Available</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded bg-gray-500 border-l-4 border-gray-700"></div>
@@ -412,7 +558,7 @@ export function ClientCalendar() {
               </div>
             </div>
             <p className="mt-3 text-xs text-gray-500 dark:text-gray-500">
-              Tap an empty time slot to book. Tap your appointments to cancel.
+              Tap empty slots or &quot;Group Available&quot; times to book. Tap your appointments to cancel.
             </p>
           </div>
 
@@ -466,7 +612,7 @@ export function ClientCalendar() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <div className="font-semibold text-lg text-gray-900 dark:text-gray-100">
-                        Training with {apt.trainer.fullName}
+                        Training with {apt.trainer?.fullName || "Trainer"}
                       </div>
                       <StatusBadge status={apt.status} type="appointment" />
                     </div>
@@ -512,7 +658,7 @@ export function ClientCalendar() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <div className="font-semibold text-lg text-gray-900 dark:text-gray-100">
-                        Training with {apt.trainer.fullName}
+                        Training with {apt.trainer?.fullName || "Trainer"}
                       </div>
                       <StatusBadge status={apt.status} type="appointment" />
                     </div>
