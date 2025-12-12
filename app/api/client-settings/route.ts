@@ -5,6 +5,9 @@ import { requireWorkspace, requireUserId, isClient } from "@/lib/middleware/tena
 
 const updateSettingsSchema = z.object({
   phone: z.string().optional().nullable(),
+  // Group session settings
+  groupSessionPermission: z.enum(["NO_GROUP_SESSIONS", "ALLOW_ALL_GROUP", "ALLOW_SPECIFIC_CLIENTS"]).optional(),
+  groupSessionDiscoverable: z.boolean().optional(),
 })
 
 export async function GET() {
@@ -66,6 +69,9 @@ export async function GET() {
           fullName: ct.trainer.fullName,
           email: ct.trainer.email,
         })),
+        // Group session settings
+        groupSessionPermission: client.clientProfile?.groupSessionPermission || "NO_GROUP_SESSIONS",
+        groupSessionDiscoverable: client.clientProfile?.groupSessionDiscoverable || false,
       },
     })
   } catch (error) {
@@ -100,25 +106,47 @@ export async function PUT(request: Request) {
     const body = await request.json()
     const data = updateSettingsSchema.parse(body)
 
-    // Update user phone
-    const updatedUser = await prisma.user.update({
+    // Update user phone if provided
+    if (data.phone !== undefined) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          phone: data.phone,
+        },
+      })
+    }
+
+    // Update client profile for group session settings
+    if (data.groupSessionPermission !== undefined || data.groupSessionDiscoverable !== undefined) {
+      const updateData: Record<string, unknown> = {}
+      if (data.groupSessionPermission !== undefined) {
+        updateData.groupSessionPermission = data.groupSessionPermission
+      }
+      if (data.groupSessionDiscoverable !== undefined) {
+        updateData.groupSessionDiscoverable = data.groupSessionDiscoverable
+      }
+
+      await prisma.clientProfile.update({
+        where: { userId },
+        data: updateData,
+      })
+    }
+
+    // Fetch updated data
+    const updatedClient = await prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        phone: data.phone,
-      },
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        phone: true,
+      include: {
+        clientProfile: true,
       },
     })
 
     return NextResponse.json({
       settings: {
-        fullName: updatedUser.fullName,
-        email: updatedUser.email,
-        phone: updatedUser.phone,
+        fullName: updatedClient?.fullName,
+        email: updatedClient?.email,
+        phone: updatedClient?.phone,
+        groupSessionPermission: updatedClient?.clientProfile?.groupSessionPermission || "NO_GROUP_SESSIONS",
+        groupSessionDiscoverable: updatedClient?.clientProfile?.groupSessionDiscoverable || false,
       },
     })
   } catch (error) {
