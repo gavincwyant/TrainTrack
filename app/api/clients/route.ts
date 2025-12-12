@@ -11,6 +11,7 @@ const createClientSchema = z.object({
   phone: z.string().optional(),
   billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]),
   sessionRate: z.string(),
+  groupSessionRate: z.string().optional(),
   notes: z.string().optional(),
   createAccount: z.enum(["invite", "manual"]),
   autoInvoiceEnabled: z.boolean().optional().default(true),
@@ -47,6 +48,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Convert group session rate to decimal (optional)
+    let groupSessionRate: number | null = null
+    if (data.groupSessionRate) {
+      groupSessionRate = parseFloat(data.groupSessionRate)
+      if (isNaN(groupSessionRate) || groupSessionRate < 0) {
+        return NextResponse.json(
+          { error: "Invalid group session rate" },
+          { status: 400 }
+        )
+      }
+    }
+
     // Create client based on account type
     if (data.createAccount === "manual") {
       // Manual creation - trainer manages everything, client has NO login access
@@ -72,6 +85,7 @@ export async function POST(request: NextRequest) {
             workspaceId,
             billingFrequency: data.billingFrequency,
             sessionRate,
+            groupSessionRate,
             notes: data.notes,
             autoInvoiceEnabled: data.autoInvoiceEnabled ?? true,
           },
@@ -110,6 +124,7 @@ export async function POST(request: NextRequest) {
             workspaceId,
             billingFrequency: data.billingFrequency,
             sessionRate,
+            groupSessionRate,
             notes: data.notes,
             autoInvoiceEnabled: data.autoInvoiceEnabled ?? true,
           },

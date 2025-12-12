@@ -35,6 +35,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     handleDefaultDueDaysChange,
     handleIndividualSessionRateChange,
     handleGroupSessionRateChange,
+    handleGroupSessionMatchingLogicChange,
     handleManualSync,
     clearError,
   } = useTrainerSettings()
@@ -233,6 +234,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   isLoading={isLoading}
                   onIndividualRateChange={(rate) => handleSuccessfulUpdate(() => handleIndividualSessionRateChange(rate))}
                   onGroupRateChange={(rate) => handleSuccessfulUpdate(() => handleGroupSessionRateChange(rate))}
+                  onGroupMatchingLogicChange={(logic) => handleSuccessfulUpdate(() => handleGroupSessionMatchingLogicChange(logic))}
                 />
               )}
 

@@ -10,6 +10,7 @@ const updateClientSchema = z.object({
   phone: z.string().optional(),
   billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]).optional(),
   sessionRate: z.string().optional(),
+  groupSessionRate: z.string().optional().nullable(),
   notes: z.string().optional(),
   autoInvoiceEnabled: z.boolean().optional(),
 })
@@ -150,6 +151,20 @@ export async function PATCH(
     if (data.notes !== undefined) profileUpdateData.notes = data.notes
     if (data.autoInvoiceEnabled !== undefined) {
       profileUpdateData.autoInvoiceEnabled = data.autoInvoiceEnabled
+    }
+    if (data.groupSessionRate !== undefined) {
+      if (data.groupSessionRate === null || data.groupSessionRate === "") {
+        profileUpdateData.groupSessionRate = null
+      } else {
+        const groupRate = parseFloat(data.groupSessionRate)
+        if (isNaN(groupRate) || groupRate < 0) {
+          return NextResponse.json(
+            { error: "Invalid group session rate" },
+            { status: 400 }
+          )
+        }
+        profileUpdateData.groupSessionRate = groupRate
+      }
     }
 
     // Update client and profile in transaction

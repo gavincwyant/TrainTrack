@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { InvoiceService } from '@/lib/services/invoice'
-import { createTestWorkspace, createAppointment } from '@/tests/fixtures/workspace'
+import { createTestWorkspace, createAppointment, createTestClient } from '@/tests/fixtures/workspace'
 import { prisma } from '@/lib/db'
 import { clearSentEmails } from '@/tests/mocks/sendgrid'
 import { Prisma } from '@prisma/client'
@@ -649,6 +649,555 @@ describe('InvoiceService', () => {
 
       // Act & Assert - should not throw
       await expect(invoiceService.processMonthlyInvoices()).resolves.toBeUndefined()
+    })
+  })
+
+  describe('Group Session Billing', () => {
+    describe('Group Detection with EXACT_MATCH', () => {
+      it('should detect group session when appointments have exact same start and end times', async () => {
+        // Arrange
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'PER_SESSION',
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'EXACT_MATCH',
+          defaultGroupSessionRate: 60,
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        const startTime = new Date('2025-01-15T10:00:00Z')
+        const endTime = new Date('2025-01-15T11:00:00Z')
+
+        // Create overlapping appointments
+        const apt1 = await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        // Act
+        await invoiceService.generatePerSessionInvoice(apt1.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            lineItems: {
+              some: { appointmentId: apt1.id },
+            },
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        // Should use trainer default group rate (60) since client has no specific group rate
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(60))
+        expect(invoice?.lineItems[0].description).toContain('Group')
+      })
+
+      it('should NOT detect group session when end times differ', async () => {
+        // Arrange
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'PER_SESSION',
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'EXACT_MATCH',
+          defaultGroupSessionRate: 60,
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        const startTime = new Date('2025-01-15T10:00:00Z')
+
+        // Create appointments with same start but different end times
+        const apt1 = await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime: new Date('2025-01-15T11:00:00Z'),
+        })
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime: new Date('2025-01-15T11:30:00Z'), // Different end time
+        })
+
+        // Act
+        await invoiceService.generatePerSessionInvoice(apt1.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            lineItems: {
+              some: { appointmentId: apt1.id },
+            },
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        // Should use individual rate (100) since times don't match exactly
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(100))
+        expect(invoice?.lineItems[0].description).not.toContain('Group')
+      })
+    })
+
+    describe('Group Detection with START_MATCH', () => {
+      it('should detect group session when appointments have same start time', async () => {
+        // Arrange
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'PER_SESSION',
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'START_MATCH',
+          defaultGroupSessionRate: 60,
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        const startTime = new Date('2025-01-15T10:00:00Z')
+
+        // Create appointments with same start but different end times
+        const apt1 = await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime: new Date('2025-01-15T11:00:00Z'),
+        })
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime: new Date('2025-01-15T11:30:00Z'), // Different end time but same start
+        })
+
+        // Act
+        await invoiceService.generatePerSessionInvoice(apt1.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            lineItems: {
+              some: { appointmentId: apt1.id },
+            },
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        // Should use group rate since start times match
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(60))
+        expect(invoice?.lineItems[0].description).toContain('Group')
+      })
+    })
+
+    describe('Group Detection with ANY_OVERLAP', () => {
+      it('should detect group session when appointments overlap at all', async () => {
+        // Arrange
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'PER_SESSION',
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'ANY_OVERLAP',
+          defaultGroupSessionRate: 60,
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        // Create appointments that partially overlap
+        const apt1 = await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime: new Date('2025-01-15T10:00:00Z'),
+          endTime: new Date('2025-01-15T11:00:00Z'),
+        })
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime: new Date('2025-01-15T10:30:00Z'), // Starts during apt1
+          endTime: new Date('2025-01-15T11:30:00Z'),
+        })
+
+        // Act
+        await invoiceService.generatePerSessionInvoice(apt1.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            lineItems: {
+              some: { appointmentId: apt1.id },
+            },
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        // Should use group rate since times overlap
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(60))
+        expect(invoice?.lineItems[0].description).toContain('Group')
+      })
+    })
+
+    describe('Rate Fallback Chain', () => {
+      it('should use client group rate when set', async () => {
+        // Arrange - Client has specific group rate
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'PER_SESSION',
+          sessionRate: 100,
+          groupSessionRate: 50, // Client-specific group rate
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'EXACT_MATCH',
+          defaultGroupSessionRate: 60, // Trainer default
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        const startTime = new Date('2025-01-15T10:00:00Z')
+        const endTime = new Date('2025-01-15T11:00:00Z')
+
+        const apt1 = await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        // Act
+        await invoiceService.generatePerSessionInvoice(apt1.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            lineItems: {
+              some: { appointmentId: apt1.id },
+            },
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        // Should use client-specific group rate (50), not trainer default (60)
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(50))
+      })
+
+      it('should use trainer default group rate when client has no group rate', async () => {
+        // Arrange
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'PER_SESSION',
+          sessionRate: 100,
+          // No client group rate specified
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'EXACT_MATCH',
+          defaultGroupSessionRate: 60, // Trainer default
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        const startTime = new Date('2025-01-15T10:00:00Z')
+        const endTime = new Date('2025-01-15T11:00:00Z')
+
+        const apt1 = await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        // Act
+        await invoiceService.generatePerSessionInvoice(apt1.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            lineItems: {
+              some: { appointmentId: apt1.id },
+            },
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        // Should use trainer default group rate (60)
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(60))
+      })
+
+      it('should fallback to individual rate when no group rates are set', async () => {
+        // Arrange
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'PER_SESSION',
+          sessionRate: 100,
+          // No client group rate
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'EXACT_MATCH',
+          // No trainer default group rate
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        const startTime = new Date('2025-01-15T10:00:00Z')
+        const endTime = new Date('2025-01-15T11:00:00Z')
+
+        const apt1 = await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        // Act
+        await invoiceService.generatePerSessionInvoice(apt1.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            lineItems: {
+              some: { appointmentId: apt1.id },
+            },
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        // Should fallback to individual rate (100)
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(100))
+        // But description should still indicate group session
+        expect(invoice?.lineItems[0].description).toContain('Group')
+      })
+    })
+
+    describe('Cancellation Scenarios', () => {
+      it('should bill as individual session when other group members cancelled', async () => {
+        // Arrange
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'PER_SESSION',
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'EXACT_MATCH',
+          defaultGroupSessionRate: 60,
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        const startTime = new Date('2025-01-15T10:00:00Z')
+        const endTime = new Date('2025-01-15T11:00:00Z')
+
+        // Client 1's appointment is completed
+        const apt1 = await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime,
+          endTime,
+        })
+
+        // Client 2's appointment was cancelled
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'CANCELLED', // Cancelled - should not count for group
+          startTime,
+          endTime,
+        })
+
+        // Act
+        await invoiceService.generatePerSessionInvoice(apt1.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            lineItems: {
+              some: { appointmentId: apt1.id },
+            },
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        // Should bill at individual rate since cancelled appointments don't count
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(100))
+        expect(invoice?.lineItems[0].description).not.toContain('Group')
+      })
+    })
+
+    describe('Monthly Invoice with Mixed Sessions', () => {
+      it('should apply correct rates for mix of group and individual sessions', async () => {
+        // Arrange
+        const workspace = await createTestWorkspace({
+          billingFrequency: 'MONTHLY',
+          sessionRate: 100,
+          groupSessionRate: 50, // Client-specific group rate
+          autoInvoiceEnabled: true,
+          groupSessionMatchingLogic: 'EXACT_MATCH',
+          defaultGroupSessionRate: 60,
+        })
+
+        const client2 = await createTestClient({
+          workspaceId: workspace.workspace.id,
+          sessionRate: 100,
+          autoInvoiceEnabled: true,
+        })
+
+        const lastMonth = new Date()
+        lastMonth.setMonth(lastMonth.getMonth() - 1)
+
+        // Session 1 - Individual (no overlap)
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 5, 10, 0),
+          endTime: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 5, 11, 0),
+        })
+
+        // Session 2 - Group (overlapping with client2)
+        const groupStartTime = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 12, 10, 0)
+        const groupEndTime = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 12, 11, 0)
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime: groupStartTime,
+          endTime: groupEndTime,
+        })
+
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: client2.user.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime: groupStartTime,
+          endTime: groupEndTime,
+        })
+
+        // Session 3 - Individual (no overlap)
+        await createAppointment({
+          trainerId: workspace.trainer.id,
+          clientId: workspace.client.id,
+          workspaceId: workspace.workspace.id,
+          status: 'COMPLETED',
+          startTime: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 19, 10, 0),
+          endTime: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 19, 11, 0),
+        })
+
+        // Act
+        await invoiceService.generateMonthlyInvoice(workspace.client.id, workspace.trainer.id)
+
+        // Assert
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            clientId: workspace.client.id,
+            trainerId: workspace.trainer.id,
+          },
+          include: { lineItems: true },
+        })
+
+        expect(invoice).toBeDefined()
+        expect(invoice?.lineItems).toHaveLength(3)
+        // Total should be: 100 (individual) + 50 (group, client rate) + 100 (individual) = 250
+        expect(invoice?.amount).toEqual(new Prisma.Decimal(250))
+
+        // Check one line item is marked as group
+        const groupLineItems = invoice?.lineItems.filter(li => li.description.includes('Group'))
+        expect(groupLineItems).toHaveLength(1)
+      })
     })
   })
 })
