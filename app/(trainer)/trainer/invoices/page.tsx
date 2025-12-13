@@ -12,10 +12,38 @@ type Invoice = {
   createdAt: string
 }
 
+type MonthlyClientPreview = {
+  client: { id: string; fullName: string; email: string }
+  individualRate: number
+  groupRate: number | null
+  autoInvoiceEnabled: boolean
+  completed: {
+    sessions: Array<{ id: string; date: string; isGroupSession: boolean; rate: number }>
+    groupCount: number
+    individualCount: number
+    total: number
+  }
+  scheduled: {
+    count: number
+    groupCount: number
+    individualCount: number
+  }
+  projectedTotal: number
+}
+
+type MonthlyPreviewData = {
+  billingPeriod: { start: string; end: string; month: string }
+  monthlyInvoiceDay: number
+  clients: MonthlyClientPreview[]
+  totals: { completedTotal: number; projectedTotal: number; clientCount: number }
+}
+
 type SortField = "client" | "amount" | "createdAt" | "dueDate" | "status"
 type SortOrder = "asc" | "desc"
+type ViewTab = "invoices" | "monthly"
 
 export default function InvoicesPage() {
+  const [activeTab, setActiveTab] = useState<ViewTab>("invoices")
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([])
   const [filter, setFilter] = useState("all")
@@ -31,10 +59,44 @@ export default function InvoicesPage() {
   const [isMarkingAllPaid, setIsMarkingAllPaid] = useState(false)
   const [showMassiveCelebration, setShowMassiveCelebration] = useState(false)
 
+  // Monthly billing state
+  const [monthlyPreview, setMonthlyPreview] = useState<MonthlyPreviewData | null>(null)
+  const [isLoadingMonthly, setIsLoadingMonthly] = useState(false)
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set())
+
   useEffect(() => {
-    fetchInvoices()
+    if (activeTab === "invoices") {
+      fetchInvoices()
+    } else {
+      fetchMonthlyPreview()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter])
+  }, [filter, activeTab])
+
+  const fetchMonthlyPreview = async () => {
+    setIsLoadingMonthly(true)
+    try {
+      const response = await fetch("/api/invoices/monthly-preview")
+      const data = await response.json()
+      setMonthlyPreview(data)
+    } catch (error) {
+      console.error("Failed to fetch monthly preview:", error)
+    } finally {
+      setIsLoadingMonthly(false)
+    }
+  }
+
+  const toggleClientExpanded = (clientId: string) => {
+    setExpandedClients((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(clientId)) {
+        newSet.delete(clientId)
+      } else {
+        newSet.add(clientId)
+      }
+      return newSet
+    })
+  }
 
   useEffect(() => {
     filterAndSortInvoices()
@@ -391,6 +453,32 @@ export default function InvoicesPage() {
         </div>
       </div>
 
+      {/* Main Tab Switcher */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-1 inline-flex">
+        <button
+          onClick={() => setActiveTab("invoices")}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+            activeTab === "invoices"
+              ? "bg-blue-600 dark:bg-blue-500 text-white shadow-sm"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+          }`}
+        >
+          All Invoices
+        </button>
+        <button
+          onClick={() => setActiveTab("monthly")}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+            activeTab === "monthly"
+              ? "bg-blue-600 dark:bg-blue-500 text-white shadow-sm"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+          }`}
+        >
+          Monthly Billing
+        </button>
+      </div>
+
+      {activeTab === "invoices" && (
+        <>
       {/* Search and Filters */}
       <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         <div className="space-y-4">
@@ -841,6 +929,239 @@ export default function InvoicesPage() {
             </tbody>
           </table>
           </div>
+        </>
+      )}
+        </>
+      )}
+
+      {/* Monthly Billing Tab */}
+      {activeTab === "monthly" && (
+        <>
+          {isLoadingMonthly ? (
+            <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">Loading monthly billing data...</p>
+            </div>
+          ) : monthlyPreview ? (
+            <>
+              {/* Summary Card */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl p-6 text-white">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold">{monthlyPreview.billingPeriod.month}</h2>
+                    <p className="text-blue-100 text-sm mt-1">
+                      Monthly invoices generate on day {monthlyPreview.monthlyInvoiceDay} of each month
+                    </p>
+                  </div>
+                  <div className="flex gap-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold">${monthlyPreview.totals.completedTotal.toFixed(2)}</p>
+                      <p className="text-blue-100 text-sm">Completed</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold">${monthlyPreview.totals.projectedTotal.toFixed(2)}</p>
+                      <p className="text-blue-100 text-sm">Projected</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold">{monthlyPreview.totals.clientCount}</p>
+                      <p className="text-blue-100 text-sm">Clients</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Client List */}
+              {monthlyPreview.clients.length === 0 ? (
+                <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No monthly billing clients</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    You don&apos;t have any clients set up with monthly billing yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {monthlyPreview.clients.map((clientData) => (
+                    <div
+                      key={clientData.client.id}
+                      className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                    >
+                      {/* Client Header - Always Visible */}
+                      <button
+                        onClick={() => toggleClientExpanded(clientData.client.id)}
+                        className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="min-w-0 text-left">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                              {clientData.client.fullName}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                              {clientData.client.email}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 sm:gap-8 flex-shrink-0">
+                          {/* Session Counts */}
+                          <div className="hidden sm:flex items-center gap-4 text-sm">
+                            <div className="text-center">
+                              <span className="font-semibold text-green-600 dark:text-green-400">
+                                {clientData.completed.sessions.length}
+                              </span>
+                              <span className="text-gray-500 dark:text-gray-400 ml-1">completed</span>
+                            </div>
+                            <div className="text-center">
+                              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                {clientData.scheduled.count}
+                              </span>
+                              <span className="text-gray-500 dark:text-gray-400 ml-1">scheduled</span>
+                            </div>
+                          </div>
+                          {/* Totals */}
+                          <div className="text-right">
+                            <p className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                              ${clientData.completed.total.toFixed(2)}
+                            </p>
+                            {clientData.projectedTotal > clientData.completed.total && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Projected: ${clientData.projectedTotal.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                          {/* Expand Icon */}
+                          <svg
+                            className={`w-5 h-5 text-gray-400 transition-transform ${
+                              expandedClients.has(clientData.client.id) ? "rotate-180" : ""
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </button>
+
+                      {/* Expanded Details */}
+                      {expandedClients.has(clientData.client.id) && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
+                          {/* Rates Info */}
+                          <div className="flex flex-wrap gap-4 mb-4 text-sm">
+                            <div className="bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                              <span className="text-gray-500 dark:text-gray-400">Individual Rate: </span>
+                              <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                ${clientData.individualRate.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                              <span className="text-gray-500 dark:text-gray-400">Group Rate: </span>
+                              <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                {clientData.groupRate ? `$${clientData.groupRate.toFixed(2)}` : "N/A"}
+                              </span>
+                            </div>
+                            <div className={`px-3 py-2 rounded-lg border ${
+                              clientData.autoInvoiceEnabled
+                                ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                                : "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
+                            }`}>
+                              <span className={`font-medium ${
+                                clientData.autoInvoiceEnabled
+                                  ? "text-green-700 dark:text-green-300"
+                                  : "text-yellow-700 dark:text-yellow-300"
+                              }`}>
+                                {clientData.autoInvoiceEnabled ? "Auto-Invoice On" : "Auto-Invoice Off"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Session Details */}
+                          {clientData.completed.sessions.length > 0 ? (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Completed Sessions This Month
+                              </h4>
+                              <div className="space-y-2">
+                                {clientData.completed.sessions.map((session) => (
+                                  <div
+                                    key={session.id}
+                                    className="flex items-center justify-between bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                                        {new Date(session.date).toLocaleDateString("en-US", {
+                                          weekday: "short",
+                                          month: "short",
+                                          day: "numeric",
+                                        })}
+                                      </span>
+                                      {session.isGroupSession ? (
+                                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                                          Group
+                                        </span>
+                                      ) : (
+                                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                          Individual
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                                      ${session.rate.toFixed(2)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                              {/* Session Summary */}
+                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between text-sm">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  {clientData.completed.individualCount} individual, {clientData.completed.groupCount} group
+                                </span>
+                                <span className="font-bold text-gray-900 dark:text-gray-100">
+                                  Total: ${clientData.completed.total.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                              No completed sessions this month
+                            </p>
+                          )}
+
+                          {/* Scheduled Sessions Info */}
+                          {clientData.scheduled.count > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <span className="font-medium text-blue-600 dark:text-blue-400">
+                                  {clientData.scheduled.count} scheduled sessions
+                                </span>
+                                {" "}remaining this month
+                                {clientData.scheduled.groupCount > 0 && (
+                                  <span className="text-gray-500">
+                                    {" "}({clientData.scheduled.individualCount} individual, {clientData.scheduled.groupCount} group)
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Link to Client */}
+                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <Link
+                              href={`/trainer/clients/${clientData.client.id}`}
+                              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                            >
+                              View Client Profile →
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">Failed to load monthly billing data</p>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -11,6 +11,7 @@ import AppointmentModal from "@/components/AppointmentModal"
 import BlockTimeModal from "@/components/BlockTimeModal"
 import AppointmentDetailModal from "@/components/AppointmentDetailModal"
 import BlockedTimeDetailModal from "@/components/BlockedTimeDetailModal"
+import GroupSessionDetailModal from "@/components/GroupSessionDetailModal"
 import { useCalendarSwipe } from "@/hooks/useCalendarSwipe"
 import { useDragToCreate } from "@/hooks/useDragToCreate"
 import { CustomAgenda } from "@/components/calendar/CustomAgenda"
@@ -33,6 +34,7 @@ type Appointment = {
   startTime: string
   endTime: string
   status: string
+  isGroupSession?: boolean
   client: {
     id: string
     fullName: string
@@ -63,8 +65,8 @@ type CalendarEvent = {
   title: string
   start: Date
   end: Date
-  resource: Appointment | BlockedTime
-  type: "appointment" | "blocked"
+  resource: Appointment | BlockedTime | Appointment[]
+  type: "appointment" | "blocked" | "group"
 }
 
 type FilterOption = "SCHEDULED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED" | "BLOCKED"
@@ -85,6 +87,7 @@ export default function TrainerCalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showAppointmentDetail, setShowAppointmentDetail] = useState(false)
   const [showBlockedTimeDetail, setShowBlockedTimeDetail] = useState(false)
+  const [showGroupSessionDetail, setShowGroupSessionDetail] = useState(false)
   const [activeFilters, setActiveFilters] = useState<FilterOption[]>(["SCHEDULED", "COMPLETED", "BLOCKED"])
 
   const toggleFilter = (filter: FilterOption) => {
@@ -117,15 +120,46 @@ export default function TrainerCalendarPage() {
       setAppointments(appointmentsData.appointments)
       setSettings(settingsData.settings)
 
-      // Convert to calendar events
-      const appointmentEvents: CalendarEvent[] = appointmentsData.appointments.map((apt: Appointment) => ({
-        id: apt.id,
-        title: apt.client.fullName,
-        start: new Date(apt.startTime),
-        end: new Date(apt.endTime),
-        resource: apt,
-        type: "appointment" as const,
-      }))
+      // Convert to calendar events, consolidating group sessions
+      const allAppointments: Appointment[] = appointmentsData.appointments
+
+      // Group appointments by matching start and end times (group sessions)
+      const groupedByTime = new Map<string, Appointment[]>()
+      allAppointments.forEach((apt: Appointment) => {
+        const timeKey = `${apt.startTime}-${apt.endTime}`
+        const existing = groupedByTime.get(timeKey) || []
+        existing.push(apt)
+        groupedByTime.set(timeKey, existing)
+      })
+
+      // Create calendar events - consolidate group sessions into single events
+      const appointmentEvents: CalendarEvent[] = []
+      groupedByTime.forEach((aptsAtTime) => {
+        if (aptsAtTime.length > 1) {
+          // This is a group session - create single consolidated event
+          const firstApt = aptsAtTime[0]
+          const activeCount = aptsAtTime.filter(a => a.status !== "CANCELLED").length
+          appointmentEvents.push({
+            id: `group-${firstApt.startTime}-${firstApt.endTime}`,
+            title: `Group Session (${activeCount} ${activeCount === 1 ? "Client" : "Clients"})`,
+            start: new Date(firstApt.startTime),
+            end: new Date(firstApt.endTime),
+            resource: aptsAtTime, // Store all appointments in the group
+            type: "group" as const,
+          })
+        } else {
+          // Individual appointment
+          const apt = aptsAtTime[0]
+          appointmentEvents.push({
+            id: apt.id,
+            title: apt.client.fullName,
+            start: new Date(apt.startTime),
+            end: new Date(apt.endTime),
+            resource: apt,
+            type: "appointment" as const,
+          })
+        }
+      })
 
       // Generate blocked time events, including recurring instances
       const blockedEvents: CalendarEvent[] = []
@@ -193,14 +227,35 @@ export default function TrainerCalendarPage() {
     if (event.type === "blocked") {
       return activeFilters.includes("BLOCKED")
     }
-    // For appointments, check the status
+    if (event.type === "group") {
+      // For group sessions, show if any appointment in the group matches the filter
+      const groupAppointments = event.resource as Appointment[]
+      return groupAppointments.some(apt => activeFilters.includes(apt.status as FilterOption))
+    }
+    // For individual appointments, check the status
     const appointment = event.resource as Appointment
     return activeFilters.includes(appointment.status as FilterOption)
   })
 
-  // Count only appointments (exclude blocked times)
-  const appointmentCount = events.filter(event => event.type === "appointment").length
-  const filteredAppointmentCount = filteredEvents.filter(event => event.type === "appointment").length
+  // Count appointments (individual + group members, exclude blocked times)
+  const appointmentCount = events.reduce((count, event) => {
+    if (event.type === "group") {
+      return count + (event.resource as Appointment[]).length
+    }
+    if (event.type === "appointment") {
+      return count + 1
+    }
+    return count
+  }, 0)
+  const filteredAppointmentCount = filteredEvents.reduce((count, event) => {
+    if (event.type === "group") {
+      return count + (event.resource as Appointment[]).length
+    }
+    if (event.type === "appointment") {
+      return count + 1
+    }
+    return count
+  }, 0)
 
   useEffect(() => {
     fetchData()
@@ -238,7 +293,9 @@ export default function TrainerCalendarPage() {
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEvent(event)
-    if (event.type === "appointment") {
+    if (event.type === "group") {
+      setShowGroupSessionDetail(true)
+    } else if (event.type === "appointment") {
       setShowAppointmentDetail(true)
     } else {
       setShowBlockedTimeDetail(true)
@@ -260,10 +317,61 @@ export default function TrainerCalendarPage() {
       }
     }
 
-    // Appointment styling with status indicator border
-    const status = (event.resource as Appointment).status
+    // Group session styling - polished blue gradient
+    if (event.type === "group") {
+      const groupAppointments = event.resource as Appointment[]
+      const hasScheduled = groupAppointments.some(a => a.status === "SCHEDULED")
+      const allCompleted = groupAppointments.every(a => a.status === "COMPLETED" || a.status === "CANCELLED")
+      const allCancelled = groupAppointments.every(a => a.status === "CANCELLED")
+
+      if (allCancelled) {
+        return {
+          style: {
+            backgroundColor: "rgba(239, 68, 68, 0.85)",
+            borderRadius: "6px",
+            opacity: 1,
+            color: "white",
+            borderLeft: "4px solid #dc2626",
+            display: "block",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          },
+        }
+      }
+
+      if (allCompleted) {
+        return {
+          style: {
+            backgroundColor: "rgba(16, 185, 129, 0.9)",
+            borderRadius: "6px",
+            opacity: 1,
+            color: "white",
+            borderLeft: "4px solid #059669",
+            display: "block",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          },
+        }
+      }
+
+      // Has scheduled appointments - show gradient
+      return {
+        style: {
+          background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #2563eb 100%)",
+          borderRadius: "6px",
+          opacity: 1,
+          color: "white",
+          borderLeft: "4px solid #1e40af",
+          display: "block",
+          boxShadow: "0 2px 8px rgba(59, 130, 246, 0.4)",
+        },
+      }
+    }
+
+    // Individual appointment styling with status indicator border
+    const appointment = event.resource as Appointment
+    const status = appointment.status
     let backgroundColor = "#3b82f6"
     let borderColor = "#2563eb"
+    let boxShadow = "0 1px 3px rgba(0,0,0,0.1)"
 
     switch (status) {
       case "SCHEDULED":
@@ -292,7 +400,7 @@ export default function TrainerCalendarPage() {
         color: "white",
         borderLeft: `4px solid ${borderColor}`,
         display: "block",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        boxShadow,
       },
     }
   }
@@ -852,6 +960,21 @@ export default function TrainerCalendarPage() {
             setSelectedEvent(null)
           }}
           blockedTime={selectedEvent.resource as BlockedTime}
+          onUpdate={() => {
+            fetchData()
+          }}
+        />
+      )}
+
+      {/* Group Session Detail Modal */}
+      {selectedEvent && selectedEvent.type === "group" && (
+        <GroupSessionDetailModal
+          isOpen={showGroupSessionDetail}
+          onClose={() => {
+            setShowGroupSessionDetail(false)
+            setSelectedEvent(null)
+          }}
+          appointments={selectedEvent.resource as Appointment[]}
           onUpdate={() => {
             fetchData()
           }}

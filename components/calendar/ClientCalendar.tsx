@@ -52,8 +52,11 @@ export function ClientCalendar() {
   const [success, setSuccess] = useState<string | null>(null)
   const [view, setView] = useState<View>("week")
   const [date, setDate] = useState(new Date())
-  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date; groupSessionWith?: string } | null>(null)
+  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date; groupSessionWith?: string[] } | null>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [isCancelling, setIsCancelling] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("calendar")
+  const [groupSessionPartners, setGroupSessionPartners] = useState<Map<string, string[]>>(new Map())
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
@@ -80,6 +83,36 @@ export function ClientCalendar() {
       // Use my appointments for the list views
       setAppointments(myAppointmentsData.appointments)
       setSettings(settingsData.settings)
+
+      // Determine group session partners for each of the client's appointments
+      // by finding overlapping appointments from other clients
+      const partnersMap = new Map<string, string[]>()
+      myAppointmentsData.appointments.forEach((myApt: Appointment) => {
+        const myStart = new Date(myApt.startTime).getTime()
+        const myEnd = new Date(myApt.endTime).getTime()
+
+        // Find overlapping appointments from calendar data (which has all appointments)
+        const overlapping = calendarAppointmentsData.appointments.filter((calApt: Appointment) => {
+          if (calApt.id === myApt.id) return false // Skip own appointment
+          if (calApt.displayType === "OWN") return false // Skip other own appointments
+
+          const calStart = new Date(calApt.startTime).getTime()
+          const calEnd = new Date(calApt.endTime).getTime()
+
+          // Check for overlap
+          return (calStart < myEnd && calEnd > myStart)
+        })
+
+        // Get names of group session partners
+        const partnerNames = overlapping
+          .map((apt: Appointment) => apt.groupSessionWith || apt.client?.fullName)
+          .filter((name: string | null | undefined): name is string => !!name)
+
+        if (partnerNames.length > 0) {
+          partnersMap.set(myApt.id, partnerNames)
+        }
+      })
+      setGroupSessionPartners(partnersMap)
 
       // Create a map of appointment IDs to trainer names from the full appointments data
       const trainerNameMap = new Map<string, string>()
@@ -252,8 +285,7 @@ export function ClientCalendar() {
   }
 
   const handleCancelAppointment = async (appointmentId: string) => {
-    if (!confirm("Are you sure you want to cancel this appointment?")) return
-
+    setIsCancelling(true)
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`, {
         method: "DELETE",
@@ -265,23 +297,24 @@ export function ClientCalendar() {
       }
 
       setSuccess("Appointment cancelled successfully!")
+      setSelectedAppointment(null)
       fetchData()
       setTimeout(() => setSuccess(null), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
       setTimeout(() => setError(null), 3000)
+    } finally {
+      setIsCancelling(false)
     }
   }
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    // Own appointment - offer to cancel
-    if (event.type === "appointment") {
+    // Own appointment - show details modal
+    if (event.type === "appointment" || event.type === "pastAppointment") {
       const apt = event.resource as Appointment
-      const canCancel = isAfter(new Date(apt.startTime), new Date()) && apt.status === "SCHEDULED"
-
-      if (canCancel && confirm("Would you like to cancel this appointment?")) {
-        handleCancelAppointment(apt.id)
-      }
+      // Look up full appointment data from appointments state (has trainer info)
+      const fullAppointment = appointments.find(a => a.id === apt.id)
+      setSelectedAppointment(fullAppointment || apt)
     }
 
     // Group available - open booking modal
@@ -291,8 +324,26 @@ export function ClientCalendar() {
         setTimeout(() => setError(null), 3000)
         return
       }
-      const apt = event.resource as Appointment
-      setSelectedSlot({ start: event.start, end: event.end, groupSessionWith: apt.groupSessionWith || undefined })
+      // Find all clients in this group session (overlapping appointments)
+      const slotStart = event.start.getTime()
+      const slotEnd = event.end.getTime()
+      const overlappingNames = events
+        .filter((e) => {
+          if (e.type !== "groupAvailable" && e.type !== "appointment" && e.type !== "otherAppointment") return false
+          const eStart = e.start.getTime()
+          const eEnd = e.end.getTime()
+          // Check for overlap
+          return (eStart < slotEnd && eEnd > slotStart)
+        })
+        .map((e) => {
+          const eApt = e.resource as Appointment
+          return eApt.groupSessionWith || eApt.client?.fullName
+        })
+        .filter((name): name is string => !!name)
+
+      // Remove duplicates
+      const uniqueNames = [...new Set(overlappingNames)]
+      setSelectedSlot({ start: event.start, end: event.end, groupSessionWith: uniqueNames.length > 0 ? uniqueNames : undefined })
     }
 
     // Other appointments (unavailable) - show message
@@ -464,46 +515,262 @@ export function ClientCalendar() {
             className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              {selectedSlot.groupSessionWith ? "Book Group Session" : "Book Appointment"}
-            </h3>
-            <div className="space-y-3 mb-6">
-              {selectedSlot.groupSessionWith && (
-                <div className="p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200 dark:border-teal-800">
-                  <span className="text-sm font-medium text-teal-700 dark:text-teal-300">Group Session With:</span>
-                  <p className="text-teal-900 dark:text-teal-100 font-medium">{selectedSlot.groupSessionWith}</p>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {selectedSlot.groupSessionWith && selectedSlot.groupSessionWith.length > 0 ? "Book Group Session" : "Book Appointment"}
+              </h3>
+              <button
+                onClick={() => setSelectedSlot(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              {/* Trainer */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Trainer</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    {appointments.find(a => a.trainer?.fullName)?.trainer?.fullName || "Your Trainer"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Group Session Partners */}
+              {selectedSlot.groupSessionWith && selectedSlot.groupSessionWith.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      {selectedSlot.groupSessionWith.length === 1 ? "Group Session With" : "Group Session With"}
+                    </span>
+                    <div className="text-gray-900 dark:text-gray-100 font-medium">
+                      {selectedSlot.groupSessionWith.map((name, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-teal-500 rounded-full"></span>
+                          {name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
-              <div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Date:</span>
-                <p className="text-gray-900 dark:text-gray-100">{format(selectedSlot.start, "EEEE, MMMM d, yyyy")}</p>
+
+              {/* Date */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Date</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    {format(selectedSlot.start, "EEEE, MMMM d, yyyy")}
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Time:</span>
-                <p className="text-gray-900 dark:text-gray-100">
-                  {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
-                </p>
+
+              {/* Time */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Time</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Duration:</span>
-                <p className="text-gray-900 dark:text-gray-100">
-                  {(selectedSlot.end.getTime() - selectedSlot.start.getTime()) / (1000 * 60)} minutes
-                </p>
+
+              {/* Duration */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    {Math.round((selectedSlot.end.getTime() - selectedSlot.start.getTime()) / (1000 * 60))} minutes
+                  </p>
+                </div>
               </div>
             </div>
+
+            {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={() => setSelectedSlot(null)}
-                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleBookAppointment}
-                className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
+                className={`flex-1 px-4 py-3 text-white rounded-md font-medium ${
+                  selectedSlot.groupSessionWith && selectedSlot.groupSessionWith.length > 0
+                    ? "bg-teal-600 dark:bg-teal-500 hover:bg-teal-700 dark:hover:bg-teal-600"
+                    : "bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
+                }`}
               >
                 Confirm Booking
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Appointment Details Modal */}
+      {selectedAppointment && (
+        <div
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+          style={{ touchAction: "none" }}
+          onClick={() => setSelectedAppointment(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Appointment Details
+              </h3>
+              <button
+                onClick={() => setSelectedAppointment(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Status Badge */}
+            <div className="mb-4">
+              <StatusBadge status={selectedAppointment.status} type="appointment" />
+            </div>
+
+            <div className="space-y-4 mb-6">
+              {/* Trainer */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Trainer</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    {selectedAppointment.trainer?.fullName || "Trainer"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Group Session Partners */}
+              {groupSessionPartners.get(selectedAppointment.id) && groupSessionPartners.get(selectedAppointment.id)!.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Group Session With</span>
+                    <div className="text-gray-900 dark:text-gray-100 font-medium">
+                      {groupSessionPartners.get(selectedAppointment.id)!.map((name, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-teal-500 rounded-full"></span>
+                          {name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Date */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Date</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    {format(new Date(selectedAppointment.startTime), "EEEE, MMMM d, yyyy")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Time */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Time</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    {format(new Date(selectedAppointment.startTime), "h:mm a")} - {format(new Date(selectedAppointment.endTime), "h:mm a")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</span>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">
+                    {Math.round((new Date(selectedAppointment.endTime).getTime() - new Date(selectedAppointment.startTime).getTime()) / (1000 * 60))} minutes
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedAppointment(null)}
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
+              >
+                Close
+              </button>
+              {/* Show cancel button only for future scheduled appointments */}
+              {isAfter(new Date(selectedAppointment.startTime), new Date()) &&
+               (selectedAppointment.status === "SCHEDULED" || selectedAppointment.status === "RESCHEDULED") && (
+                <button
+                  onClick={() => handleCancelAppointment(selectedAppointment.id)}
+                  disabled={isCancelling}
+                  className="flex-1 px-4 py-3 bg-red-600 dark:bg-red-500 text-white rounded-md hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {isCancelling ? "Cancelling..." : "Cancel Appointment"}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -604,35 +871,61 @@ export function ClientCalendar() {
             </div>
           ) : (
             <div className="space-y-3">
-              {upcomingAppointments.map((apt) => (
-                <div
-                  key={apt.id}
-                  className="group flex justify-between items-center p-5 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500/30 hover:shadow-lg transition-all duration-200 bg-gray-50 dark:bg-gray-800"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <div className="font-semibold text-lg text-gray-900 dark:text-gray-100">
-                        Training with {apt.trainer?.fullName || "Trainer"}
+              {upcomingAppointments.map((apt) => {
+                const partners = groupSessionPartners.get(apt.id)
+                const isGroupSession = partners && partners.length > 0
+
+                return (
+                  <div
+                    key={apt.id}
+                    onClick={() => setSelectedAppointment(apt)}
+                    className={`group flex justify-between items-center p-5 border-2 rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer ${
+                      isGroupSession
+                        ? "border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/20 hover:border-teal-400/50"
+                        : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-500/30"
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                          Training with {apt.trainer?.fullName || "Trainer"}
+                        </div>
+                        <StatusBadge status={apt.status} type="appointment" />
+                        {isGroupSession && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 rounded-full">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Group Session
+                          </span>
+                        )}
                       </div>
-                      <StatusBadge status={apt.status} type="appointment" />
+                      {isGroupSession && (
+                        <div className="text-sm text-teal-600 dark:text-teal-400 mt-1 flex items-center gap-1">
+                          <span className="font-medium">With:</span> {partners.join(", ")}
+                        </div>
+                      )}
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {format(new Date(apt.startTime), "EEEE, MMM d")} at{" "}
+                        {format(new Date(apt.startTime), "h:mm a")} -{" "}
+                        {format(new Date(apt.endTime), "h:mm a")}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <div className={`ml-4 transition-colors ${
+                      isGroupSession
+                        ? "text-teal-400 group-hover:text-teal-500"
+                        : "text-gray-400 group-hover:text-blue-500"
+                    }`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
-                      {format(new Date(apt.startTime), "EEEE, MMM d")} at{" "}
-                      {format(new Date(apt.startTime), "h:mm a")} -{" "}
-                      {format(new Date(apt.endTime), "h:mm a")}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleCancelAppointment(apt.id)}
-                    className="ml-4 px-4 py-2 text-sm font-medium text-red-600 hover:text-white hover:bg-red-500 border-2 border-red-500 rounded-lg transition-all duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -653,7 +946,8 @@ export function ClientCalendar() {
               {pastAppointments.slice(0, 20).map((apt) => (
                 <div
                   key={apt.id}
-                  className="flex justify-between items-center p-5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800"
+                  onClick={() => setSelectedAppointment(apt)}
+                  className="group flex justify-between items-center p-5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all duration-200 cursor-pointer"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
@@ -669,6 +963,11 @@ export function ClientCalendar() {
                       {format(new Date(apt.startTime), "EEEE, MMM d, yyyy")} at{" "}
                       {format(new Date(apt.startTime), "h:mm a")}
                     </div>
+                  </div>
+                  <div className="ml-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
                 </div>
               ))}

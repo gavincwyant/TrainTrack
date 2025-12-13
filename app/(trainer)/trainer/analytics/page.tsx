@@ -480,6 +480,7 @@ function renderCustomLabel(entry: any) {
 // Export Modal Component
 function ExportModal({ onClose }: { onClose: () => void }) {
   const [exportType, setExportType] = useState<"month" | "year">("month")
+  const [exportFormat, setExportFormat] = useState<"csv" | "xlsx">("xlsx")
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
 
@@ -504,6 +505,7 @@ function ExportModal({ onClose }: { onClose: () => void }) {
     const params = new URLSearchParams({
       period: exportType,
       year: selectedYear.toString(),
+      format: exportFormat,
     })
 
     if (exportType === "month") {
@@ -606,10 +608,44 @@ function ExportModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
+        {/* Export Format Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            File Format
+          </label>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setExportFormat("csv")}
+              className={`flex-1 py-2 px-4 rounded-md font-medium ${
+                exportFormat === "csv"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              CSV
+            </button>
+            <button
+              onClick={() => setExportFormat("xlsx")}
+              className={`flex-1 py-2 px-4 rounded-md font-medium ${
+                exportFormat === "xlsx"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              Excel (.xlsx)
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            {exportFormat === "csv"
+              ? "CSV files can be opened in any spreadsheet application"
+              : "Excel files include formatted columns and are ready to use"}
+          </p>
+        </div>
+
         {/* Export Details */}
         <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md p-4 mb-6">
           <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-            CSV will include:
+            Export will include:
           </h3>
           <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
             <li>• Payment Date</li>
@@ -634,7 +670,7 @@ function ExportModal({ onClose }: { onClose: () => void }) {
             onClick={handleExport}
             className="flex-1 px-4 py-2 min-h-[44px] bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-medium"
           >
-            Download CSV
+            Download {exportFormat === "xlsx" ? "Excel" : "CSV"}
           </button>
         </div>
       </div>

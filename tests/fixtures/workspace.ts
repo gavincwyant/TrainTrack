@@ -16,10 +16,13 @@ export interface TestWorkspace {
 export interface WorkspaceOptions {
   billingFrequency?: 'PER_SESSION' | 'MONTHLY'
   sessionRate?: number
+  groupSessionRate?: number
   autoInvoiceEnabled?: boolean
   trainerEmail?: string
   clientEmail?: string
   monthlyInvoiceDay?: number
+  groupSessionMatchingLogic?: 'EXACT_MATCH' | 'START_MATCH' | 'END_MATCH' | 'ANY_OVERLAP'
+  defaultGroupSessionRate?: number
 }
 
 /**
@@ -67,6 +70,8 @@ export async function createTestWorkspace(
       timezone: 'America/New_York',
       dayStartTime: '09:00',
       dayEndTime: '17:00',
+      groupSessionMatchingLogic: options.groupSessionMatchingLogic || 'EXACT_MATCH',
+      defaultGroupSessionRate: options.defaultGroupSessionRate,
     },
   })
 
@@ -89,6 +94,7 @@ export async function createTestWorkspace(
       workspaceId: workspace.id,
       billingFrequency: options.billingFrequency || 'PER_SESSION',
       sessionRate: options.sessionRate || 100,
+      groupSessionRate: options.groupSessionRate,
       autoInvoiceEnabled: options.autoInvoiceEnabled ?? true,
     },
   })
@@ -109,7 +115,9 @@ export async function createTestClient(options: {
   workspaceId: string
   billingFrequency?: 'PER_SESSION' | 'MONTHLY'
   sessionRate?: number
+  groupSessionRate?: number
   email?: string
+  autoInvoiceEnabled?: boolean
 }): Promise<{ user: User; profile: ClientProfile }> {
   const password = await hash('TestPassword123!', 10)
 
@@ -130,7 +138,8 @@ export async function createTestClient(options: {
       workspaceId: options.workspaceId,
       billingFrequency: options.billingFrequency || 'PER_SESSION',
       sessionRate: options.sessionRate || 100,
-      autoInvoiceEnabled: true,
+      groupSessionRate: options.groupSessionRate,
+      autoInvoiceEnabled: options.autoInvoiceEnabled ?? true,
     },
   })
 

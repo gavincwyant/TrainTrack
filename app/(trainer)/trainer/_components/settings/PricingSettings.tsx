@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react"
-import { Settings } from "../useTrainerSettings"
+import { Settings, GroupSessionMatchingLogic } from "../useTrainerSettings"
 
 type Props = {
   settings: Settings | null
   isLoading: boolean
   onIndividualRateChange: (rate: number) => Promise<boolean>
   onGroupRateChange: (rate: number) => Promise<boolean>
+  onGroupMatchingLogicChange: (logic: GroupSessionMatchingLogic) => Promise<boolean>
 }
 
 export function PricingSettings({
@@ -13,6 +14,7 @@ export function PricingSettings({
   isLoading,
   onIndividualRateChange,
   onGroupRateChange,
+  onGroupMatchingLogicChange,
 }: Props) {
   const [individualRate, setIndividualRate] = useState<string>("")
   const [groupRate, setGroupRate] = useState<string>("")
@@ -110,7 +112,31 @@ export function PricingSettings({
           </div>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">per session</p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            This rate will be used for group training sessions (coming soon)
+            This rate will be used for group training sessions
+          </p>
+        </div>
+
+        {/* Group Session Detection */}
+        <div>
+          <label htmlFor="groupMatchingLogic" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Group Session Detection
+          </label>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            How should the system determine if appointments are part of a group session?
+          </p>
+          <select
+            id="groupMatchingLogic"
+            value={settings?.groupSessionMatchingLogic || "EXACT_MATCH"}
+            onChange={(e) => onGroupMatchingLogicChange(e.target.value as GroupSessionMatchingLogic)}
+            className="block w-full max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="EXACT_MATCH">Exact Match (same start AND end time)</option>
+            <option value="START_MATCH">Start Match (same start time)</option>
+            <option value="END_MATCH">End Match (same end time)</option>
+            <option value="ANY_OVERLAP">Any Overlap (any time overlap)</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Appointments matching this criteria will be grouped together and billed at the group rate
           </p>
         </div>
 

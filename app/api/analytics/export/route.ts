@@ -2,8 +2,10 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireWorkspace, requireUserId } from "@/lib/middleware/tenant"
 import { format } from "date-fns"
+import * as XLSX from "xlsx"
 
 type ExportPeriod = "month" | "year"
+type ExportFormat = "csv" | "xlsx"
 
 export async function GET(request: Request) {
   try {
@@ -12,6 +14,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const period = (searchParams.get("period") || "month") as ExportPeriod
+    const exportFormat = (searchParams.get("format") || "csv") as ExportFormat
     const yearParam = searchParams.get("year")
     const monthParam = searchParams.get("month")
 
@@ -19,7 +22,8 @@ export async function GET(request: Request) {
     const { startDate, endDate, filename } = calculateDateRange(
       period,
       yearParam,
-      monthParam
+      monthParam,
+      exportFormat
     )
 
     // Fetch PAID invoices only (actual revenue received)
@@ -72,9 +76,33 @@ export async function GET(request: Request) {
       workspaceId,
     })
 
-    // If no invoices found, return a CSV with a helpful message
-    if (invoices.length === 0) {
-      const csv = generateEmptyCSV(period, startDate)
+    // Handle different export formats
+    if (exportFormat === "xlsx") {
+      // Generate Excel file
+      const excelBuffer = generateExcel(invoices, period, startDate)
+
+      return new NextResponse(new Uint8Array(excelBuffer), {
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+        },
+      })
+    } else {
+      // If no invoices found, return a CSV with a helpful message
+      if (invoices.length === 0) {
+        const csv = generateEmptyCSV(period, startDate)
+        return new NextResponse(csv, {
+          headers: {
+            "Content-Type": "text/csv",
+            "Content-Disposition": `attachment; filename="${filename}"`,
+          },
+        })
+      }
+
+      // Generate CSV content
+      const csv = generateCSV(invoices)
+
+      // Return CSV file
       return new NextResponse(csv, {
         headers: {
           "Content-Type": "text/csv",
@@ -82,17 +110,6 @@ export async function GET(request: Request) {
         },
       })
     }
-
-    // Generate CSV content
-    const csv = generateCSV(invoices)
-
-    // Return CSV file
-    return new NextResponse(csv, {
-      headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-      },
-    })
   } catch (error) {
     console.error("CSV export error:", error)
     return NextResponse.json(
@@ -105,7 +122,8 @@ export async function GET(request: Request) {
 function calculateDateRange(
   period: ExportPeriod,
   yearParam: string | null,
-  monthParam: string | null
+  monthParam: string | null,
+  exportFormat: ExportFormat
 ) {
   const now = new Date()
   const currentYear = now.getFullYear()
@@ -114,6 +132,8 @@ function calculateDateRange(
   let startDate: Date
   let endDate: Date
   let filename: string
+
+  const extension = exportFormat === "xlsx" ? "xlsx" : "csv"
 
   if (period === "month") {
     // Export specific month or current month
@@ -124,7 +144,7 @@ function calculateDateRange(
     endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
 
     const monthName = format(startDate, "MMMM-yyyy")
-    filename = `payments-${monthName}.csv`
+    filename = `payments-${monthName}.${extension}`
   } else {
     // Export calendar year
     const year = yearParam ? parseInt(yearParam) : currentYear
@@ -132,7 +152,7 @@ function calculateDateRange(
     startDate = new Date(year, 0, 1)
     endDate = new Date(year, 11, 31, 23, 59, 59, 999)
 
-    filename = `payments-${year}.csv`
+    filename = `payments-${year}.${extension}`
   }
 
   return { startDate, endDate, filename }
@@ -144,8 +164,6 @@ function generateCSV(
     amount: { toString: () => string }
     paidAt: Date | null
     createdAt: Date
-    paymentMethod: string | null
-    notes: string | null
     client: {
       fullName: string
       email: string
@@ -162,10 +180,8 @@ function generateCSV(
     "Client Name",
     "Client Email",
     "Amount",
-    "Payment Method",
     "Invoice ID",
     "Services/Items",
-    "Notes",
   ]
 
   // CSV Rows
@@ -179,19 +195,13 @@ function generateCSV(
       .map((item) => `${item.description} ($${item.total.toString()})`)
       .join("; ")
 
-    const notes = invoice.notes
-      ? invoice.notes.replace(/"/g, '""').replace(/\n/g, " ")
-      : ""
-
     return [
       paymentDate,
       escapeCSV(invoice.client.fullName),
       escapeCSV(invoice.client.email),
       `$${invoice.amount.toString()}`,
-      invoice.paymentMethod || "N/A",
       invoice.id,
       escapeCSV(services),
-      escapeCSV(notes),
     ]
   })
 
@@ -213,10 +223,8 @@ function generateEmptyCSV(
     "Client Name",
     "Client Email",
     "Amount",
-    "Payment Method",
     "Invoice ID",
     "Services/Items",
-    "Notes",
   ]
 
   const periodText =
@@ -226,7 +234,7 @@ function generateEmptyCSV(
 
   const message = `No paid invoices found for ${periodText}`
 
-  return [headers.join(","), `"${message}",,,,,,,`].join("\n")
+  return [headers.join(","), `"${message}",,,,,`].join("\n")
 }
 
 function escapeCSV(value: string): string {
@@ -235,4 +243,82 @@ function escapeCSV(value: string): string {
     return `"${value.replace(/"/g, '""')}"`
   }
   return value
+}
+
+function generateExcel(
+  invoices: Array<{
+    id: string
+    amount: { toString: () => string }
+    paidAt: Date | null
+    createdAt: Date
+    client: {
+      fullName: string
+      email: string
+    }
+    lineItems: Array<{
+      description: string
+      total: { toString: () => string }
+    }>
+  }>,
+  period: ExportPeriod,
+  startDate: Date
+): Buffer {
+  // Prepare data rows
+  const rows = invoices.map((invoice) => {
+    const paymentDate = invoice.paidAt
+      ? format(invoice.paidAt, "yyyy-MM-dd")
+      : format(invoice.createdAt, "yyyy-MM-dd")
+
+    const services = invoice.lineItems
+      .map((item) => `${item.description} ($${item.total.toString()})`)
+      .join("; ")
+
+    return {
+      "Payment Date": paymentDate,
+      "Client Name": invoice.client.fullName,
+      "Client Email": invoice.client.email,
+      "Amount": parseFloat(invoice.amount.toString()),
+      "Invoice ID": invoice.id,
+      "Services/Items": services,
+    }
+  })
+
+  // If no invoices, create a row with a message
+  if (rows.length === 0) {
+    const periodText =
+      period === "month"
+        ? `${format(startDate, "MMMM yyyy")}`
+        : `${format(startDate, "yyyy")}`
+
+    rows.push({
+      "Payment Date": `No paid invoices found for ${periodText}`,
+      "Client Name": "",
+      "Client Email": "",
+      "Amount": 0,
+      "Invoice ID": "",
+      "Services/Items": "",
+    })
+  }
+
+  // Create workbook and worksheet
+  const workbook = XLSX.utils.book_new()
+  const worksheet = XLSX.utils.json_to_sheet(rows)
+
+  // Set column widths for better readability
+  worksheet["!cols"] = [
+    { wch: 12 },  // Payment Date
+    { wch: 20 },  // Client Name
+    { wch: 25 },  // Client Email
+    { wch: 10 },  // Amount
+    { wch: 36 },  // Invoice ID
+    { wch: 40 },  // Services/Items
+  ]
+
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Payments")
+
+  // Generate buffer
+  const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" })
+
+  return buffer
 }
