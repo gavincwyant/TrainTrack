@@ -249,7 +249,65 @@ export async function GET(request: Request) {
       ? appointments.filter(apt => !apt.workoutSession)
       : appointments
 
-    return NextResponse.json({ appointments: filteredAppointments })
+    // Get trainer settings to determine group session matching logic
+    const trainerId = userIsTrainer ? userId : filteredAppointments[0]?.trainer?.id
+    let matchingLogic = "EXACT_MATCH"
+
+    if (trainerId) {
+      const trainerSettings = await prisma.trainerSettings.findUnique({
+        where: { trainerId },
+        select: { groupSessionMatchingLogic: true },
+      })
+      matchingLogic = trainerSettings?.groupSessionMatchingLogic || "EXACT_MATCH"
+    }
+
+    // Calculate isGroupSession for each appointment
+    const appointmentsWithGroupInfo = await Promise.all(
+      filteredAppointments.map(async (apt) => {
+        // Build overlap condition based on matching logic
+        let overlapCondition: Record<string, unknown>
+
+        switch (matchingLogic) {
+          case "START_MATCH":
+            overlapCondition = { startTime: apt.startTime }
+            break
+          case "END_MATCH":
+            overlapCondition = { endTime: apt.endTime }
+            break
+          case "ANY_OVERLAP":
+            overlapCondition = {
+              AND: [
+                { startTime: { lt: apt.endTime } },
+                { endTime: { gt: apt.startTime } },
+              ],
+            }
+            break
+          case "EXACT_MATCH":
+          default:
+            overlapCondition = {
+              startTime: apt.startTime,
+              endTime: apt.endTime,
+            }
+        }
+
+        const overlappingCount = await prisma.appointment.count({
+          where: {
+            trainerId: apt.trainerId,
+            workspaceId: apt.workspaceId,
+            status: { in: ["SCHEDULED", "COMPLETED"] },
+            id: { not: apt.id },
+            ...overlapCondition,
+          },
+        })
+
+        return {
+          ...apt,
+          isGroupSession: overlappingCount > 0,
+        }
+      })
+    )
+
+    return NextResponse.json({ appointments: appointmentsWithGroupInfo })
   } catch (error) {
     console.error("Get appointments error:", error)
 

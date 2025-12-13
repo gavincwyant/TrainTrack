@@ -107,3 +107,15 @@ body {
 .animate-fade-in {
   animation: fade-in 0.8s ease-out forwards;
 }
+
+/* Fix for browser autofill background in dark mode */
+@media (prefers-color-scheme: dark) {
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1f2937 inset !important;
+    -webkit-text-fill-color: #f3f4f6 !important;
+    caret-color: #f3f4f6 !important;
+  }
+}

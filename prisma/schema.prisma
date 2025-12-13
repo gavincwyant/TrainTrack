@@ -93,9 +93,10 @@ model ClientProfile {
   workspaceId      String          @map("workspace_id")
   workspace        Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  billingFrequency BillingFrequency @map("billing_frequency")
-  sessionRate      Decimal         @map("session_rate") @db.Decimal(10, 2)
-  notes            String?         @db.Text
+  billingFrequency   BillingFrequency @map("billing_frequency")
+  sessionRate        Decimal          @map("session_rate") @db.Decimal(10, 2)
+  groupSessionRate   Decimal?         @map("group_session_rate") @db.Decimal(10, 2)
+  notes              String?          @db.Text
 
   // Invoice Settings
   autoInvoiceEnabled Boolean @default(true) @map("auto_invoice_enabled") // Opt-out per client
@@ -230,6 +231,9 @@ model TrainerSettings {
   // Pricing Configuration
   defaultIndividualSessionRate Decimal? @map("default_individual_session_rate") @db.Decimal(10, 2)
   defaultGroupSessionRate      Decimal? @map("default_group_session_rate") @db.Decimal(10, 2)
+
+  // Group Session Configuration
+  groupSessionMatchingLogic String @default("EXACT_MATCH") @map("group_session_matching_logic") // EXACT_MATCH, START_MATCH, END_MATCH, ANY_OVERLAP
 
   // Client Auto-Sync Settings
   autoClientSyncEnabled         Boolean   @default(false) @map("auto_client_sync_enabled")
