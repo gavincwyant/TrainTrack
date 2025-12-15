@@ -6,7 +6,6 @@ import { format, parse, startOfWeek, endOfWeek, getDay, addDays, addWeeks, addMo
 import { enUS } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "./calendar-custom.css"
-import Link from "next/link"
 import AppointmentModal from "@/components/AppointmentModal"
 import BlockTimeModal from "@/components/BlockTimeModal"
 import AppointmentDetailModal from "@/components/AppointmentDetailModal"
@@ -320,7 +319,7 @@ export default function TrainerCalendarPage() {
     // Group session styling - polished blue gradient
     if (event.type === "group") {
       const groupAppointments = event.resource as Appointment[]
-      const hasScheduled = groupAppointments.some(a => a.status === "SCHEDULED")
+      const _hasScheduled = groupAppointments.some(a => a.status === "SCHEDULED")
       const allCompleted = groupAppointments.every(a => a.status === "COMPLETED" || a.status === "CANCELLED")
       const allCancelled = groupAppointments.every(a => a.status === "CANCELLED")
 
@@ -371,7 +370,7 @@ export default function TrainerCalendarPage() {
     const status = appointment.status
     let backgroundColor = "#3b82f6"
     let borderColor = "#2563eb"
-    let boxShadow = "0 1px 3px rgba(0,0,0,0.1)"
+    const boxShadow = "0 1px 3px rgba(0,0,0,0.1)"
 
     switch (status) {
       case "SCHEDULED":
@@ -477,13 +476,6 @@ export default function TrainerCalendarPage() {
             <span className="sm:hidden">New</span>
             <span className="hidden sm:inline">New Appointment</span>
           </button>
-          <Link
-            href="/trainer/availability"
-            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-500/30 transition-all duration-200 font-medium flex items-center justify-center"
-          >
-            <span className="hidden sm:inline">Manage Availability</span>
-            <span className="sm:hidden">Availability</span>
-          </Link>
           <button
             onClick={async () => {
               try {

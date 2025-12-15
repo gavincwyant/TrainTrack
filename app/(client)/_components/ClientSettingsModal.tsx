@@ -77,9 +77,9 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
       ></div>
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-0 md:p-4">
         <div
-          className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-3xl mx-4 sm:mx-auto min-h-0 max-h-[90vh] md:h-[500px] overflow-hidden flex flex-col"
+          className="relative bg-white dark:bg-gray-900 md:rounded-lg shadow-xl w-full max-w-3xl md:mx-auto min-h-0 h-[100dvh] md:h-[500px] md:max-h-[90vh] overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

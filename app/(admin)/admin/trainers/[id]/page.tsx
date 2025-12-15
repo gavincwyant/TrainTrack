@@ -100,45 +100,45 @@ export default async function TrainerDetailPage({
       {/* Back Button */}
       <Link
         href="/admin"
-        className="text-blue-600 hover:text-blue-900 font-medium text-sm"
+        className="inline-block mb-4 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium text-sm"
       >
         ← Back to Dashboard
       </Link>
 
       {/* Trainer Profile */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
           {trainer.fullName}
         </h1>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-gray-500">Email:</span>{" "}
-            <span className="text-gray-900">{trainer.email}</span>
+            <span className="text-gray-500 dark:text-gray-400">Email:</span>{" "}
+            <span className="text-gray-900 dark:text-gray-100">{trainer.email}</span>
           </div>
           <div>
-            <span className="text-gray-500">Phone:</span>{" "}
-            <span className="text-gray-900">{trainer.phone || "N/A"}</span>
+            <span className="text-gray-500 dark:text-gray-400">Phone:</span>{" "}
+            <span className="text-gray-900 dark:text-gray-100">{trainer.phone || "N/A"}</span>
           </div>
           <div>
-            <span className="text-gray-500">Workspace:</span>{" "}
-            <span className="text-gray-900">{trainer.workspace?.name || "N/A"}</span>
+            <span className="text-gray-500 dark:text-gray-400">Workspace:</span>{" "}
+            <span className="text-gray-900 dark:text-gray-100">{trainer.workspace?.name || "N/A"}</span>
           </div>
           <div>
-            <span className="text-gray-500">Signed Up:</span>{" "}
-            <span className="text-gray-900">
+            <span className="text-gray-500 dark:text-gray-400">Signed Up:</span>{" "}
+            <span className="text-gray-900 dark:text-gray-100">
               {format(new Date(trainer.createdAt), "MMM d, yyyy")}
             </span>
           </div>
           <div>
-            <span className="text-gray-500">Google Calendar:</span>{" "}
-            <span className="text-gray-900">
+            <span className="text-gray-500 dark:text-gray-400">Google Calendar:</span>{" "}
+            <span className="text-gray-900 dark:text-gray-100">
               {trainer.trainerSettings?.googleCalendarConnected ? "Connected" : "Not Connected"}
             </span>
           </div>
           {trainer.trainerSettings?.lastSyncedAt && (
             <div>
-              <span className="text-gray-500">Last Synced:</span>{" "}
-              <span className="text-gray-900">
+              <span className="text-gray-500 dark:text-gray-400">Last Synced:</span>{" "}
+              <span className="text-gray-900 dark:text-gray-100">
                 {formatDistanceToNow(new Date(trainer.trainerSettings.lastSyncedAt), { addSuffix: true })}
               </span>
             </div>
@@ -148,75 +148,75 @@ export default async function TrainerDetailPage({
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="text-sm text-gray-500">Total Clients</p>
-          <p className="text-2xl font-bold text-blue-600">{stats.totalClients}</p>
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Clients</p>
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalClients}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="text-sm text-gray-500">Pending Clients</p>
-          <p className="text-2xl font-bold text-yellow-600">{stats.pendingClients}</p>
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Pending Clients</p>
+          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pendingClients}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="text-sm text-gray-500">Appointments</p>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Appointments</p>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
             {stats.completedAppointments}/{stats.totalAppointments}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="text-sm text-gray-500">Total Revenue</p>
-          <p className="text-2xl font-bold text-purple-600">
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
             ${Number(stats.totalRevenue).toFixed(2)}
           </p>
         </div>
       </div>
 
       {/* Clients Table */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Approved Clients ({clients.length})
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Session Rate
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Billing
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Added
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {clients.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                     No clients yet
                   </td>
                 </tr>
               ) : (
                 clients.map((client) => (
-                  <tr key={client.id}>
-                    <td className="px-6 py-4 text-sm text-gray-900">{client.fullName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{client.email}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                  <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{client.fullName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{client.email}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                       ${Number(client.clientProfile?.sessionRate || 0).toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {client.clientProfile?.billingFrequency || "N/A"}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {formatDistanceToNow(new Date(client.createdAt), { addSuffix: true })}
                     </td>
                   </tr>
@@ -228,56 +228,56 @@ export default async function TrainerDetailPage({
       </div>
 
       {/* Pending Profiles Table */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Pending Client Profiles ({pendingProfiles.length})
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Source
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Occurrences
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {pendingProfiles.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                     No pending profiles
                   </td>
                 </tr>
               ) : (
                 pendingProfiles.map((profile) => (
-                  <tr key={profile.id}>
-                    <td className="px-6 py-4 text-sm text-gray-900">{profile.extractedName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{profile.extractedEmail || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500 capitalize">{profile.source}</td>
+                  <tr key={profile.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{profile.extractedName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{profile.extractedEmail || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 capitalize">{profile.source}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        profile.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                        profile.status === "approved" ? "bg-green-100 text-green-800" :
-                        "bg-gray-100 text-gray-800"
+                        profile.status === "pending" ? "bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300" :
+                        profile.status === "approved" ? "bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300" :
+                        "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
                       }`}>
                         {profile.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{profile.occurrenceCount}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{profile.occurrenceCount}</td>
                   </tr>
                 ))
               )}
