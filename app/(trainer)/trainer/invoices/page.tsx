@@ -10,6 +10,7 @@ type Invoice = {
   dueDate: string
   status: string
   createdAt: string
+  notes?: string
 }
 
 type MonthlyClientPreview = {
@@ -38,9 +39,28 @@ type MonthlyPreviewData = {
   totals: { completedTotal: number; projectedTotal: number; clientCount: number }
 }
 
+type PrepaidClientData = {
+  client: { id: string; fullName: string; email: string }
+  currentBalance: number
+  targetBalance: number
+  sessionsConsumedSinceLastCredit: number
+  lastTransactionDate: string | null
+  balanceStatus: "healthy" | "low" | "empty"
+}
+
+type PrepaidData = {
+  clients: PrepaidClientData[]
+  totals: {
+    totalBalance: number
+    totalTarget: number
+    clientCount: number
+    clientsNeedingAttention: number
+  }
+}
+
 type SortField = "client" | "amount" | "createdAt" | "dueDate" | "status"
 type SortOrder = "asc" | "desc"
-type ViewTab = "invoices" | "monthly"
+type ViewTab = "invoices" | "monthly" | "prepaid"
 
 export default function InvoicesPage() {
   const [activeTab, setActiveTab] = useState<ViewTab>("invoices")
@@ -64,11 +84,19 @@ export default function InvoicesPage() {
   const [isLoadingMonthly, setIsLoadingMonthly] = useState(false)
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set())
 
+  // Prepaid billing state
+  const [prepaidData, setPrepaidData] = useState<PrepaidData | null>(null)
+  const [isLoadingPrepaid, setIsLoadingPrepaid] = useState(false)
+  const [showAddCreditModal, setShowAddCreditModal] = useState(false)
+  const [selectedPrepaidClient, setSelectedPrepaidClient] = useState<PrepaidClientData | null>(null)
+
   useEffect(() => {
     if (activeTab === "invoices") {
       fetchInvoices()
-    } else {
+    } else if (activeTab === "monthly") {
       fetchMonthlyPreview()
+    } else if (activeTab === "prepaid") {
+      fetchPrepaidData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, activeTab])
@@ -83,6 +111,71 @@ export default function InvoicesPage() {
       console.error("Failed to fetch monthly preview:", error)
     } finally {
       setIsLoadingMonthly(false)
+    }
+  }
+
+  const fetchPrepaidData = async () => {
+    setIsLoadingPrepaid(true)
+    try {
+      const response = await fetch("/api/prepaid")
+      const data = await response.json()
+      if (data.clients && data.totals) {
+        setPrepaidData(data)
+      } else {
+        console.error("Invalid prepaid data response:", data)
+        setPrepaidData(null)
+      }
+    } catch (error) {
+      console.error("Failed to fetch prepaid data:", error)
+      setPrepaidData(null)
+    } finally {
+      setIsLoadingPrepaid(false)
+    }
+  }
+
+  const handleAddCredit = async (amount: number, notes?: string) => {
+    if (!selectedPrepaidClient) return
+
+    try {
+      const response = await fetch(`/api/prepaid/${selectedPrepaidClient.client.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, notes }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to add credit")
+      }
+
+      // Refresh the prepaid data
+      await fetchPrepaidData()
+      setShowAddCreditModal(false)
+      setSelectedPrepaidClient(null)
+    } catch (error) {
+      console.error("Failed to add credit:", error)
+      alert("Failed to add credit. Please try again.")
+    }
+  }
+
+  const getBalanceStatusColor = (status: "healthy" | "low" | "empty") => {
+    switch (status) {
+      case "healthy":
+        return "text-green-600 dark:text-green-400"
+      case "low":
+        return "text-yellow-600 dark:text-yellow-400"
+      case "empty":
+        return "text-red-600 dark:text-red-400"
+    }
+  }
+
+  const getBalanceStatusBg = (status: "healthy" | "low" | "empty") => {
+    switch (status) {
+      case "healthy":
+        return "bg-green-100 dark:bg-green-900/30"
+      case "low":
+        return "bg-yellow-100 dark:bg-yellow-900/30"
+      case "empty":
+        return "bg-red-100 dark:bg-red-900/30"
     }
   }
 
@@ -439,10 +532,16 @@ export default function InvoicesPage() {
         return "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300"
       case "DRAFT":
         return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
+      case "CANCELLED":
+        return "bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300"
       default:
         return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
     }
   }
+
+  // Check if an invoice is a prepaid top-up invoice
+  const isPrepaidTopUp = (invoice: Invoice) =>
+    invoice.notes?.includes("Prepaid balance replenishment")
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -474,6 +573,16 @@ export default function InvoicesPage() {
           }`}
         >
           Monthly Billing
+        </button>
+        <button
+          onClick={() => setActiveTab("prepaid")}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+            activeTab === "prepaid"
+              ? "bg-blue-600 dark:bg-blue-500 text-white shadow-sm"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+          }`}
+        >
+          Prepaid Balances
         </button>
       </div>
 
@@ -648,13 +757,20 @@ export default function InvoicesPage() {
                         {invoice.client.email}
                       </p>
                     </div>
-                    <span
-                      className={`px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 ${getStatusBadgeClass(
-                        invoice.status
-                      )}`}
-                    >
-                      {invoice.status}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span
+                        className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusBadgeClass(
+                          invoice.status
+                        )}`}
+                      >
+                        {invoice.status}
+                      </span>
+                      {isPrepaidTopUp(invoice) && (
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300">
+                          Prepaid Top-Up
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -851,13 +967,20 @@ export default function InvoicesPage() {
                     {new Date(invoice.dueDate).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(
-                        invoice.status
-                      )}`}
-                    >
-                      {invoice.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(
+                          invoice.status
+                        )}`}
+                      >
+                        {invoice.status}
+                      </span>
+                      {isPrepaidTopUp(invoice) && (
+                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-medium rounded-full bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300">
+                          Prepaid
+                        </span>
+                      )}
+                    </div>
                   </td>
                   {filteredInvoices.some((inv) => inv.status !== "PAID") && (
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
@@ -1164,6 +1287,275 @@ export default function InvoicesPage() {
           )}
         </>
       )}
+
+      {/* Prepaid Balances Tab */}
+      {activeTab === "prepaid" && (
+        <>
+          {isLoadingPrepaid ? (
+            <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">Loading prepaid balances...</p>
+            </div>
+          ) : prepaidData && prepaidData.totals ? (
+            <>
+              {/* Summary Card */}
+              <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl p-6 text-white">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold">Prepaid Balances</h2>
+                    <p className="text-purple-100 text-sm mt-1">
+                      Clients with prepaid session credits
+                    </p>
+                  </div>
+                  <div className="flex gap-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold">${prepaidData.totals.totalBalance.toFixed(2)}</p>
+                      <p className="text-purple-100 text-sm">Total Balance</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold">{prepaidData.totals.clientCount}</p>
+                      <p className="text-purple-100 text-sm">Clients</p>
+                    </div>
+                    {prepaidData.totals.clientsNeedingAttention > 0 && (
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-yellow-300">{prepaidData.totals.clientsNeedingAttention}</p>
+                        <p className="text-purple-100 text-sm">Need Attention</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Client List */}
+              {prepaidData.clients.length === 0 ? (
+                <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No prepaid clients</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    You don&apos;t have any clients set up with prepaid billing yet. Add prepaid credit to a client to get started.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {prepaidData.clients.map((clientData) => (
+                    <div
+                      key={clientData.client.id}
+                      className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                    >
+                      <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${getBalanceStatusBg(clientData.balanceStatus)}`}>
+                            <div className={`w-3 h-3 rounded-full ${
+                              clientData.balanceStatus === "healthy" ? "bg-green-500" :
+                              clientData.balanceStatus === "low" ? "bg-yellow-500" : "bg-red-500"
+                            }`} />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                              {clientData.client.fullName}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                              {clientData.client.email}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 sm:gap-8 flex-shrink-0">
+                          {/* Balance Info */}
+                          <div className="text-right">
+                            <p className={`text-2xl font-bold ${getBalanceStatusColor(clientData.balanceStatus)}`}>
+                              ${clientData.currentBalance.toFixed(2)}
+                            </p>
+                            {clientData.targetBalance > 0 && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Target: ${clientData.targetBalance.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Sessions consumed */}
+                          {clientData.sessionsConsumedSinceLastCredit > 0 && (
+                            <div className="text-center hidden sm:block">
+                              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                                {clientData.sessionsConsumedSinceLastCredit}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Sessions Used
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Add Credit Button */}
+                          <button
+                            onClick={() => {
+                              setSelectedPrepaidClient(clientData)
+                              setShowAddCreditModal(true)
+                            }}
+                            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 dark:bg-purple-500 rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors"
+                          >
+                            Add Credit
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Last transaction info */}
+                      {clientData.lastTransactionDate && (
+                        <div className="px-4 sm:px-6 py-2 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Last transaction: {new Date(clientData.lastTransactionDate).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">Failed to load prepaid data</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Add Credit Modal */}
+      {showAddCreditModal && selectedPrepaidClient && (
+        <AddCreditModal
+          client={selectedPrepaidClient}
+          onClose={() => {
+            setShowAddCreditModal(false)
+            setSelectedPrepaidClient(null)
+          }}
+          onSubmit={handleAddCredit}
+        />
+      )}
+    </div>
+  )
+}
+
+// Add Credit Modal Component
+function AddCreditModal({
+  client,
+  onClose,
+  onSubmit,
+}: {
+  client: PrepaidClientData
+  onClose: () => void
+  onSubmit: (amount: number, notes?: string) => Promise<void>
+}) {
+  const [amount, setAmount] = useState(
+    client.targetBalance > 0 ? (client.targetBalance - client.currentBalance).toFixed(2) : ""
+  )
+  const [notes, setNotes] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const numAmount = parseFloat(amount)
+    if (isNaN(numAmount) || numAmount <= 0) {
+      alert("Please enter a valid amount")
+      return
+    }
+
+    setIsSubmitting(true)
+    await onSubmit(numAmount, notes || undefined)
+    setIsSubmitting(false)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Add Prepaid Credit
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {client.client.fullName}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Current Balance Info */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Current Balance</span>
+              <span className="font-semibold text-gray-900 dark:text-gray-100">
+                ${client.currentBalance.toFixed(2)}
+              </span>
+            </div>
+            {client.targetBalance > 0 && (
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Target Balance</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  ${client.targetBalance.toFixed(2)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Amount Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Amount to Add (USD)
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
+                $
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full pl-7 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent"
+                placeholder="0.00"
+                required
+              />
+            </div>
+            {client.targetBalance > 0 && client.currentBalance < client.targetBalance && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                ${(client.targetBalance - client.currentBalance).toFixed(2)} needed to reach target
+              </p>
+            )}
+          </div>
+
+          {/* Notes Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Notes (optional)
+            </label>
+            <input
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent"
+              placeholder="e.g., Cash payment received"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-purple-600 dark:bg-purple-500 rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Adding..." : "Add Credit"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

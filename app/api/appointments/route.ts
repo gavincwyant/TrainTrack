@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { requireWorkspace, requireUserId, isTrainer } from "@/lib/middleware/tenant"
 import { CalendarSyncService } from "@/lib/services/calendar-sync"
 import { InvoiceService } from "@/lib/services/invoice"
+import { PrepaidService } from "@/lib/services/prepaid"
 
 const appointmentSchema = z.object({
   clientId: z.string().uuid().optional(), // Optional for client self-booking
@@ -319,13 +320,16 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  console.log(`📅 POST /api/appointments - Creating new appointment`)
   try {
     const workspaceId = await requireWorkspace()
     const userId = await requireUserId()
     const userIsTrainer = await isTrainer()
+    console.log(`📅 User: ${userId}, isTrainer: ${userIsTrainer}`)
 
     const body = await request.json()
     const data = appointmentSchema.parse(body)
+    console.log(`📅 Appointment data:`, JSON.stringify(data))
 
     const startTime = new Date(data.startTime)
     const endTime = new Date(data.endTime)
@@ -511,6 +515,15 @@ export async function POST(request: Request) {
     syncService.syncAppointmentToGoogle(appointment.id).catch((error) => {
       console.error("Background sync failed:", error)
     })
+
+    // Check prepaid balance and generate invoice if needed
+    const prepaidService = new PrepaidService()
+    try {
+      const prepaidResult = await prepaidService.checkBalanceAndGenerateInvoiceIfNeeded(finalClientId, finalTrainerId)
+      console.log(`📋 Prepaid balance check result:`, prepaidResult)
+    } catch (error) {
+      console.error("Prepaid balance check failed:", error)
+    }
 
     return NextResponse.json({ appointment }, { status: 201 })
   } catch (error) {

@@ -107,7 +107,9 @@ export default async function ClientDetailPage({
             <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
               {client.clientProfile.billingFrequency === "PER_SESSION"
                 ? "Per Session"
-                : "Monthly"}
+                : client.clientProfile.billingFrequency === "MONTHLY"
+                  ? "Monthly"
+                  : "Prepaid"}
             </p>
           </div>
           <div>
@@ -147,6 +149,50 @@ export default async function ClientDetailPage({
           </div>
         )}
       </div>
+
+      {/* Prepaid Balance Section */}
+      {client.clientProfile.billingFrequency === "PREPAID" && (
+        <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Prepaid Balance</h2>
+            <Link
+              href="/trainer/invoices"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+            >
+              Manage Prepaid →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Current Balance</p>
+              <p className={`mt-1 text-2xl font-bold ${
+                Number(client.clientProfile.prepaidBalance || 0) <= 0
+                  ? "text-red-600 dark:text-red-400"
+                  : Number(client.clientProfile.prepaidBalance || 0) < Number(client.clientProfile.sessionRate)
+                    ? "text-yellow-600 dark:text-yellow-400"
+                    : "text-green-600 dark:text-green-400"
+              }`}>
+                ${Number(client.clientProfile.prepaidBalance || 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Target Balance</p>
+              <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                ${Number(client.clientProfile.prepaidTargetBalance || 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Sessions Available</p>
+              <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {Number(client.clientProfile.sessionRate) > 0
+                  ? Math.floor(Number(client.clientProfile.prepaidBalance || 0) / Number(client.clientProfile.sessionRate))
+                  : 0}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">at individual rate</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recent Workout Sessions */}
       <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 rounded-lg p-6">

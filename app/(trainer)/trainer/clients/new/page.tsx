@@ -11,9 +11,10 @@ const clientSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]),
+  billingFrequency: z.enum(["PER_SESSION", "MONTHLY", "PREPAID"]),
   sessionRate: z.string().min(1, "Session rate is required"),
   groupSessionRate: z.string().optional(),
+  prepaidTargetBalance: z.string().optional(),
   notes: z.string().optional(),
   createAccount: z.enum(["invite", "manual"]),
   autoInvoiceEnabled: z.boolean(),
@@ -76,6 +77,7 @@ export default function NewClientPage() {
   }, [setValue])
 
   const createAccount = watch("createAccount")
+  const billingFrequency = watch("billingFrequency")
 
   const onSubmit = async (data: ClientFormData) => {
     setIsLoading(true)
@@ -221,6 +223,7 @@ export default function NewClientPage() {
                 >
                   <option value="PER_SESSION">Per Session</option>
                   <option value="MONTHLY">Monthly</option>
+                  <option value="PREPAID">Prepaid</option>
                 </select>
                 {errors.billingFrequency && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.billingFrequency.message}</p>
@@ -278,6 +281,29 @@ export default function NewClientPage() {
                   </p>
                 )}
               </div>
+
+              {billingFrequency === "PREPAID" && (
+                <div>
+                  <label htmlFor="prepaidTargetBalance" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Prepaid Target Balance (USD)
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 dark:text-gray-400 sm:text-sm">$</span>
+                    </div>
+                    <input
+                      {...register("prepaidTargetBalance")}
+                      type="number"
+                      step="0.01"
+                      className="block w-full pl-7 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
+                      placeholder="400.00"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    The target balance to invoice back to when balance runs low.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
