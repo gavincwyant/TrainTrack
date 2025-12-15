@@ -12,7 +12,7 @@ type EditClientData = {
   fullName: string
   email: string
   phone: string
-  billingFrequency: "PER_SESSION" | "MONTHLY"
+  billingFrequency: "PER_SESSION" | "MONTHLY" | "PREPAID"
   sessionRate: string
   notes: string
   autoInvoiceEnabled: boolean
@@ -25,6 +25,9 @@ export default function ClientsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showInactive, setShowInactive] = useState(false)
+  const [reactivatingId, setReactivatingId] = useState<string | null>(null)
+  const [clientToReactivate, setClientToReactivate] = useState<ClientWithProfile | null>(null)
   const [formData, setFormData] = useState<EditClientData>({
     fullName: "",
     email: "",
@@ -34,6 +37,10 @@ export default function ClientsPage() {
     notes: "",
     autoInvoiceEnabled: true,
   })
+
+  // Filter clients by active status
+  const activeClients = clients.filter(c => c.isActive !== false)
+  const inactiveClients = clients.filter(c => c.isActive === false)
 
   useEffect(() => {
     fetchClients()
@@ -103,6 +110,35 @@ export default function ClientsPage() {
     }
   }
 
+  const handleReactivateClick = (client: ClientWithProfile) => {
+    setClientToReactivate(client)
+  }
+
+  const handleReactivateConfirm = async () => {
+    if (!clientToReactivate) return
+
+    setReactivatingId(clientToReactivate.id)
+    try {
+      const response = await fetch(`/api/clients/${clientToReactivate.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: true }),
+      })
+
+      if (!response.ok) {
+        const result = await response.json()
+        throw new Error(result.error || "Failed to reactivate client")
+      }
+
+      await fetchClients()
+      setClientToReactivate(null)
+    } catch (err) {
+      console.error("Failed to reactivate client:", err)
+    } finally {
+      setReactivatingId(null)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -146,9 +182,16 @@ export default function ClientsPage() {
         </div>
       ) : (
         <>
-          {/* Mobile Card View */}
-          <div className="md:hidden space-y-4">
-            {clients.map((client: ClientWithProfile) => (
+          {/* Active Clients Section */}
+          {activeClients.length === 0 ? (
+            <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 text-center">
+              <p className="text-gray-600 dark:text-gray-400">No active clients. {inactiveClients.length > 0 && "Check the inactive clients section below."}</p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
+                {activeClients.map((client: ClientWithProfile) => (
               <div
                 key={client.id}
                 className="bg-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 overflow-hidden"
@@ -159,10 +202,16 @@ export default function ClientsPage() {
                     <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                       {client.fullName}
                     </h3>
-                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 flex-shrink-0">
+                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 ${
+                      client.clientProfile?.billingFrequency === "PREPAID"
+                        ? "bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300"
+                        : "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300"
+                    }`}>
                       {client.clientProfile?.billingFrequency === "PER_SESSION"
                         ? "Per Session"
-                        : "Monthly"}
+                        : client.clientProfile?.billingFrequency === "PREPAID"
+                          ? "Prepaid"
+                          : "Monthly"}
                     </span>
                   </div>
                 </div>
@@ -209,33 +258,33 @@ export default function ClientsPage() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+                ))}
+              </div>
 
-          {/* Desktop Table View */}
-          <div className="hidden md:block bg-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Billing
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {clients.map((client: ClientWithProfile) => (
+              {/* Desktop Table View */}
+              <div className="hidden md:block bg-white dark:bg-gray-900 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Phone
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Billing
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    {activeClients.map((client: ClientWithProfile) => (
                   <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{client.fullName}</div>
@@ -247,10 +296,16 @@ export default function ClientsPage() {
                       <div className="text-sm text-gray-600 dark:text-gray-400">{client.phone || "—"}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        client.clientProfile?.billingFrequency === "PREPAID"
+                          ? "bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300"
+                          : "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300"
+                      }`}>
                         {client.clientProfile?.billingFrequency === "PER_SESSION"
                           ? "Per Session"
-                          : "Monthly"}
+                          : client.clientProfile?.billingFrequency === "PREPAID"
+                            ? "Prepaid"
+                            : "Monthly"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -268,10 +323,128 @@ export default function ClientsPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Inactive Clients Section */}
+          {inactiveClients.length > 0 && (
+            <div className="mt-8">
+              <button
+                onClick={() => setShowInactive(!showInactive)}
+                className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
+              >
+                <svg
+                  className={`w-4 h-4 transition-transform ${showInactive ? "rotate-90" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="font-medium">Inactive Clients ({inactiveClients.length})</span>
+              </button>
+
+              {showInactive && (
+                <>
+                  {/* Mobile Card View - Inactive */}
+                  <div className="md:hidden space-y-4">
+                    {inactiveClients.map((client: ClientWithProfile) => (
+                      <div
+                        key={client.id}
+                        className="bg-gray-50 dark:bg-gray-800/50 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden opacity-75"
+                      >
+                        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-gray-600 dark:text-gray-400">
+                                {client.fullName}
+                              </h3>
+                              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                Inactive
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <dl className="px-4 py-3 space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <dt className="text-gray-500 dark:text-gray-500">Email</dt>
+                            <dd className="text-gray-600 dark:text-gray-400 font-medium text-right truncate ml-2 max-w-[60%]">
+                              {client.email}
+                            </dd>
+                          </div>
+                        </dl>
+                        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                          <button
+                            onClick={() => handleReactivateClick(client)}
+                            className="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                          >
+                            Reactivate
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table View - Inactive */}
+                  <div className="hidden md:block bg-gray-50 dark:bg-gray-800/50 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-100 dark:bg-gray-800">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Name
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Email
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Phone
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-gray-50 dark:bg-gray-800/30 divide-y divide-gray-200 dark:divide-gray-700">
+                        {inactiveClients.map((client: ClientWithProfile) => (
+                          <tr key={client.id} className="opacity-75">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">{client.fullName}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500 dark:text-gray-500">{client.email}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500 dark:text-gray-500">{client.phone || "—"}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                Inactive
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <button
+                                onClick={() => handleReactivateClick(client)}
+                                className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                              >
+                                Reactivate
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -361,11 +534,12 @@ export default function ClientsPage() {
                       <select
                         id="billingFrequency"
                         value={formData.billingFrequency}
-                        onChange={(e) => setFormData({ ...formData, billingFrequency: e.target.value as "PER_SESSION" | "MONTHLY" })}
+                        onChange={(e) => setFormData({ ...formData, billingFrequency: e.target.value as "PER_SESSION" | "MONTHLY" | "PREPAID" })}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm"
                       >
                         <option value="PER_SESSION">Per Session</option>
                         <option value="MONTHLY">Monthly</option>
+                        <option value="PREPAID">Prepaid</option>
                       </select>
                     </div>
 
@@ -439,6 +613,43 @@ export default function ClientsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reactivate Confirmation Modal */}
+      {clientToReactivate && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 border border-gray-200 dark:border-gray-700 max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Reactivate Client</h2>
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                Are you sure you want to reactivate <span className="font-semibold text-gray-900 dark:text-gray-100">{clientToReactivate.fullName}</span>?
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                This client will be moved back to your active clients list.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setClientToReactivate(null)}
+                disabled={reactivatingId === clientToReactivate.id}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReactivateConfirm}
+                disabled={reactivatingId === clientToReactivate.id}
+                className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {reactivatingId === clientToReactivate.id ? "Reactivating..." : "Reactivate"}
+              </button>
+            </div>
           </div>
         </div>
       )}

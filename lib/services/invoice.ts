@@ -1,14 +1,17 @@
 import { prisma } from "@/lib/db"
 import { EmailService } from "./email"
+import { PrepaidService } from "./prepaid"
 import { Prisma, ClientProfile, TrainerSettings, Appointment } from "@prisma/client"
 
 type GroupSessionMatchingLogic = "EXACT_MATCH" | "START_MATCH" | "END_MATCH" | "ANY_OVERLAP"
 
 export class InvoiceService {
   private emailService: EmailService
+  private prepaidService: PrepaidService
 
   constructor() {
     this.emailService = new EmailService()
+    this.prepaidService = new PrepaidService()
   }
 
   /**
@@ -88,6 +91,70 @@ export class InvoiceService {
   }
 
   /**
+   * Check if a client has prepaid credit available (when not on PREPAID billing).
+   * This handles the case where a client switched from prepaid and has remaining balance.
+   * Returns credit info if available, null otherwise.
+   */
+  private async applyPrepaidCredit(
+    clientProfileId: string,
+    invoiceAmount: Prisma.Decimal
+  ): Promise<{
+    creditToApply: Prisma.Decimal
+    newBalance: Prisma.Decimal
+  } | null> {
+    // Re-fetch the client profile to get current balance and billing frequency
+    const clientProfile = await prisma.clientProfile.findUnique({
+      where: { id: clientProfileId },
+    })
+
+    if (!clientProfile) {
+      return null
+    }
+
+    // Only apply credit if client is NOT on prepaid billing but has a balance
+    // (This means they switched from prepaid and have remaining credit)
+    if (clientProfile.billingFrequency === "PREPAID") {
+      return null
+    }
+
+    const currentBalance = clientProfile.prepaidBalance || new Prisma.Decimal(0)
+    if (currentBalance.lte(new Prisma.Decimal(0))) {
+      return null
+    }
+
+    // Calculate credit to apply (don't exceed invoice amount)
+    const creditToApply = currentBalance.lt(invoiceAmount) ? currentBalance : invoiceAmount
+    const newBalance = currentBalance.sub(creditToApply)
+
+    console.log(`💰 Applying prepaid credit: $${creditToApply} (remaining: $${newBalance})`)
+
+    // Update the balance and create transaction record
+    await prisma.$transaction(async (tx) => {
+      // Deduct from prepaidBalance
+      await tx.clientProfile.update({
+        where: { id: clientProfileId },
+        data: { prepaidBalance: newBalance },
+      })
+
+      // Create transaction record for the credit application
+      await tx.prepaidTransaction.create({
+        data: {
+          clientProfileId,
+          type: "DEDUCTION",
+          amount: creditToApply,
+          balanceAfter: newBalance,
+          description: "Credit applied to invoice",
+        },
+      })
+    })
+
+    return {
+      creditToApply,
+      newBalance,
+    }
+  }
+
+  /**
    * Generate invoice for a single completed appointment (per-session billing)
    */
   async generatePerSessionInvoice(appointmentId: string): Promise<void> {
@@ -128,8 +195,33 @@ export class InvoiceService {
     }
 
     // Check billing frequency
-    if (clientProfile.billingFrequency !== "PER_SESSION") {
+    if (clientProfile.billingFrequency === "MONTHLY") {
       console.log(`⏭️ Client has MONTHLY billing, skipping per-session invoice`)
+      return
+    }
+
+    // Handle PREPAID billing
+    if (clientProfile.billingFrequency === "PREPAID") {
+      console.log(`💳 Client has PREPAID billing, processing prepaid deduction`)
+      const result = await this.prepaidService.deductSession(appointmentId)
+      console.log(`💳 Deduction result:`, JSON.stringify({
+        success: result.success,
+        newBalance: result.newBalance.toString(),
+        amountDeducted: result.amountDeducted.toString(),
+        shouldGenerateInvoice: result.shouldGenerateInvoice,
+      }))
+
+      // If balance is $0 or below target, generate top-up invoice (idempotent)
+      // Client stays on PREPAID - no longer switches to PER_SESSION
+      if (result.shouldGenerateInvoice) {
+        console.log(`📄 Generating prepaid top-up invoice (balance low or $0)`)
+        const invoiceResult = await this.prepaidService.generateTopUpInvoice(appointment.clientId, appointment.trainerId)
+        console.log(`📄 Top-up invoice result:`, invoiceResult)
+      } else {
+        console.log(`✅ No top-up invoice needed (shouldGenerateInvoice=false)`)
+      }
+
+      // Always return for PREPAID clients - they don't get per-session invoices
       return
     }
 
@@ -163,23 +255,51 @@ export class InvoiceService {
 
     console.log(`📊 Session type: ${isGroupSession ? "GROUP" : "INDIVIDUAL"}, Rate: $${sessionRate}`)
 
+    // Check for available prepaid credit (for clients who switched from prepaid)
+    const creditResult = await this.applyPrepaidCredit(clientProfile.id, sessionRate)
+
+    // Build line items array
+    const lineItemsToCreate: Array<{
+      appointmentId: string | null
+      description: string
+      quantity: number
+      unitPrice: Prisma.Decimal
+      total: Prisma.Decimal
+    }> = [
+      {
+        appointmentId: appointment.id,
+        description: `${sessionType} on ${new Date(appointment.startTime).toLocaleDateString()}`,
+        quantity: 1,
+        unitPrice: sessionRate,
+        total: sessionRate,
+      },
+    ]
+
+    // Calculate final amount (subtract credit if applicable)
+    let finalAmount = sessionRate
+    if (creditResult) {
+      // Add credit line item with negative amount
+      lineItemsToCreate.push({
+        appointmentId: null,
+        description: "Prepaid credit applied",
+        quantity: 1,
+        unitPrice: creditResult.creditToApply.neg(),
+        total: creditResult.creditToApply.neg(),
+      })
+      finalAmount = sessionRate.sub(creditResult.creditToApply)
+    }
+
     // Create invoice
     const invoice = await prisma.invoice.create({
       data: {
         workspaceId: appointment.workspaceId,
         trainerId: appointment.trainerId,
         clientId: appointment.clientId,
-        amount: sessionRate,
+        amount: finalAmount,
         dueDate,
         status: "SENT", // Automatically mark as SENT since we're emailing it
         lineItems: {
-          create: {
-            appointmentId: appointment.id,
-            description: `${sessionType} on ${new Date(appointment.startTime).toLocaleDateString()}`,
-            quantity: 1,
-            unitPrice: sessionRate,
-            total: sessionRate,
-          },
+          create: lineItemsToCreate,
         },
       },
       include: {
@@ -265,7 +385,8 @@ export class InvoiceService {
 
     console.log(`📊 Found ${appointments.length} completed appointments`)
 
-    // Check if invoice already exists for this period
+    // Check if monthly invoice already exists for this period
+    // Exclude CANCELLED invoices and only check for invoices with "Monthly invoice" notes
     const existingInvoice = await prisma.invoice.findFirst({
       where: {
         clientId,
@@ -273,6 +394,8 @@ export class InvoiceService {
         createdAt: {
           gte: new Date(now.getFullYear(), now.getMonth(), 1), // This month
         },
+        status: { not: "CANCELLED" },
+        notes: { contains: "Monthly invoice" },
       },
     })
 
@@ -320,24 +443,50 @@ export class InvoiceService {
     const individualCount = lineItemsData.length - groupCount
     console.log(`📊 Sessions: ${groupCount} group, ${individualCount} individual, Total: $${totalAmount}`)
 
+    // Check for available prepaid credit (for clients who switched from prepaid)
+    const creditResult = await this.applyPrepaidCredit(client.clientProfile!.id, totalAmount)
+
+    // Build final line items array
+    const finalLineItems: Array<{
+      appointmentId: string | null
+      description: string
+      quantity: number
+      unitPrice: Prisma.Decimal
+      total: Prisma.Decimal
+    }> = lineItemsData.map(({ appointmentId, description, quantity, unitPrice, total }) => ({
+      appointmentId,
+      description,
+      quantity,
+      unitPrice,
+      total,
+    }))
+
+    // Calculate final amount (subtract credit if applicable)
+    let finalAmount = totalAmount
+    if (creditResult) {
+      // Add credit line item with negative amount
+      finalLineItems.push({
+        appointmentId: null,
+        description: "Prepaid credit applied",
+        quantity: 1,
+        unitPrice: creditResult.creditToApply.neg(),
+        total: creditResult.creditToApply.neg(),
+      })
+      finalAmount = totalAmount.sub(creditResult.creditToApply)
+    }
+
     // Create invoice with line items
     const invoice = await prisma.invoice.create({
       data: {
         workspaceId: client.workspaceId!,
         trainerId,
         clientId,
-        amount: totalAmount,
+        amount: finalAmount,
         dueDate,
         status: "SENT",
         notes: `Monthly invoice for ${firstDayLastMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`,
         lineItems: {
-          create: lineItemsData.map(({ appointmentId, description, quantity, unitPrice, total }) => ({
-            appointmentId,
-            description,
-            quantity,
-            unitPrice,
-            total,
-          })),
+          create: finalLineItems,
         },
       },
       include: {
