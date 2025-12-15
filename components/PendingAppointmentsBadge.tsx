@@ -29,7 +29,7 @@ export default function PendingAppointmentsBadge() {
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     fetchCount()
     // Refresh count every 30 seconds
     const interval = setInterval(fetchCount, 30000)

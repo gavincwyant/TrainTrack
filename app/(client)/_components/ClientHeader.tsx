@@ -28,7 +28,7 @@ export function ClientHeader({ userEmail, clientName }: Props) {
 
   useEffect(() => {
     if (!isMobile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setHideHeader(false)
       return
     }
