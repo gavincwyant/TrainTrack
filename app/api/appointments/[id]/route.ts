@@ -137,11 +137,14 @@ export async function PATCH(
 
     // Generate per-session invoice if status changed to COMPLETED
     if (data.status === "COMPLETED") {
+      console.log(`🔔 Appointment marked COMPLETED, generating invoice for: ${id}`)
       const invoiceService = new InvoiceService()
-      invoiceService.generatePerSessionInvoice(id).catch((error) => {
+      try {
+        await invoiceService.generatePerSessionInvoice(id)
+        console.log(`✅ Invoice generation completed for appointment: ${id}`)
+      } catch (error) {
         console.error("Failed to generate per-session invoice:", error)
-        // Don't fail the request if invoice generation fails
-      })
+      }
     }
 
     return NextResponse.json({ appointment: updated })

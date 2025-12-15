@@ -9,9 +9,10 @@ const createClientSchema = z.object({
   fullName: z.string().min(2),
   email: z.string().email(),
   phone: z.string().optional(),
-  billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]),
+  billingFrequency: z.enum(["PER_SESSION", "MONTHLY", "PREPAID"]),
   sessionRate: z.string(),
   groupSessionRate: z.string().optional(),
+  prepaidTargetBalance: z.string().optional(),
   notes: z.string().optional(),
   createAccount: z.enum(["invite", "manual"]),
   autoInvoiceEnabled: z.boolean().optional().default(true),
@@ -60,6 +61,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Convert prepaid target balance to decimal (optional, for PREPAID billing)
+    let prepaidTargetBalance: number | null = null
+    if (data.prepaidTargetBalance) {
+      prepaidTargetBalance = parseFloat(data.prepaidTargetBalance)
+      if (isNaN(prepaidTargetBalance) || prepaidTargetBalance < 0) {
+        return NextResponse.json(
+          { error: "Invalid prepaid target balance" },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Fix 7: PREPAID clients require a positive target balance
+    if (data.billingFrequency === "PREPAID" && (!prepaidTargetBalance || prepaidTargetBalance <= 0)) {
+      return NextResponse.json(
+        { error: "PREPAID clients require a positive target balance" },
+        { status: 400 }
+      )
+    }
+
     // Create client based on account type
     if (data.createAccount === "manual") {
       // Manual creation - trainer manages everything, client has NO login access
@@ -79,6 +100,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Create client profile
+        // For PREPAID clients, start with balance equal to target (they paid upfront)
         const profile = await tx.clientProfile.create({
           data: {
             userId: client.id,
@@ -86,6 +108,8 @@ export async function POST(request: NextRequest) {
             billingFrequency: data.billingFrequency,
             sessionRate,
             groupSessionRate,
+            prepaidTargetBalance: data.billingFrequency === "PREPAID" ? prepaidTargetBalance : null,
+            prepaidBalance: data.billingFrequency === "PREPAID" ? (prepaidTargetBalance || 0) : null,
             notes: data.notes,
             autoInvoiceEnabled: data.autoInvoiceEnabled ?? true,
           },
@@ -118,6 +142,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Create client profile
+        // For PREPAID clients, start with balance equal to target (they paid upfront)
         const profile = await tx.clientProfile.create({
           data: {
             userId: client.id,
@@ -125,6 +150,8 @@ export async function POST(request: NextRequest) {
             billingFrequency: data.billingFrequency,
             sessionRate,
             groupSessionRate,
+            prepaidTargetBalance: data.billingFrequency === "PREPAID" ? prepaidTargetBalance : null,
+            prepaidBalance: data.billingFrequency === "PREPAID" ? (prepaidTargetBalance || 0) : null,
             notes: data.notes,
             autoInvoiceEnabled: data.autoInvoiceEnabled ?? true,
           },
@@ -161,8 +188,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Return more specific error message for debugging
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to create client" },
+      { error: `Failed to create client: ${errorMessage}` },
       { status: 500 }
     )
   }

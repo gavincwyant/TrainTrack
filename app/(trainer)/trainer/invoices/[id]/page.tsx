@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 
 type InvoiceLineItem = {
@@ -24,6 +24,9 @@ type Invoice = {
     fullName: string
     email: string
     phone?: string
+    clientProfile?: {
+      prepaidBalance?: number
+    }
   }
   trainer: {
     id: string
@@ -40,12 +43,18 @@ type Invoice = {
 
 export default function InvoiceDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  // Void and switch modal state
+  const [showVoidSwitchModal, setShowVoidSwitchModal] = useState(false)
+  const [selectedBillingMode, setSelectedBillingMode] = useState<"PER_SESSION" | "MONTHLY">("PER_SESSION")
+  const [isVoidingAndSwitching, setIsVoidingAndSwitching] = useState(false)
 
   useEffect(() => {
     fetchInvoice()
@@ -153,6 +162,41 @@ export default function InvoiceDetailPage() {
     }
   }
 
+  // Check if this is a prepaid top-up invoice that can be voided
+  const isPrepaidTopUpInvoice = invoice?.notes?.includes("Prepaid balance replenishment") &&
+    invoice?.status !== "PAID" &&
+    invoice?.status !== "CANCELLED"
+
+  const handleVoidAndSwitch = async () => {
+    if (!invoice) return
+
+    setIsVoidingAndSwitching(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/invoices/${invoice.id}/void-and-switch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newBillingFrequency: selectedBillingMode }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to void invoice")
+      }
+
+      setShowVoidSwitchModal(false)
+      setSuccessMessage(data.message)
+      // Refresh invoice data
+      await fetchInvoice()
+      setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setIsVoidingAndSwitching(false)
+    }
+  }
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "PAID":
@@ -163,6 +207,8 @@ export default function InvoiceDetailPage() {
         return "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300"
       case "DRAFT":
         return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
+      case "CANCELLED":
+        return "bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300"
       default:
         return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
     }
@@ -202,13 +248,21 @@ export default function InvoiceDetailPage() {
           ← Back to invoices
         </Link>
         <div className="flex gap-3">
-          {invoice.status !== "PAID" && (
+          {invoice.status !== "PAID" && invoice.status !== "CANCELLED" && (
             <button
               onClick={handleSendInvoice}
               disabled={isSending}
               className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSending ? "Sending..." : invoice.status === "DRAFT" ? "Send Invoice" : "Resend Invoice"}
+            </button>
+          )}
+          {isPrepaidTopUpInvoice && (
+            <button
+              onClick={() => setShowVoidSwitchModal(true)}
+              className="px-4 py-2 bg-orange-600 dark:bg-orange-500 text-white rounded-md hover:bg-orange-700 dark:hover:bg-orange-600"
+            >
+              Void & Switch Billing
             </button>
           )}
           {invoice.status === "PAID" ? (
@@ -219,7 +273,7 @@ export default function InvoiceDetailPage() {
             >
               {isUpdating ? "Updating..." : "Unmark as Paid"}
             </button>
-          ) : (
+          ) : invoice.status !== "CANCELLED" ? (
             <button
               onClick={handleMarkAsPaid}
               disabled={isUpdating}
@@ -227,7 +281,7 @@ export default function InvoiceDetailPage() {
             >
               {isUpdating ? "Updating..." : "Mark as Paid"}
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -357,6 +411,78 @@ export default function InvoiceDetailPage() {
           </p>
         </div>
       </div>
+
+      {/* Void & Switch Billing Modal */}
+      {showVoidSwitchModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Void Invoice & Switch Billing
+              </h3>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                This will cancel the prepaid top-up invoice and switch the client to a new billing mode.
+              </p>
+              {invoice.client.clientProfile?.prepaidBalance && Number(invoice.client.clientProfile.prepaidBalance) > 0 && (
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
+                    <strong>${Number(invoice.client.clientProfile.prepaidBalance).toFixed(2)}</strong> remaining credit will be automatically applied to future invoices.
+                  </p>
+                </div>
+              )}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Select new billing mode:</p>
+                <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <input
+                    type="radio"
+                    name="billingMode"
+                    value="PER_SESSION"
+                    checked={selectedBillingMode === "PER_SESSION"}
+                    onChange={(e) => setSelectedBillingMode(e.target.value as "PER_SESSION" | "MONTHLY")}
+                    className="h-4 w-4 text-blue-600 dark:text-blue-500"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Per Session</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Invoice after each completed session</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <input
+                    type="radio"
+                    name="billingMode"
+                    value="MONTHLY"
+                    checked={selectedBillingMode === "MONTHLY"}
+                    onChange={(e) => setSelectedBillingMode(e.target.value as "PER_SESSION" | "MONTHLY")}
+                    className="h-4 w-4 text-blue-600 dark:text-blue-500"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Monthly</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Combined monthly invoice for all sessions</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={() => setShowVoidSwitchModal(false)}
+                disabled={isVoidingAndSwitching}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleVoidAndSwitch}
+                disabled={isVoidingAndSwitching}
+                className="px-4 py-2 bg-orange-600 dark:bg-orange-500 text-white rounded-md hover:bg-orange-700 dark:hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isVoidingAndSwitching ? "Processing..." : "Void & Switch"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
