@@ -369,13 +369,6 @@ export default function TrainerCalendarPage() {
             <span className="sm:hidden">New</span>
             <span className="hidden sm:inline">New Appointment</span>
           </button>
-          <Link
-            href="/trainer/availability"
-            className="px-4 sm:px-5 py-2.5 min-h-[44px] border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-500/30 transition-all duration-200 font-medium flex items-center justify-center"
-          >
-            <span className="hidden sm:inline">Manage Availability</span>
-            <span className="sm:hidden">Availability</span>
-          </Link>
           <button
             onClick={async () => {
               try {

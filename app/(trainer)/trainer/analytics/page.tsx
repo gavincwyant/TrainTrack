@@ -177,7 +177,7 @@ export default function AnalyticsPage() {
             onClick={() => setShowExportModal(true)}
             className="px-4 py-2 min-h-[44px] bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-medium text-sm"
           >
-            Export for Taxes
+            Export
           </button>
 
           <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto w-full sm:w-auto">

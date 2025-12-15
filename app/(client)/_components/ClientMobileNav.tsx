@@ -63,7 +63,7 @@ export function ClientMobileNav({ userEmail }: Props) {
     <>
       <MobileDrawerTrigger
         onClick={() => setIsDrawerOpen(true)}
-        className="sm:hidden"
+        className="md:hidden"
       />
 
       <MobileDrawer
