@@ -33,6 +33,7 @@ export default function WorkoutHistoryPage() {
   const [selectedClient, setSelectedClient] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showExportModal, setShowExportModal] = useState(false)
 
   useEffect(() => {
     fetchSessions()
@@ -67,83 +68,6 @@ export default function WorkoutHistoryPage() {
     ).values()
   )
 
-  const exportToCSV = () => {
-    // Prepare CSV data
-    const csvRows = []
-
-    // Headers
-    csvRows.push([
-      "Date",
-      "Client Name",
-      "Client Email",
-      "Trainer Name",
-      "Session Notes",
-      "Exercise Name",
-      "Sets",
-      "Reps",
-      "Weight (lbs)",
-      "Exercise Notes",
-      "Custom Metrics",
-    ].join(","))
-
-    // Data rows
-    sessions.forEach((session) => {
-      const baseInfo = [
-        new Date(session.date).toLocaleDateString(),
-        `"${session.appointment.client.fullName}"`,
-        session.appointment.client.email,
-        `"${session.appointment.trainer.fullName}"`,
-        session.notes ? `"${session.notes.replace(/"/g, '""')}"` : "",
-      ]
-
-      const metrics = session.customMetrics
-        ? Object.entries(session.customMetrics)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join("; ")
-        : ""
-
-      if (session.exercises && session.exercises.length > 0) {
-        session.exercises.forEach((exercise) => {
-          csvRows.push([
-            ...baseInfo,
-            `"${exercise.name}"`,
-            exercise.sets,
-            exercise.reps,
-            exercise.weight || "",
-            exercise.notes ? `"${exercise.notes.replace(/"/g, '""')}"` : "",
-            `"${metrics}"`,
-          ].join(","))
-        })
-      } else {
-        csvRows.push([
-          ...baseInfo,
-          "",
-          "",
-          "",
-          "",
-          "",
-          `"${metrics}"`,
-        ].join(","))
-      }
-    })
-
-    // Create and download file
-    const csvContent = csvRows.join("\n")
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const link = document.createElement("a")
-    const url = URL.createObjectURL(blob)
-
-    link.setAttribute("href", url)
-    link.setAttribute(
-      "download",
-      `workout-history-${new Date().toISOString().split("T")[0]}.csv`
-    )
-    link.style.visibility = "hidden"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -152,14 +76,12 @@ export default function WorkoutHistoryPage() {
           <p className="mt-2 text-gray-600 dark:text-gray-400">View and manage all logged workout sessions</p>
         </div>
         <div className="flex gap-3">
-          {sessions.length > 0 && (
-            <button
-              onClick={exportToCSV}
-              className="px-4 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              Export CSV
-            </button>
-          )}
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="px-4 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Export
+          </button>
           <Link
             href="/trainer/workouts/log"
             className="px-4 py-2 min-h-[44px] flex items-center bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
@@ -308,6 +230,281 @@ export default function WorkoutHistoryPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <ExportModal
+          onClose={() => setShowExportModal(false)}
+          clientId={selectedClient}
+        />
+      )}
+    </div>
+  )
+}
+
+// Export Modal Component
+function ExportModal({
+  onClose,
+  clientId,
+}: {
+  onClose: () => void
+  clientId?: string
+}) {
+  const [exportFormat, setExportFormat] = useState<"csv" | "xlsx">("xlsx")
+  const [exportPeriod, setExportPeriod] = useState<"month" | "year" | "all" | "custom">("month")
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [customStartDate, setCustomStartDate] = useState("")
+  const [customEndDate, setCustomEndDate] = useState("")
+
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
+
+  const months = [
+    { value: 1, label: "January" },
+    { value: 2, label: "February" },
+    { value: 3, label: "March" },
+    { value: 4, label: "April" },
+    { value: 5, label: "May" },
+    { value: 6, label: "June" },
+    { value: 7, label: "July" },
+    { value: 8, label: "August" },
+    { value: 9, label: "September" },
+    { value: 10, label: "October" },
+    { value: 11, label: "November" },
+    { value: 12, label: "December" },
+  ]
+
+  const handleExport = () => {
+    const params = new URLSearchParams({
+      format: exportFormat,
+      period: exportPeriod,
+    })
+
+    if (exportPeriod === "month") {
+      params.append("year", selectedYear.toString())
+      params.append("month", selectedMonth.toString())
+    } else if (exportPeriod === "year") {
+      params.append("year", selectedYear.toString())
+    } else if (exportPeriod === "custom") {
+      if (customStartDate) params.append("startDate", customStartDate)
+      if (customEndDate) params.append("endDate", customEndDate)
+    }
+
+    if (clientId) {
+      params.append("clientId", clientId)
+    }
+
+    window.location.href = `/api/workout-sessions/export?${params.toString()}`
+    onClose()
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/40 border border-gray-200 dark:border-gray-700 max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          Export Workout History
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Export your workout session data for record keeping or analysis.
+        </p>
+
+        {/* Format Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            File Format
+          </label>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setExportFormat("xlsx")}
+              className={`flex-1 py-2 px-4 rounded-md font-medium ${
+                exportFormat === "xlsx"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              Excel (.xlsx)
+            </button>
+            <button
+              onClick={() => setExportFormat("csv")}
+              className={`flex-1 py-2 px-4 rounded-md font-medium ${
+                exportFormat === "csv"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              CSV (.csv)
+            </button>
+          </div>
+        </div>
+
+        {/* Time Range Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Time Range
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setExportPeriod("month")}
+              className={`py-2 px-4 rounded-md font-medium text-sm ${
+                exportPeriod === "month"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              Month
+            </button>
+            <button
+              onClick={() => setExportPeriod("year")}
+              className={`py-2 px-4 rounded-md font-medium text-sm ${
+                exportPeriod === "year"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              Year
+            </button>
+            <button
+              onClick={() => setExportPeriod("all")}
+              className={`py-2 px-4 rounded-md font-medium text-sm ${
+                exportPeriod === "all"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              All History
+            </button>
+            <button
+              onClick={() => setExportPeriod("custom")}
+              className={`py-2 px-4 rounded-md font-medium text-sm ${
+                exportPeriod === "custom"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              Custom Range
+            </button>
+          </div>
+        </div>
+
+        {/* Month/Year Selectors */}
+        {exportPeriod === "month" && (
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Month
+              </label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              >
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Year
+              </label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {exportPeriod === "year" && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Year
+            </label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {exportPeriod === "custom" && (
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Export Details */}
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md p-4 mb-6">
+          <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
+            Export will include:
+          </h3>
+          <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 list-disc list-inside">
+            <li>Session date and client info</li>
+            <li>All exercises with sets, reps, and weights</li>
+            <li>Session notes and custom metrics</li>
+          </ul>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex-1 px-4 py-2 min-h-[44px] bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 font-medium"
+          >
+            Download {exportFormat.toUpperCase()}
+          </button>
+        </div>
       </div>
     </div>
   )

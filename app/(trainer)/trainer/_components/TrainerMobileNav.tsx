@@ -16,7 +16,7 @@ const navLinks = [
   { href: "/trainer/dashboard", label: "Dashboard", icon: HomeIcon },
   { href: "/trainer/clients", label: "Clients", icon: UsersIcon },
   { href: "/trainer/calendar", label: "Calendar", icon: CalendarIcon },
-  { href: "/trainer/pending-appointments", label: "Pending", icon: ClockIcon, showBadge: true },
+  { href: "/trainer/pending", label: "Pending", icon: ClockIcon, showBadge: true },
   { href: "/trainer/workouts", label: "Workouts", icon: DumbbellIcon },
   { href: "/trainer/metrics", label: "Metrics", icon: ChartIcon },
   { href: "/trainer/invoices", label: "Invoices", icon: ReceiptIcon },
