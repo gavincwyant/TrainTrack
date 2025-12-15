@@ -104,8 +104,8 @@ jobs:
       - name: Run type checking
         run: npm run type-check
 
-      - name: Run database migrations
-        run: npm run prisma:deploy
+      - name: Setup test database
+        run: npx prisma db push --force-reset --accept-data-loss
 
       - name: Run unit tests
         run: npm run test:unit
