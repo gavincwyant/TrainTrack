@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useCallback } from "react"
+import { useEffect, useCallback, useState } from "react"
 import { createPortal } from "react-dom"
 
 type MobileDrawerProps = {
@@ -16,6 +16,13 @@ export function MobileDrawer({
   children,
   position = "left",
 }: MobileDrawerProps) {
+  const [mounted, setMounted] = useState(false)
+
+  // Track when component is mounted on client
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // Handle escape key
   const handleEscape = useCallback(
     (event: KeyboardEvent) => {
@@ -39,8 +46,8 @@ export function MobileDrawer({
     }
   }, [isOpen, handleEscape])
 
-  // Don't render anything on server or when closed
-  if (typeof window === "undefined") return null
+  // Don't render anything until mounted on client (prevents hydration mismatch)
+  if (!mounted) return null
 
   const translateClass =
     position === "left"

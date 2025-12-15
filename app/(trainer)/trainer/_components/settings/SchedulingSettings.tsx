@@ -56,10 +56,10 @@ export function SchedulingSettings({ settings, onUpdate, isLoading, isSaving }: 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Scheduling & Availability</h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">Configure your calendar hours and timezone preferences</p>
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">Scheduling & Availability</h2>
+        <p className="mt-2 text-sm md:text-base text-gray-600 dark:text-gray-400">Configure your calendar hours and timezone preferences</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
