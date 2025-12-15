@@ -300,7 +300,10 @@ describe('Appointments Availability API - checkAvailability mode', () => {
         status: 'COMPLETED',
       })
 
-      const request = new Request('http://localhost:3000/api/appointments?checkAvailability=true')
+      // Pass startDate to include yesterday (which might be before start of current week)
+      const twoDaysAgo = new Date()
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+      const request = new Request(`http://localhost:3000/api/appointments?checkAvailability=true&startDate=${twoDaysAgo.toISOString()}`)
       const response = await GET(request)
       const data = await response.json()
 

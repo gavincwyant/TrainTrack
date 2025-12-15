@@ -8,11 +8,13 @@ const updateClientSchema = z.object({
   fullName: z.string().min(2).optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]).optional(),
+  billingFrequency: z.enum(["PER_SESSION", "MONTHLY", "PREPAID"]).optional(),
   sessionRate: z.string().optional(),
   groupSessionRate: z.string().optional().nullable(),
+  prepaidTargetBalance: z.string().optional().nullable(),
   notes: z.string().optional(),
   autoInvoiceEnabled: z.boolean().optional(),
+  isActive: z.boolean().optional(),
 })
 
 export async function GET(
@@ -133,6 +135,7 @@ export async function PATCH(
     if (data.fullName !== undefined) userUpdateData.fullName = data.fullName
     if (data.email !== undefined) userUpdateData.email = data.email
     if (data.phone !== undefined) userUpdateData.phone = data.phone
+    if (data.isActive !== undefined) userUpdateData.isActive = data.isActive
 
     const profileUpdateData: Record<string, unknown> = {}
     if (data.billingFrequency !== undefined) {
@@ -165,6 +168,33 @@ export async function PATCH(
         }
         profileUpdateData.groupSessionRate = groupRate
       }
+    }
+    if (data.prepaidTargetBalance !== undefined) {
+      if (data.prepaidTargetBalance === null || data.prepaidTargetBalance === "") {
+        profileUpdateData.prepaidTargetBalance = null
+      } else {
+        const targetBalance = parseFloat(data.prepaidTargetBalance)
+        if (isNaN(targetBalance) || targetBalance < 0) {
+          return NextResponse.json(
+            { error: "Invalid prepaid target balance" },
+            { status: 400 }
+          )
+        }
+        profileUpdateData.prepaidTargetBalance = targetBalance
+      }
+    }
+
+    // Fix 7: Validate PREPAID requires positive target balance when switching to PREPAID
+    const effectiveBillingFrequency = data.billingFrequency ?? existingClient.clientProfile?.billingFrequency
+    const effectiveTargetBalance = profileUpdateData.prepaidTargetBalance !== undefined
+      ? profileUpdateData.prepaidTargetBalance as number | null
+      : existingClient.clientProfile?.prepaidTargetBalance?.toNumber() ?? null
+
+    if (effectiveBillingFrequency === "PREPAID" && (!effectiveTargetBalance || effectiveTargetBalance <= 0)) {
+      return NextResponse.json(
+        { error: "Cannot switch to PREPAID without a positive target balance" },
+        { status: 400 }
+      )
     }
 
     // Update client and profile in transaction
@@ -214,3 +244,4 @@ export async function PATCH(
     )
   }
 }
+

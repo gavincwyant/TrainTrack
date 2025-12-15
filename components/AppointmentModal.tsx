@@ -40,6 +40,8 @@ export default function AppointmentModal({
   const [selectedClients, setSelectedClients] = useState<Client[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPastConfirmation, setShowPastConfirmation] = useState(false)
+  const [pendingSubmitData, setPendingSubmitData] = useState<AppointmentFormData | null>(null)
 
   const {
     register,
@@ -146,21 +148,32 @@ export default function AppointmentModal({
       return
     }
 
+    // Combine date and time into ISO datetime strings
+    const startDateTime = new Date(`${data.date}T${data.startTime}`)
+    const endDateTime = new Date(`${data.date}T${data.endTime}`)
+
+    // Validate end time is after start time
+    if (endDateTime <= startDateTime) {
+      setError("End time must be after start time")
+      return
+    }
+
+    // Check if appointment is in the past
+    const now = new Date()
+    if (endDateTime < now && !showPastConfirmation) {
+      setPendingSubmitData(data)
+      setShowPastConfirmation(true)
+      return
+    }
+
+    await createAppointments(startDateTime, endDateTime)
+  }
+
+  const createAppointments = async (startDateTime: Date, endDateTime: Date) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      // Combine date and time into ISO datetime strings
-      const startDateTime = new Date(`${data.date}T${data.startTime}`)
-      const endDateTime = new Date(`${data.date}T${data.endTime}`)
-
-      // Validate end time is after start time
-      if (endDateTime <= startDateTime) {
-        setError("End time must be after start time")
-        setIsLoading(false)
-        return
-      }
-
       // Create appointments for all selected clients
       const appointmentPromises = selectedClients.map(client =>
         fetch("/api/appointments", {
@@ -183,6 +196,8 @@ export default function AppointmentModal({
 
       reset()
       setSelectedClients([])
+      setShowPastConfirmation(false)
+      setPendingSubmitData(null)
       onSuccess()
       onClose()
     } catch (err) {
@@ -192,10 +207,26 @@ export default function AppointmentModal({
     }
   }
 
+  const handleConfirmPastAppointment = async () => {
+    if (!pendingSubmitData) return
+
+    const startDateTime = new Date(`${pendingSubmitData.date}T${pendingSubmitData.startTime}`)
+    const endDateTime = new Date(`${pendingSubmitData.date}T${pendingSubmitData.endTime}`)
+
+    await createAppointments(startDateTime, endDateTime)
+  }
+
+  const handleCancelPastConfirmation = () => {
+    setShowPastConfirmation(false)
+    setPendingSubmitData(null)
+  }
+
   const handleClose = () => {
     reset()
     setSelectedClients([])
     setError(null)
+    setShowPastConfirmation(false)
+    setPendingSubmitData(null)
     onClose()
   }
 
@@ -238,6 +269,53 @@ export default function AppointmentModal({
           {error && (
             <div className="mb-4 rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
               <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
+            </div>
+          )}
+
+          {/* Past Appointment Confirmation Dialog */}
+          {showPastConfirmation && (
+            <div className="mb-4 rounded-md bg-amber-50 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-800">
+              <div className="flex items-start">
+                <svg
+                  className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 mr-3 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    Scheduling a Past Session
+                  </h3>
+                  <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                    This appointment is in the past. It will be automatically marked as completed and the client{selectedClients.length > 1 ? "s" : ""} will be billed accordingly.
+                  </p>
+                  <div className="mt-3 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleConfirmPastAppointment}
+                      disabled={isLoading}
+                      className="px-3 py-1.5 text-sm font-medium bg-amber-600 dark:bg-amber-500 text-white rounded-md hover:bg-amber-700 dark:hover:bg-amber-600 disabled:opacity-50"
+                    >
+                      {isLoading ? "Creating..." : "Yes, Create Session"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelPastConfirmation}
+                      disabled={isLoading}
+                      className="px-3 py-1.5 text-sm font-medium text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -354,26 +432,28 @@ export default function AppointmentModal({
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-4 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading || selectedClients.length === 0}
-                className="px-4 py-2 min-h-[44px] bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading
-                  ? "Scheduling..."
-                  : selectedClients.length > 1
-                    ? `Schedule Group Session (${selectedClients.length})`
-                    : "Schedule Appointment"}
-              </button>
-            </div>
+            {!showPastConfirmation && (
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="px-4 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading || selectedClients.length === 0}
+                  className="px-4 py-2 min-h-[44px] bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading
+                    ? "Scheduling..."
+                    : selectedClients.length > 1
+                      ? `Schedule Group Session (${selectedClients.length})`
+                      : "Schedule Appointment"}
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </div>

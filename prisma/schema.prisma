@@ -54,6 +54,7 @@ model User {
   phone         String?
   profileImage  String?   @map("profile_image")
   isSystemAdmin Boolean   @default(false) @map("is_system_admin")
+  isActive      Boolean   @default(true) @map("is_active")
 
   ownedWorkspaces        Workspace[]         @relation("TrainerWorkspace")
   clientProfile          ClientProfile?
@@ -101,6 +102,11 @@ model ClientProfile {
   // Invoice Settings
   autoInvoiceEnabled Boolean @default(true) @map("auto_invoice_enabled") // Opt-out per client
 
+  // Prepaid Billing
+  prepaidBalance       Decimal? @map("prepaid_balance") @db.Decimal(10, 2)
+  prepaidTargetBalance Decimal? @map("prepaid_target_balance") @db.Decimal(10, 2)
+  prepaidTransactions  PrepaidTransaction[]
+
   // Group Session Permissions
   groupSessionPermission   String  @default("NO_GROUP_SESSIONS") @map("group_session_permission") // NO_GROUP_SESSIONS, ALLOW_ALL_GROUP, ALLOW_SPECIFIC_CLIENTS
   groupSessionDiscoverable Boolean @default(false) @map("group_session_discoverable") // Opt-in to be visible in other clients' allowed lists
@@ -118,6 +124,7 @@ model ClientProfile {
 enum BillingFrequency {
   PER_SESSION
   MONTHLY
+  PREPAID
 }
 
 model ClientTrainer {
@@ -269,6 +276,7 @@ model Appointment {
   invoiceLineItems      InvoiceLineItem[]
   calendarEventMappings CalendarEventMapping[]
   convertedFromPending  PendingAppointment?    @relation("ConvertedFromPending")
+  prepaidTransactions   PrepaidTransaction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -387,6 +395,7 @@ model Invoice {
   status        InvoiceStatus
   paymentMethod PaymentMethod? @map("payment_method")
   notes         String?       @db.Text
+  isPrepaidTopUp Boolean      @default(false) @map("is_prepaid_top_up")
 
   lineItems     InvoiceLineItem[]
 
@@ -510,4 +519,32 @@ model PendingClientProfile {
   @@index([workspaceId, trainerId, status])
   @@index([source, extractedName])
   @@map("pending_client_profiles")
+}
+
+// ============================================================================
+// Prepaid Billing Models
+// ============================================================================
+
+model PrepaidTransaction {
+  id              String                 @id @default(uuid())
+  clientProfileId String                 @map("client_profile_id")
+  clientProfile   ClientProfile          @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+
+  type            PrepaidTransactionType
+  amount          Decimal                @db.Decimal(10, 2)
+  balanceAfter    Decimal                @map("balance_after") @db.Decimal(10, 2)
+
+  appointmentId   String?                @map("appointment_id")
+  appointment     Appointment?           @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  description     String
+  createdAt       DateTime               @default(now()) @map("created_at")
+
+  @@index([clientProfileId, createdAt])
+  @@map("prepaid_transactions")
+}
+
+enum PrepaidTransactionType {
+  CREDIT
+  DEDUCTION
 }

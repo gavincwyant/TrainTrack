@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker'
 import { prisma } from '@/lib/db'
 import { hash } from 'bcryptjs'
-import type { User, Workspace, ClientProfile, TrainerSettings, Appointment, GroupSessionAllowedClient, BlockedTime } from '@prisma/client'
+import type { User, Workspace, ClientProfile, TrainerSettings, Appointment, GroupSessionAllowedClient, BlockedTime, PrepaidTransaction, Invoice } from '@prisma/client'
 
 export type GroupSessionPermission = 'NO_GROUP_SESSIONS' | 'ALLOW_ALL_GROUP' | 'ALLOW_SPECIFIC_CLIENTS'
 
@@ -14,7 +14,7 @@ export interface TestWorkspace {
 }
 
 export interface WorkspaceOptions {
-  billingFrequency?: 'PER_SESSION' | 'MONTHLY'
+  billingFrequency?: 'PER_SESSION' | 'MONTHLY' | 'PREPAID'
   sessionRate?: number
   groupSessionRate?: number
   autoInvoiceEnabled?: boolean
@@ -23,6 +23,8 @@ export interface WorkspaceOptions {
   monthlyInvoiceDay?: number
   groupSessionMatchingLogic?: 'EXACT_MATCH' | 'START_MATCH' | 'END_MATCH' | 'ANY_OVERLAP'
   defaultGroupSessionRate?: number
+  prepaidBalance?: number
+  prepaidTargetBalance?: number
 }
 
 /**
@@ -96,6 +98,8 @@ export async function createTestWorkspace(
       sessionRate: options.sessionRate || 100,
       groupSessionRate: options.groupSessionRate,
       autoInvoiceEnabled: options.autoInvoiceEnabled ?? true,
+      prepaidBalance: options.billingFrequency === 'PREPAID' ? (options.prepaidBalance ?? options.prepaidTargetBalance ?? 0) : null,
+      prepaidTargetBalance: options.billingFrequency === 'PREPAID' ? (options.prepaidTargetBalance ?? 0) : null,
     },
   })
 
@@ -429,4 +433,146 @@ export async function setupGroupSessionTestScenario(): Promise<{
     clientNoGroup,
     clientDiscoverable,
   }
+}
+
+/**
+ * Create a prepaid client with specified balance
+ */
+export async function createPrepaidClient(options: {
+  workspaceId: string
+  prepaidBalance: number
+  prepaidTargetBalance: number
+  sessionRate?: number
+  groupSessionRate?: number
+  email?: string
+  fullName?: string
+}): Promise<{ user: User; profile: ClientProfile }> {
+  const password = await hash('TestPassword123!', 10)
+
+  const user = await prisma.user.create({
+    data: {
+      email: options.email || faker.internet.email(),
+      passwordHash: password,
+      fullName: options.fullName || faker.person.fullName(),
+      role: 'CLIENT',
+      workspaceId: options.workspaceId,
+      phone: faker.phone.number(),
+    },
+  })
+
+  const profile = await prisma.clientProfile.create({
+    data: {
+      userId: user.id,
+      workspaceId: options.workspaceId,
+      billingFrequency: 'PREPAID',
+      sessionRate: options.sessionRate ?? 100,
+      groupSessionRate: options.groupSessionRate,
+      autoInvoiceEnabled: true,
+      prepaidBalance: options.prepaidBalance,
+      prepaidTargetBalance: options.prepaidTargetBalance,
+    },
+  })
+
+  return { user, profile }
+}
+
+/**
+ * Create a prepaid transaction record
+ */
+export async function createPrepaidTransaction(options: {
+  clientProfileId: string
+  type: 'CREDIT' | 'DEDUCTION'
+  amount: number
+  balanceAfter: number
+  appointmentId?: string
+  description?: string
+}): Promise<PrepaidTransaction> {
+  return await prisma.prepaidTransaction.create({
+    data: {
+      clientProfileId: options.clientProfileId,
+      type: options.type,
+      amount: options.amount,
+      balanceAfter: options.balanceAfter,
+      appointmentId: options.appointmentId,
+      description: options.description || (options.type === 'CREDIT' ? 'Credit added' : 'Session deduction'),
+    },
+  })
+}
+
+/**
+ * Setup a complete prepaid billing test scenario
+ * Returns workspace with trainer and multiple prepaid clients at different balance levels
+ */
+export async function setupPrepaidTestScenario(): Promise<{
+  workspace: TestWorkspace
+  clientHealthy: { user: User; profile: ClientProfile }
+  clientLow: { user: User; profile: ClientProfile }
+  clientEmpty: { user: User; profile: ClientProfile }
+}> {
+  const workspace = await createTestWorkspace()
+
+  // Client with healthy balance (> 25% of target)
+  const clientHealthy = await createPrepaidClient({
+    workspaceId: workspace.workspace.id,
+    prepaidBalance: 400,
+    prepaidTargetBalance: 500,
+    sessionRate: 100,
+    fullName: 'Prepaid Healthy',
+  })
+
+  // Client with low balance (< 25% of target)
+  const clientLow = await createPrepaidClient({
+    workspaceId: workspace.workspace.id,
+    prepaidBalance: 50,
+    prepaidTargetBalance: 500,
+    sessionRate: 100,
+    fullName: 'Prepaid Low',
+  })
+
+  // Client with empty balance
+  const clientEmpty = await createPrepaidClient({
+    workspaceId: workspace.workspace.id,
+    prepaidBalance: 0,
+    prepaidTargetBalance: 500,
+    sessionRate: 100,
+    fullName: 'Prepaid Empty',
+  })
+
+  return {
+    workspace,
+    clientHealthy,
+    clientLow,
+    clientEmpty,
+  }
+}
+
+/**
+ * Create a prepaid top-up invoice for testing
+ */
+export async function createPrepaidTopUpInvoice(options: {
+  workspaceId: string
+  trainerId: string
+  clientId: string
+  amount: number
+  status?: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED'
+}): Promise<Invoice> {
+  return await prisma.invoice.create({
+    data: {
+      workspaceId: options.workspaceId,
+      trainerId: options.trainerId,
+      clientId: options.clientId,
+      amount: options.amount,
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      status: options.status || 'SENT',
+      notes: 'Prepaid balance replenishment',
+      lineItems: {
+        create: {
+          description: `Prepaid balance top-up to $${options.amount}`,
+          quantity: 1,
+          unitPrice: options.amount,
+          total: options.amount,
+        },
+      },
+    },
+  })
 }
