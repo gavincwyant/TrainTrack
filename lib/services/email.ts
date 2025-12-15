@@ -1,5 +1,5 @@
 import sgMail from "@sendgrid/mail"
-import { Invoice, InvoiceLineItem } from "@prisma/client"
+import { Appointment, Invoice, InvoiceLineItem } from "@prisma/client"
 
 type InvoiceWithRelations = Invoice & {
   client: {
@@ -14,6 +14,20 @@ type InvoiceWithRelations = Invoice & {
     email: string
   }
   lineItems: InvoiceLineItem[]
+}
+
+type AppointmentWithRelations = Appointment & {
+  client: {
+    id: string
+    fullName: string
+    email: string
+    phone?: string | null
+  }
+  trainer: {
+    id: string
+    fullName: string
+    email: string
+  }
 }
 
 export class EmailService {
@@ -59,6 +73,267 @@ export class EmailService {
       console.error(`❌ Failed to send invoice email:`, error)
       throw error
     }
+  }
+
+  /**
+   * Send appointment reminder email to client
+   */
+  async sendAppointmentReminderEmail(
+    appointment: AppointmentWithRelations,
+    hoursUntil: number
+  ): Promise<void> {
+    const apiKey = this.getApiKey()
+    sgMail.setApiKey(apiKey)
+
+    const emailHtml = this.buildAppointmentReminderEmailHtml(appointment, hoursUntil)
+    const emailText = this.buildAppointmentReminderEmailText(appointment, hoursUntil)
+
+    const timeLabel = hoursUntil === 1 ? "1 hour" : `${hoursUntil} hours`
+
+    const msg = {
+      to: appointment.client.email,
+      from: {
+        email: process.env.SENDGRID_FROM_EMAIL || "gavincwyant@gmail.com",
+        name: appointment.trainer.fullName,
+      },
+      replyTo: appointment.trainer.email,
+      subject: `Reminder: Training session in ${timeLabel}`,
+      text: emailText,
+      html: emailHtml,
+      trackingSettings: {
+        clickTracking: { enable: false },
+        openTracking: { enable: false },
+      },
+    }
+
+    try {
+      await sgMail.send(msg)
+      console.log(`✅ Appointment reminder email sent to ${appointment.client.email}`)
+    } catch (error) {
+      console.error(`❌ Failed to send appointment reminder email:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Send invoice reminder email (due soon or overdue)
+   */
+  async sendInvoiceReminderEmail(
+    invoice: InvoiceWithRelations,
+    type: "DUE_SOON" | "OVERDUE"
+  ): Promise<void> {
+    const apiKey = this.getApiKey()
+    sgMail.setApiKey(apiKey)
+
+    const emailHtml = this.buildInvoiceReminderEmailHtml(invoice, type)
+    const emailText = this.buildInvoiceReminderEmailText(invoice, type)
+
+    const subject =
+      type === "DUE_SOON"
+        ? `Payment reminder: Invoice due ${this.formatDate(invoice.dueDate)}`
+        : `Overdue notice: Invoice was due ${this.formatDate(invoice.dueDate)}`
+
+    const msg = {
+      to: invoice.client.email,
+      from: {
+        email: process.env.SENDGRID_FROM_EMAIL || "gavincwyant@gmail.com",
+        name: invoice.trainer.fullName,
+      },
+      replyTo: invoice.trainer.email,
+      subject,
+      text: emailText,
+      html: emailHtml,
+      trackingSettings: {
+        clickTracking: { enable: false },
+        openTracking: { enable: false },
+      },
+    }
+
+    try {
+      await sgMail.send(msg)
+      console.log(`✅ Invoice ${type.toLowerCase()} reminder email sent to ${invoice.client.email}`)
+    } catch (error) {
+      console.error(`❌ Failed to send invoice reminder email:`, error)
+      throw error
+    }
+  }
+
+  private getApiKey(): string {
+    const apiKey = process.env.SENDGRID_API_KEY || 'REDACTED_SENDGRID_KEY'
+    if (!apiKey || !apiKey.startsWith('SG.')) {
+      throw new Error('Invalid SendGrid API key - must start with "SG."')
+    }
+    return apiKey
+  }
+
+  private buildAppointmentReminderEmailHtml(
+    appointment: AppointmentWithRelations,
+    hoursUntil: number
+  ): string {
+    const timeLabel = hoursUntil === 1 ? "1 hour" : `${hoursUntil} hours`
+    const appointmentTime = new Date(appointment.startTime).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
+    const appointmentDate = new Date(appointment.startTime).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Appointment Reminder</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #10b981; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">Appointment Reminder</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Your session is in ${timeLabel}</p>
+          </div>
+
+          <div style="background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <p style="margin: 0 0 15px 0;">Hi ${appointment.client.fullName},</p>
+
+            <p style="margin: 0 0 20px 0;">This is a friendly reminder that you have a training session scheduled:</p>
+
+            <div style="background-color: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 10px 0;"><strong>Trainer:</strong> ${appointment.trainer.fullName}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Date:</strong> ${appointmentDate}</p>
+              <p style="margin: 0;"><strong>Time:</strong> ${appointmentTime}</p>
+            </div>
+
+            <p style="margin: 20px 0 0 0; font-size: 14px; color: #6b7280;">
+              If you need to reschedule, please contact ${appointment.trainer.fullName} by replying to this email.
+            </p>
+          </div>
+
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+            <p style="margin: 0; font-size: 12px; color: #9ca3af;">Powered by TrainTrack</p>
+          </div>
+        </body>
+      </html>
+    `
+  }
+
+  private buildAppointmentReminderEmailText(
+    appointment: AppointmentWithRelations,
+    hoursUntil: number
+  ): string {
+    const timeLabel = hoursUntil === 1 ? "1 hour" : `${hoursUntil} hours`
+    const appointmentTime = new Date(appointment.startTime).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
+    const appointmentDate = new Date(appointment.startTime).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
+
+    return `
+APPOINTMENT REMINDER
+
+Hi ${appointment.client.fullName},
+
+This is a friendly reminder that you have a training session in ${timeLabel}:
+
+Trainer: ${appointment.trainer.fullName}
+Date: ${appointmentDate}
+Time: ${appointmentTime}
+
+If you need to reschedule, please contact ${appointment.trainer.fullName} by replying to this email.
+
+---
+Powered by TrainTrack
+    `.trim()
+  }
+
+  private buildInvoiceReminderEmailHtml(
+    invoice: InvoiceWithRelations,
+    type: "DUE_SOON" | "OVERDUE"
+  ): string {
+    const isDueSoon = type === "DUE_SOON"
+    const headerColor = isDueSoon ? "#f59e0b" : "#dc2626"
+    const headerText = isDueSoon ? "Payment Reminder" : "Overdue Notice"
+    const subtext = isDueSoon
+      ? `Invoice due ${this.formatDate(invoice.dueDate)}`
+      : `Invoice was due ${this.formatDate(invoice.dueDate)}`
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${headerText}</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: ${headerColor}; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">${headerText}</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">${subtext}</p>
+          </div>
+
+          <div style="background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <p style="margin: 0 0 15px 0;">Hi ${invoice.client.fullName},</p>
+
+            <p style="margin: 0 0 20px 0;">
+              ${isDueSoon
+                ? "This is a friendly reminder that you have an upcoming payment due."
+                : "We noticed your invoice is past due. Please arrange payment at your earliest convenience."
+              }
+            </p>
+
+            <div style="background-color: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 10px 0;"><strong>Invoice:</strong> #${invoice.id.slice(0, 8)}</p>
+              <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> $${Number(invoice.amount).toFixed(2)}</p>
+              <p style="margin: 0;"><strong>Due Date:</strong> ${this.formatDate(invoice.dueDate)}</p>
+            </div>
+
+            <p style="margin: 20px 0 0 0; font-size: 14px; color: #6b7280;">
+              If you have any questions or have already made payment, please contact ${invoice.trainer.fullName} by replying to this email.
+            </p>
+          </div>
+
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+            <p style="margin: 0; font-size: 12px; color: #9ca3af;">Powered by TrainTrack</p>
+          </div>
+        </body>
+      </html>
+    `
+  }
+
+  private buildInvoiceReminderEmailText(
+    invoice: InvoiceWithRelations,
+    type: "DUE_SOON" | "OVERDUE"
+  ): string {
+    const isDueSoon = type === "DUE_SOON"
+    const headerText = isDueSoon ? "PAYMENT REMINDER" : "OVERDUE NOTICE"
+    const messageText = isDueSoon
+      ? "This is a friendly reminder that you have an upcoming payment due."
+      : "We noticed your invoice is past due. Please arrange payment at your earliest convenience."
+
+    return `
+${headerText}
+
+Hi ${invoice.client.fullName},
+
+${messageText}
+
+Invoice: #${invoice.id.slice(0, 8)}
+Amount: $${Number(invoice.amount).toFixed(2)}
+Due Date: ${this.formatDate(invoice.dueDate)}
+
+If you have any questions or have already made payment, please contact ${invoice.trainer.fullName} by replying to this email.
+
+---
+Powered by TrainTrack
+    `.trim()
   }
 
   private buildInvoiceEmailHtml(invoice: InvoiceWithRelations): string {

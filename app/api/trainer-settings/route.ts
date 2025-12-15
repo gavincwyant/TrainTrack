@@ -22,6 +22,15 @@ const settingsSchema = z.object({
   hasCompletedInitialClientSync: z.boolean().optional(),
   // UI preferences
   darkModeEnabled: z.boolean().optional(),
+  // Notification settings - Appointment Reminders
+  appointmentReminderEnabled: z.boolean().optional(),
+  appointmentReminderHours: z.array(z.number().int().positive()).optional(),
+  // Notification settings - Invoice Reminders
+  invoiceReminderBeforeDue: z.boolean().optional(),
+  invoiceReminderBeforeDueDays: z.number().int().min(1).max(14).optional(),
+  invoiceReminderOnDue: z.boolean().optional(),
+  invoiceReminderOverdue: z.boolean().optional(),
+  invoiceReminderOverdueDays: z.array(z.number().int().positive()).optional(),
 })
 
 export async function GET() {
@@ -135,6 +144,14 @@ export async function PUT(request: Request) {
     if (data.clientSyncLookbackDays !== undefined) updateData.clientSyncLookbackDays = data.clientSyncLookbackDays
     if (data.hasCompletedInitialClientSync !== undefined) updateData.hasCompletedInitialClientSync = data.hasCompletedInitialClientSync
     if (data.darkModeEnabled !== undefined) updateData.darkModeEnabled = data.darkModeEnabled
+    // Notification settings
+    if (data.appointmentReminderEnabled !== undefined) updateData.appointmentReminderEnabled = data.appointmentReminderEnabled
+    if (data.appointmentReminderHours !== undefined) updateData.appointmentReminderHours = data.appointmentReminderHours
+    if (data.invoiceReminderBeforeDue !== undefined) updateData.invoiceReminderBeforeDue = data.invoiceReminderBeforeDue
+    if (data.invoiceReminderBeforeDueDays !== undefined) updateData.invoiceReminderBeforeDueDays = data.invoiceReminderBeforeDueDays
+    if (data.invoiceReminderOnDue !== undefined) updateData.invoiceReminderOnDue = data.invoiceReminderOnDue
+    if (data.invoiceReminderOverdue !== undefined) updateData.invoiceReminderOverdue = data.invoiceReminderOverdue
+    if (data.invoiceReminderOverdueDays !== undefined) updateData.invoiceReminderOverdueDays = data.invoiceReminderOverdueDays
 
     const settings = await prisma.trainerSettings.upsert({
       where: {

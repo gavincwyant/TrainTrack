@@ -8,6 +8,11 @@ const updateSettingsSchema = z.object({
   // Group session settings
   groupSessionPermission: z.enum(["NO_GROUP_SESSIONS", "ALLOW_ALL_GROUP", "ALLOW_SPECIFIC_CLIENTS"]).optional(),
   groupSessionDiscoverable: z.boolean().optional(),
+  // Notification settings
+  smsNotificationsEnabled: z.boolean().optional(),
+  emailNotificationsEnabled: z.boolean().optional(),
+  appointmentRemindersEnabled: z.boolean().optional(),
+  invoiceAlertsEnabled: z.boolean().optional(),
 })
 
 export async function GET() {
@@ -72,6 +77,11 @@ export async function GET() {
         // Group session settings
         groupSessionPermission: client.clientProfile?.groupSessionPermission || "NO_GROUP_SESSIONS",
         groupSessionDiscoverable: client.clientProfile?.groupSessionDiscoverable || false,
+        // Notification settings
+        smsNotificationsEnabled: client.clientProfile?.smsNotificationsEnabled ?? false,
+        emailNotificationsEnabled: client.clientProfile?.emailNotificationsEnabled ?? true,
+        appointmentRemindersEnabled: client.clientProfile?.appointmentRemindersEnabled ?? true,
+        invoiceAlertsEnabled: client.clientProfile?.invoiceAlertsEnabled ?? true,
       },
     })
   } catch (error) {
@@ -116,19 +126,36 @@ export async function PUT(request: Request) {
       })
     }
 
-    // Update client profile for group session settings
-    if (data.groupSessionPermission !== undefined || data.groupSessionDiscoverable !== undefined) {
-      const updateData: Record<string, unknown> = {}
-      if (data.groupSessionPermission !== undefined) {
-        updateData.groupSessionPermission = data.groupSessionPermission
-      }
-      if (data.groupSessionDiscoverable !== undefined) {
-        updateData.groupSessionDiscoverable = data.groupSessionDiscoverable
-      }
+    // Update client profile settings
+    const profileUpdateData: Record<string, unknown> = {}
 
+    // Group session settings
+    if (data.groupSessionPermission !== undefined) {
+      profileUpdateData.groupSessionPermission = data.groupSessionPermission
+    }
+    if (data.groupSessionDiscoverable !== undefined) {
+      profileUpdateData.groupSessionDiscoverable = data.groupSessionDiscoverable
+    }
+
+    // Notification settings
+    if (data.smsNotificationsEnabled !== undefined) {
+      profileUpdateData.smsNotificationsEnabled = data.smsNotificationsEnabled
+    }
+    if (data.emailNotificationsEnabled !== undefined) {
+      profileUpdateData.emailNotificationsEnabled = data.emailNotificationsEnabled
+    }
+    if (data.appointmentRemindersEnabled !== undefined) {
+      profileUpdateData.appointmentRemindersEnabled = data.appointmentRemindersEnabled
+    }
+    if (data.invoiceAlertsEnabled !== undefined) {
+      profileUpdateData.invoiceAlertsEnabled = data.invoiceAlertsEnabled
+    }
+
+    // Only update if there are profile changes
+    if (Object.keys(profileUpdateData).length > 0) {
       await prisma.clientProfile.update({
         where: { userId },
-        data: updateData,
+        data: profileUpdateData,
       })
     }
 
@@ -147,6 +174,11 @@ export async function PUT(request: Request) {
         phone: updatedClient?.phone,
         groupSessionPermission: updatedClient?.clientProfile?.groupSessionPermission || "NO_GROUP_SESSIONS",
         groupSessionDiscoverable: updatedClient?.clientProfile?.groupSessionDiscoverable || false,
+        // Notification settings
+        smsNotificationsEnabled: updatedClient?.clientProfile?.smsNotificationsEnabled ?? false,
+        emailNotificationsEnabled: updatedClient?.clientProfile?.emailNotificationsEnabled ?? true,
+        appointmentRemindersEnabled: updatedClient?.clientProfile?.appointmentRemindersEnabled ?? true,
+        invoiceAlertsEnabled: updatedClient?.clientProfile?.invoiceAlertsEnabled ?? true,
       },
     })
   } catch (error) {

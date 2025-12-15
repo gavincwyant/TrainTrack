@@ -14,27 +14,28 @@ datasource db {
 // ============================================================================
 
 model Workspace {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   name      String
-  subdomain String?  @unique
-  trainerId String   @map("trainer_id")
-  trainer   User     @relation("TrainerWorkspace", fields: [trainerId], references: [id], onDelete: Cascade)
+  subdomain String? @unique
+  trainerId String  @map("trainer_id")
+  trainer   User    @relation("TrainerWorkspace", fields: [trainerId], references: [id], onDelete: Cascade)
 
-  subscriptionTier String?  @map("subscription_tier")
+  subscriptionTier String? @map("subscription_tier")
 
-  users                     User[]                     @relation("WorkspaceMembers")
-  clientProfiles            ClientProfile[]
-  clientTrainers            ClientTrainer[]
-  appointments              Appointment[]
-  workoutSessions           WorkoutSession[]
-  invoices                  Invoice[]
-  availabilityBlocks        AvailabilityBlock[]
-  blockedTimes              BlockedTime[]
-  trainerSettings           TrainerSettings[]
-  customMetricDefinitions   CustomMetricDefinition[]
-  calendarEventMappings     CalendarEventMapping[]
-  pendingAppointments       PendingAppointment[]
-  pendingClientProfiles     PendingClientProfile[]
+  users                   User[]                   @relation("WorkspaceMembers")
+  clientProfiles          ClientProfile[]
+  clientTrainers          ClientTrainer[]
+  appointments            Appointment[]
+  workoutSessions         WorkoutSession[]
+  invoices                Invoice[]
+  availabilityBlocks      AvailabilityBlock[]
+  blockedTimes            BlockedTime[]
+  trainerSettings         TrainerSettings[]
+  customMetricDefinitions CustomMetricDefinition[]
+  calendarEventMappings   CalendarEventMapping[]
+  pendingAppointments     PendingAppointment[]
+  pendingClientProfiles   PendingClientProfile[]
+  notificationLogs        NotificationLog[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -43,37 +44,37 @@ model Workspace {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
   role         Role
-  workspaceId  String?   @map("workspace_id")
+  workspaceId  String?    @map("workspace_id")
   workspace    Workspace? @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  fullName      String    @map("full_name")
+  fullName      String  @map("full_name")
   phone         String?
-  profileImage  String?   @map("profile_image")
-  isSystemAdmin Boolean   @default(false) @map("is_system_admin")
+  profileImage  String? @map("profile_image")
+  isSystemAdmin Boolean @default(false) @map("is_system_admin")
 
-  ownedWorkspaces        Workspace[]         @relation("TrainerWorkspace")
-  clientProfile          ClientProfile?
-  trainerAppointments    Appointment[]       @relation("TrainerAppointments")
-  clientAppointments     Appointment[]       @relation("ClientAppointments")
-  trainerWorkoutSessions WorkoutSession[]    @relation("TrainerSessions")
-  clientWorkoutSessions  WorkoutSession[]    @relation("ClientSessions")
-  trainerInvoices        Invoice[]           @relation("TrainerInvoices")
-  clientInvoices         Invoice[]           @relation("ClientInvoices")
-  availabilityBlocks          AvailabilityBlock[]
-  blockedTimes                BlockedTime[]           @relation("TrainerBlockedTimes")
-  trainerSettings             TrainerSettings?        @relation("TrainerSettings")
-  trainerPendingAppointments  PendingAppointment[]    @relation("TrainerPendingAppointments")
-  clientPendingAppointments   PendingAppointment[]    @relation("ClientPendingAppointments")
+  ownedWorkspaces              Workspace[]            @relation("TrainerWorkspace")
+  clientProfile                ClientProfile?
+  trainerAppointments          Appointment[]          @relation("TrainerAppointments")
+  clientAppointments           Appointment[]          @relation("ClientAppointments")
+  trainerWorkoutSessions       WorkoutSession[]       @relation("TrainerSessions")
+  clientWorkoutSessions        WorkoutSession[]       @relation("ClientSessions")
+  trainerInvoices              Invoice[]              @relation("TrainerInvoices")
+  clientInvoices               Invoice[]              @relation("ClientInvoices")
+  availabilityBlocks           AvailabilityBlock[]
+  blockedTimes                 BlockedTime[]          @relation("TrainerBlockedTimes")
+  trainerSettings              TrainerSettings?       @relation("TrainerSettings")
+  trainerPendingAppointments   PendingAppointment[]   @relation("TrainerPendingAppointments")
+  clientPendingAppointments    PendingAppointment[]   @relation("ClientPendingAppointments")
   trainerPendingClientProfiles PendingClientProfile[] @relation("TrainerPendingClientProfiles")
   convertedFromPendingClient   PendingClientProfile?  @relation("ConvertedFromPendingClient")
 
   // Client-Trainer relationships
-  clientTrainers               ClientTrainer[]        @relation("ClientTrainers")
-  trainerClients               ClientTrainer[]        @relation("TrainerClients")
+  clientTrainers ClientTrainer[] @relation("ClientTrainers")
+  trainerClients ClientTrainer[] @relation("TrainerClients")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -87,16 +88,16 @@ enum Role {
 }
 
 model ClientProfile {
-  id               String          @id @default(uuid())
-  userId           String          @unique @map("user_id")
-  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspaceId      String          @map("workspace_id")
-  workspace        Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  userId      String    @unique @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  billingFrequency   BillingFrequency @map("billing_frequency")
-  sessionRate        Decimal          @map("session_rate") @db.Decimal(10, 2)
-  groupSessionRate   Decimal?         @map("group_session_rate") @db.Decimal(10, 2)
-  notes              String?          @db.Text
+  billingFrequency BillingFrequency @map("billing_frequency")
+  sessionRate      Decimal          @map("session_rate") @db.Decimal(10, 2)
+  groupSessionRate Decimal?         @map("group_session_rate") @db.Decimal(10, 2)
+  notes            String?          @db.Text
 
   // Invoice Settings
   autoInvoiceEnabled Boolean @default(true) @map("auto_invoice_enabled") // Opt-out per client
@@ -104,6 +105,12 @@ model ClientProfile {
   // Group Session Permissions
   groupSessionPermission   String  @default("NO_GROUP_SESSIONS") @map("group_session_permission") // NO_GROUP_SESSIONS, ALLOW_ALL_GROUP, ALLOW_SPECIFIC_CLIENTS
   groupSessionDiscoverable Boolean @default(false) @map("group_session_discoverable") // Opt-in to be visible in other clients' allowed lists
+
+  // Notification Preferences
+  smsNotificationsEnabled     Boolean @default(false) @map("sms_notifications_enabled")
+  emailNotificationsEnabled   Boolean @default(true) @map("email_notifications_enabled")
+  appointmentRemindersEnabled Boolean @default(true) @map("appointment_reminders_enabled")
+  invoiceAlertsEnabled        Boolean @default(true) @map("invoice_alerts_enabled")
 
   // Relations for allowed clients (specific permissions)
   allowedGroupClients GroupSessionAllowedClient[] @relation("AllowerProfile")
@@ -129,12 +136,12 @@ model ClientTrainer {
   workspaceId String    @map("workspace_id")
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  isActive    Boolean   @default(true) @map("is_active")
-  startDate   DateTime  @default(now()) @map("start_date")
-  endDate     DateTime? @map("end_date")
+  isActive  Boolean   @default(true) @map("is_active")
+  startDate DateTime  @default(now()) @map("start_date")
+  endDate   DateTime? @map("end_date")
 
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([clientId, trainerId, workspaceId])
   @@index([clientId])
@@ -169,10 +176,10 @@ model AvailabilityBlock {
   trainerId   String    @map("trainer_id")
   trainer     User      @relation(fields: [trainerId], references: [id], onDelete: Cascade)
 
-  dayOfWeek   Int       @map("day_of_week") // 0-6 (Sunday-Saturday)
-  startTime   String    @map("start_time")  // "09:00" format
-  endTime     String    @map("end_time")    // "17:00" format
-  isRecurring Boolean   @default(true) @map("is_recurring")
+  dayOfWeek   Int     @map("day_of_week") // 0-6 (Sunday-Saturday)
+  startTime   String  @map("start_time") // "09:00" format
+  endTime     String  @map("end_time") // "17:00" format
+  isRecurring Boolean @default(true) @map("is_recurring")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -187,11 +194,11 @@ model BlockedTime {
   trainerId   String    @map("trainer_id")
   trainer     User      @relation("TrainerBlockedTimes", fields: [trainerId], references: [id], onDelete: Cascade)
 
-  startTime   DateTime  @map("start_time")  // Specific date and time
-  endTime     DateTime  @map("end_time")
-  reason      String?   @db.Text           // Optional reason (vacation, appointment, etc.)
-  isRecurring Boolean   @default(false) @map("is_recurring")
-  dayOfWeek   Int?      @map("day_of_week") // For recurring blocks (0-6)
+  startTime   DateTime @map("start_time") // Specific date and time
+  endTime     DateTime @map("end_time")
+  reason      String?  @db.Text // Optional reason (vacation, appointment, etc.)
+  isRecurring Boolean  @default(false) @map("is_recurring")
+  dayOfWeek   Int?     @map("day_of_week") // For recurring blocks (0-6)
 
   calendarEventMappings CalendarEventMapping[]
 
@@ -209,24 +216,24 @@ model TrainerSettings {
   trainerId   String    @unique @map("trainer_id")
   trainer     User      @relation("TrainerSettings", fields: [trainerId], references: [id], onDelete: Cascade)
 
-  dayStartTime String    @default("06:00") @map("day_start_time") // "06:00" format
-  dayEndTime   String    @default("22:00") @map("day_end_time")   // "22:00" format
-  timezone     String    @default("America/New_York")             // IANA timezone
+  dayStartTime String @default("06:00") @map("day_start_time") // "06:00" format
+  dayEndTime   String @default("22:00") @map("day_end_time") // "22:00" format
+  timezone     String @default("America/New_York") // IANA timezone
 
   // Google Calendar Integration
   googleCalendarConnected Boolean   @default(false) @map("google_calendar_connected")
   googleCalendarEmail     String?   @map("google_calendar_email")
-  googleAccessToken       String?   @db.Text @map("google_access_token")    // Encrypted
-  googleRefreshToken      String?   @db.Text @map("google_refresh_token")   // Encrypted
-  googleCalendarId        String?   @map("google_calendar_id")              // Primary calendar ID
+  googleAccessToken       String?   @map("google_access_token") @db.Text // Encrypted
+  googleRefreshToken      String?   @map("google_refresh_token") @db.Text // Encrypted
+  googleCalendarId        String?   @map("google_calendar_id") // Primary calendar ID
   autoSyncEnabled         Boolean   @default(false) @map("auto_sync_enabled")
   lastSyncedAt            DateTime? @map("last_synced_at")
   syncDirection           String    @default("bidirectional") @map("sync_direction") // "push_only", "pull_only", "bidirectional"
 
   // Invoice Configuration
   autoInvoicingEnabled  Boolean @default(true) @map("auto_invoicing_enabled")
-  monthlyInvoiceDay     Int     @default(1) @map("monthly_invoice_day")        // 1-31
-  defaultInvoiceDueDays Int     @default(30) @map("default_invoice_due_days")  // Net 7, 15, 30, etc.
+  monthlyInvoiceDay     Int     @default(1) @map("monthly_invoice_day") // 1-31
+  defaultInvoiceDueDays Int     @default(30) @map("default_invoice_due_days") // Net 7, 15, 30, etc.
 
   // Pricing Configuration
   defaultIndividualSessionRate Decimal? @map("default_individual_session_rate") @db.Decimal(10, 2)
@@ -241,6 +248,17 @@ model TrainerSettings {
   lastClientSyncAt              DateTime? @map("last_client_sync_at")
   hasCompletedInitialClientSync Boolean   @default(false) @map("has_completed_initial_client_sync")
 
+  // Notification Settings - Appointment Reminders
+  appointmentReminderEnabled Boolean @default(true) @map("appointment_reminder_enabled")
+  appointmentReminderHours   Json    @default("[24]") @map("appointment_reminder_hours") // Array of hours before appointment
+
+  // Notification Settings - Invoice Reminders
+  invoiceReminderBeforeDue     Boolean @default(true) @map("invoice_reminder_before_due")
+  invoiceReminderBeforeDueDays Int     @default(3) @map("invoice_reminder_before_due_days")
+  invoiceReminderOnDue         Boolean @default(true) @map("invoice_reminder_on_due")
+  invoiceReminderOverdue       Boolean @default(true) @map("invoice_reminder_overdue")
+  invoiceReminderOverdueDays   Json    @default("[3, 7]") @map("invoice_reminder_overdue_days") // Days after due date
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -248,13 +266,13 @@ model TrainerSettings {
 }
 
 model Appointment {
-  id                 String            @id @default(uuid())
-  workspaceId        String            @map("workspace_id")
-  workspace          Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  trainerId          String            @map("trainer_id")
-  trainer            User              @relation("TrainerAppointments", fields: [trainerId], references: [id], onDelete: Cascade)
-  clientId           String            @map("client_id")
-  client             User              @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation("TrainerAppointments", fields: [trainerId], references: [id], onDelete: Cascade)
+  clientId    String    @map("client_id")
+  client      User      @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
 
   startTime          DateTime          @map("start_time")
   endTime            DateTime          @map("end_time")
@@ -263,7 +281,7 @@ model Appointment {
 
   // Group session override - NULL means use client's default permission
   // Values: "ALLOW_ALL", "ALLOW_SPECIFIC", "NO_GROUP"
-  groupSessionOverride String?         @map("group_session_override")
+  groupSessionOverride String? @map("group_session_override")
 
   workoutSession        WorkoutSession?
   invoiceLineItems      InvoiceLineItem[]
@@ -300,16 +318,16 @@ model PendingAppointment {
   endTime            DateTime @map("end_time")
 
   // Smart detection
-  suggestedClientId   String? @map("suggested_client_id")
-  suggestedClient     User?   @relation("ClientPendingAppointments", fields: [suggestedClientId], references: [id], onDelete: SetNull)
-  matchConfidence     String  @map("match_confidence") // "high", "medium", "low"
-  matchReason         String? @map("match_reason") @db.Text // Explanation of why this client was suggested
+  suggestedClientId String? @map("suggested_client_id")
+  suggestedClient   User?   @relation("ClientPendingAppointments", fields: [suggestedClientId], references: [id], onDelete: SetNull)
+  matchConfidence   String  @map("match_confidence") // "high", "medium", "low"
+  matchReason       String? @map("match_reason") @db.Text // Explanation of why this client was suggested
 
   // Status
   status String @default("pending") // "pending", "approved", "rejected", "converted"
 
   // If approved and converted
-  createdAppointmentId String? @unique @map("created_appointment_id")
+  createdAppointmentId String?      @unique @map("created_appointment_id")
   createdAppointment   Appointment? @relation("ConvertedFromPending", fields: [createdAppointmentId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -328,9 +346,9 @@ model CustomMetricDefinition {
   workspaceId String    @map("workspace_id")
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  name        String
-  unit        String?
-  dataType    MetricDataType @map("data_type")
+  name     String
+  unit     String?
+  dataType MetricDataType @map("data_type")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -345,21 +363,21 @@ enum MetricDataType {
 }
 
 model WorkoutSession {
-  id            String    @id @default(uuid())
-  workspaceId   String    @map("workspace_id")
-  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  appointmentId String    @unique @map("appointment_id")
+  id            String      @id @default(uuid())
+  workspaceId   String      @map("workspace_id")
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  appointmentId String      @unique @map("appointment_id")
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
-  trainerId     String    @map("trainer_id")
-  trainer       User      @relation("TrainerSessions", fields: [trainerId], references: [id], onDelete: Cascade)
-  clientId      String    @map("client_id")
-  client        User      @relation("ClientSessions", fields: [clientId], references: [id], onDelete: Cascade)
+  trainerId String @map("trainer_id")
+  trainer   User   @relation("TrainerSessions", fields: [trainerId], references: [id], onDelete: Cascade)
+  clientId  String @map("client_id")
+  client    User   @relation("ClientSessions", fields: [clientId], references: [id], onDelete: Cascade)
 
-  date          DateTime  @db.Date
-  notes         String?   @db.Text
-  exercises     Json?     // Array of {name, sets, reps, weight, notes}
-  customMetrics Json?     @map("custom_metrics") // {metric_name: value}
+  date          DateTime @db.Date
+  notes         String?  @db.Text
+  exercises     Json? // Array of {name, sets, reps, weight, notes}
+  customMetrics Json?    @map("custom_metrics") // {metric_name: value}
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -373,22 +391,22 @@ model WorkoutSession {
 // ============================================================================
 
 model Invoice {
-  id            String        @id @default(uuid())
-  workspaceId   String        @map("workspace_id")
-  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  trainerId     String        @map("trainer_id")
-  trainer       User          @relation("TrainerInvoices", fields: [trainerId], references: [id], onDelete: Cascade)
-  clientId      String        @map("client_id")
-  client        User          @relation("ClientInvoices", fields: [clientId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trainerId   String    @map("trainer_id")
+  trainer     User      @relation("TrainerInvoices", fields: [trainerId], references: [id], onDelete: Cascade)
+  clientId    String    @map("client_id")
+  client      User      @relation("ClientInvoices", fields: [clientId], references: [id], onDelete: Cascade)
 
-  amount        Decimal       @db.Decimal(10, 2)
-  dueDate       DateTime      @map("due_date") @db.Date
-  paidAt        DateTime?     @map("paid_at")
+  amount        Decimal        @db.Decimal(10, 2)
+  dueDate       DateTime       @map("due_date") @db.Date
+  paidAt        DateTime?      @map("paid_at")
   status        InvoiceStatus
   paymentMethod PaymentMethod? @map("payment_method")
-  notes         String?       @db.Text
+  notes         String?        @db.Text
 
-  lineItems     InvoiceLineItem[]
+  lineItems InvoiceLineItem[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -415,16 +433,16 @@ enum PaymentMethod {
 }
 
 model InvoiceLineItem {
-  id            String      @id @default(uuid())
-  invoiceId     String      @map("invoice_id")
-  invoice       Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  appointmentId String?     @map("appointment_id")
+  id            String       @id @default(uuid())
+  invoiceId     String       @map("invoice_id")
+  invoice       Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  appointmentId String?      @map("appointment_id")
   appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
 
-  description   String
-  quantity      Int
-  unitPrice     Decimal     @map("unit_price") @db.Decimal(10, 2)
-  total         Decimal     @db.Decimal(10, 2)
+  description String
+  quantity    Int
+  unitPrice   Decimal @map("unit_price") @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -447,8 +465,8 @@ model CalendarEventMapping {
   blockedTime   BlockedTime? @relation(fields: [blockedTimeId], references: [id], onDelete: Cascade)
 
   // External calendar reference
-  provider           String @map("provider")            // "google", future: "microsoft"
-  externalEventId    String @map("external_event_id")  // Google Calendar event ID
+  provider           String @map("provider") // "google", future: "microsoft"
+  externalEventId    String @map("external_event_id") // Google Calendar event ID
   externalCalendarId String @map("external_calendar_id") // Which calendar it's in
 
   // Sync metadata
@@ -510,4 +528,60 @@ model PendingClientProfile {
   @@index([workspaceId, trainerId, status])
   @@index([source, extractedName])
   @@map("pending_client_profiles")
+}
+
+// ============================================================================
+// Notification Models
+// ============================================================================
+
+model NotificationLog {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // Recipient
+  recipientId   String @map("recipient_id")
+  recipientType String @map("recipient_type") // "CLIENT" or "TRAINER"
+
+  // Notification Details
+  channel String // "SMS" or "EMAIL"
+  type    String // "APPOINTMENT_REMINDER", "INVOICE_SENT", "INVOICE_DUE_SOON", "INVOICE_OVERDUE"
+
+  // Reference IDs (nullable based on type)
+  appointmentId String? @map("appointment_id")
+  invoiceId     String? @map("invoice_id")
+
+  // Content
+  phoneNumber    String? @map("phone_number")
+  emailAddress   String? @map("email_address")
+  messageContent String  @map("message_content") @db.Text
+
+  // Delivery Status
+  status       NotificationStatus @default(PENDING)
+  externalId   String?            @map("external_id") // Twilio SID or SendGrid message ID
+  errorMessage String?            @map("error_message") @db.Text
+
+  // Retry tracking
+  attemptCount  Int       @default(0) @map("attempt_count")
+  lastAttemptAt DateTime? @map("last_attempt_at")
+  nextRetryAt   DateTime? @map("next_retry_at")
+
+  // Timestamps
+  sentAt      DateTime? @map("sent_at")
+  deliveredAt DateTime? @map("delivered_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([workspaceId, recipientId])
+  @@index([status, nextRetryAt])
+  @@index([appointmentId])
+  @@index([invoiceId])
+  @@map("notification_logs")
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
 }

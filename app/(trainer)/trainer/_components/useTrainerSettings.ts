@@ -18,6 +18,14 @@ export type Settings = {
   groupSessionMatchingLogic: GroupSessionMatchingLogic
   autoClientSyncEnabled: boolean
   darkModeEnabled: boolean
+  // Notification settings
+  appointmentReminderEnabled: boolean
+  appointmentReminderHours: number[]
+  invoiceReminderBeforeDue: boolean
+  invoiceReminderBeforeDueDays: number
+  invoiceReminderOnDue: boolean
+  invoiceReminderOverdue: boolean
+  invoiceReminderOverdueDays: number[]
 }
 
 export function useTrainerSettings() {
@@ -130,6 +138,35 @@ export function useTrainerSettings() {
     return await updateSettings({ groupSessionMatchingLogic: logic })
   }
 
+  // Notification handlers
+  const handleAppointmentReminderEnabledChange = async (enabled: boolean) => {
+    return await updateSettings({ appointmentReminderEnabled: enabled })
+  }
+
+  const handleAppointmentReminderHoursChange = async (hours: number[]) => {
+    return await updateSettings({ appointmentReminderHours: hours })
+  }
+
+  const handleInvoiceReminderBeforeDueChange = async (enabled: boolean) => {
+    return await updateSettings({ invoiceReminderBeforeDue: enabled })
+  }
+
+  const handleInvoiceReminderBeforeDueDaysChange = async (days: number) => {
+    return await updateSettings({ invoiceReminderBeforeDueDays: days })
+  }
+
+  const handleInvoiceReminderOnDueChange = async (enabled: boolean) => {
+    return await updateSettings({ invoiceReminderOnDue: enabled })
+  }
+
+  const handleInvoiceReminderOverdueChange = async (enabled: boolean) => {
+    return await updateSettings({ invoiceReminderOverdue: enabled })
+  }
+
+  const handleInvoiceReminderOverdueDaysChange = async (days: number[]) => {
+    return await updateSettings({ invoiceReminderOverdueDays: days })
+  }
+
   const handleManualSync = async () => {
     setIsSyncing(true)
     setError(null)
@@ -172,6 +209,14 @@ export function useTrainerSettings() {
     handleGroupSessionRateChange,
     handleGroupSessionMatchingLogicChange,
     handleManualSync,
+    // Notification handlers
+    handleAppointmentReminderEnabledChange,
+    handleAppointmentReminderHoursChange,
+    handleInvoiceReminderBeforeDueChange,
+    handleInvoiceReminderBeforeDueDaysChange,
+    handleInvoiceReminderOnDueChange,
+    handleInvoiceReminderOverdueChange,
+    handleInvoiceReminderOverdueDaysChange,
     clearError: () => setError(null),
   }
 }

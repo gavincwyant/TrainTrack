@@ -18,6 +18,11 @@ export type ClientSettings = {
   // Group session settings
   groupSessionPermission: GroupSessionPermission
   groupSessionDiscoverable: boolean
+  // Notification settings
+  smsNotificationsEnabled: boolean
+  emailNotificationsEnabled: boolean
+  appointmentRemindersEnabled: boolean
+  invoiceAlertsEnabled: boolean
 }
 
 export function useClientSettings() {
@@ -49,6 +54,10 @@ export function useClientSettings() {
     phone?: string | null
     groupSessionPermission?: GroupSessionPermission
     groupSessionDiscoverable?: boolean
+    smsNotificationsEnabled?: boolean
+    emailNotificationsEnabled?: boolean
+    appointmentRemindersEnabled?: boolean
+    invoiceAlertsEnabled?: boolean
   }) => {
     setIsSaving(true)
     setError(null)
@@ -72,6 +81,10 @@ export function useClientSettings() {
           phone: result.settings.phone ?? settings.phone,
           groupSessionPermission: result.settings.groupSessionPermission ?? settings.groupSessionPermission,
           groupSessionDiscoverable: result.settings.groupSessionDiscoverable ?? settings.groupSessionDiscoverable,
+          smsNotificationsEnabled: result.settings.smsNotificationsEnabled ?? settings.smsNotificationsEnabled,
+          emailNotificationsEnabled: result.settings.emailNotificationsEnabled ?? settings.emailNotificationsEnabled,
+          appointmentRemindersEnabled: result.settings.appointmentRemindersEnabled ?? settings.appointmentRemindersEnabled,
+          invoiceAlertsEnabled: result.settings.invoiceAlertsEnabled ?? settings.invoiceAlertsEnabled,
         })
       }
 
@@ -96,6 +109,23 @@ export function useClientSettings() {
     return await updateSettings({ groupSessionDiscoverable: discoverable })
   }
 
+  // Notification handlers
+  const handleSmsNotificationsChange = async (enabled: boolean) => {
+    return await updateSettings({ smsNotificationsEnabled: enabled })
+  }
+
+  const handleEmailNotificationsChange = async (enabled: boolean) => {
+    return await updateSettings({ emailNotificationsEnabled: enabled })
+  }
+
+  const handleAppointmentRemindersChange = async (enabled: boolean) => {
+    return await updateSettings({ appointmentRemindersEnabled: enabled })
+  }
+
+  const handleInvoiceAlertsChange = async (enabled: boolean) => {
+    return await updateSettings({ invoiceAlertsEnabled: enabled })
+  }
+
   return {
     settings,
     isLoading,
@@ -106,6 +136,10 @@ export function useClientSettings() {
     handlePhoneChange,
     handleGroupSessionPermissionChange,
     handleGroupSessionDiscoverableChange,
+    handleSmsNotificationsChange,
+    handleEmailNotificationsChange,
+    handleAppointmentRemindersChange,
+    handleInvoiceAlertsChange,
     clearError: () => setError(null),
   }
 }

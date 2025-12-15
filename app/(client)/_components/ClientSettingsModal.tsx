@@ -26,6 +26,10 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
     handlePhoneChange,
     handleGroupSessionPermissionChange,
     handleGroupSessionDiscoverableChange,
+    handleSmsNotificationsChange,
+    handleEmailNotificationsChange,
+    handleAppointmentRemindersChange,
+    handleInvoiceAlertsChange,
     clearError,
   } = useClientSettings()
 
@@ -212,7 +216,25 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
                 />
               )}
 
-              {activeCategory === "notifications" && <NotificationSettings />}
+              {activeCategory === "notifications" && (
+                <NotificationSettings
+                  settings={settings}
+                  onSmsChange={(enabled) =>
+                    handleSuccessfulUpdate(() => handleSmsNotificationsChange(enabled))
+                  }
+                  onEmailChange={(enabled) =>
+                    handleSuccessfulUpdate(() => handleEmailNotificationsChange(enabled))
+                  }
+                  onAppointmentRemindersChange={(enabled) =>
+                    handleSuccessfulUpdate(() => handleAppointmentRemindersChange(enabled))
+                  }
+                  onInvoiceAlertsChange={(enabled) =>
+                    handleSuccessfulUpdate(() => handleInvoiceAlertsChange(enabled))
+                  }
+                  isLoading={isLoading}
+                  isSaving={isSaving}
+                />
+              )}
             </div>
           </div>
         </div>

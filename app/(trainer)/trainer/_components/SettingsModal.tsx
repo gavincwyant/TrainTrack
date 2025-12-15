@@ -6,13 +6,14 @@ import { SchedulingSettings } from "./settings/SchedulingSettings"
 import { CalendarSettings } from "./settings/CalendarSettings"
 import { InvoicingSettings } from "./settings/InvoicingSettings"
 import { PricingSettings } from "./settings/PricingSettings"
+import { NotificationSettings } from "./settings/NotificationSettings"
 
 type Props = {
   isOpen: boolean
   onClose: () => void
 }
 
-type Category = "scheduling" | "calendar" | "pricing" | "invoicing"
+type Category = "scheduling" | "calendar" | "pricing" | "invoicing" | "notifications"
 
 export function SettingsModal({ isOpen, onClose }: Props) {
   const [activeCategory, setActiveCategory] = useState<Category>("scheduling")
@@ -37,6 +38,13 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     handleGroupSessionRateChange,
     handleGroupSessionMatchingLogicChange,
     handleManualSync,
+    handleAppointmentReminderEnabledChange,
+    handleAppointmentReminderHoursChange,
+    handleInvoiceReminderBeforeDueChange,
+    handleInvoiceReminderBeforeDueDaysChange,
+    handleInvoiceReminderOnDueChange,
+    handleInvoiceReminderOverdueChange,
+    handleInvoiceReminderOverdueDaysChange,
     clearError,
   } = useTrainerSettings()
 
@@ -143,7 +151,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
             {/* Mobile Tab Pills - visible on mobile only */}
             <div className="md:hidden flex overflow-x-auto gap-2 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
-              {(["scheduling", "calendar", "pricing", "invoicing"] as const).map((cat) => (
+              {(["scheduling", "calendar", "pricing", "invoicing", "notifications"] as const).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
@@ -201,6 +209,16 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                 >
                   Invoicing
                 </button>
+                <button
+                  onClick={() => setActiveCategory("notifications")}
+                  className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeCategory === "notifications"
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  Notifications
+                </button>
               </nav>
             </div>
 
@@ -245,6 +263,34 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   onToggleAutoInvoicing={(enabled) => handleSuccessfulUpdate(() => handleToggleAutoInvoicing(enabled))}
                   onMonthlyInvoiceDayChange={(day) => handleSuccessfulUpdate(() => handleMonthlyInvoiceDayChange(day))}
                   onDefaultDueDaysChange={(days) => handleSuccessfulUpdate(() => handleDefaultDueDaysChange(days))}
+                />
+              )}
+
+              {activeCategory === "notifications" && (
+                <NotificationSettings
+                  settings={settings}
+                  isLoading={isLoading}
+                  onAppointmentReminderEnabledChange={(enabled) =>
+                    handleSuccessfulUpdate(() => handleAppointmentReminderEnabledChange(enabled))
+                  }
+                  onAppointmentReminderHoursChange={(hours) =>
+                    handleSuccessfulUpdate(() => handleAppointmentReminderHoursChange(hours))
+                  }
+                  onInvoiceReminderBeforeDueChange={(enabled) =>
+                    handleSuccessfulUpdate(() => handleInvoiceReminderBeforeDueChange(enabled))
+                  }
+                  onInvoiceReminderBeforeDueDaysChange={(days) =>
+                    handleSuccessfulUpdate(() => handleInvoiceReminderBeforeDueDaysChange(days))
+                  }
+                  onInvoiceReminderOnDueChange={(enabled) =>
+                    handleSuccessfulUpdate(() => handleInvoiceReminderOnDueChange(enabled))
+                  }
+                  onInvoiceReminderOverdueChange={(enabled) =>
+                    handleSuccessfulUpdate(() => handleInvoiceReminderOverdueChange(enabled))
+                  }
+                  onInvoiceReminderOverdueDaysChange={(days) =>
+                    handleSuccessfulUpdate(() => handleInvoiceReminderOverdueDaysChange(days))
+                  }
                 />
               )}
             </div>
