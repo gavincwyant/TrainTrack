@@ -110,10 +110,10 @@ export default async function TrainerDashboardPage() {
             Schedule Session
           </Link>
           <Link
-            href="/trainer/availability"
+            href="/trainer/invoices"
             className="flex items-center justify-center px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
           >
-            Set Availability
+            View Invoices
           </Link>
         </div>
       </div>

@@ -124,7 +124,7 @@ export function SchedulingSettings({ settings, onUpdate, isLoading, isSaving }: 
           <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 list-disc list-inside">
             <li>Your calendar will only show hours between your start and end times</li>
             <li>Clients will see your availability within these hours</li>
-            <li>You can still block specific times using the availability manager</li>
+            <li>You can block specific times directly on the calendar</li>
           </ul>
         </div>
 
