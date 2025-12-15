@@ -55,8 +55,8 @@ test.describe('Trainer Onboarding Flow', () => {
     // Wait for redirect to clients list
     await page.waitForURL('/trainer/clients', { timeout: 5000 })
 
-    // Verify client appears in list
-    await expect(page.locator(`text=${clientName}`)).toBeVisible()
+    // Verify client appears in list (target table view which is visible on desktop)
+    await expect(page.locator('table').getByText(clientName)).toBeVisible()
   })
 
   test('should show validation errors for incomplete signup', async ({ page }) => {
@@ -111,7 +111,7 @@ test.describe('Trainer Onboarding Flow', () => {
     await page.click('button[type="submit"]')
 
     await page.waitForURL('/trainer/clients')
-    await expect(page.locator(`text=${clientName1}`)).toBeVisible()
+    await expect(page.locator('table').getByText(clientName1)).toBeVisible()
 
     // Add second client
     await page.goto('/trainer/clients/new')
@@ -125,8 +125,8 @@ test.describe('Trainer Onboarding Flow', () => {
 
     await page.waitForURL('/trainer/clients')
 
-    // Both clients should be visible
-    await expect(page.locator(`text=${clientName1}`)).toBeVisible()
-    await expect(page.locator(`text=${clientName2}`)).toBeVisible()
+    // Both clients should be visible (target table view which is visible on desktop)
+    await expect(page.locator('table').getByText(clientName1)).toBeVisible()
+    await expect(page.locator('table').getByText(clientName2)).toBeVisible()
   })
 })

@@ -38,7 +38,7 @@ jobs:
 
       # Auth
       NEXTAUTH_SECRET: test-secret-key-for-testing-only-do-not-use-in-production
-      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3001
 
       # Encryption
       ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
