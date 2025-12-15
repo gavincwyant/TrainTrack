@@ -37,8 +37,8 @@ export default async function EditUserPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Edit User</h1>
-        <p className="text-gray-600 mt-2">Update user information and settings</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Edit User</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Update user information and settings</p>
       </div>
 
       <UserForm user={user} workspaces={workspaces} />
