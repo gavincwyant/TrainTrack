@@ -2,6 +2,22 @@ import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { requireSystemAdmin } from "@/lib/middleware/tenant"
 import { prisma } from "@/lib/db"
+import { Prisma } from "@prisma/client"
+
+type TrainerWithWorkspace = Prisma.UserGetPayload<{
+  include: {
+    workspace: {
+      include: {
+        _count: {
+          select: {
+            clientProfiles: true
+            pendingClientProfiles: true
+          }
+        }
+      }
+    }
+  }
+}>
 
 async function getAdminData() {
   await requireSystemAdmin()
@@ -149,7 +165,7 @@ export default async function AdminDashboard() {
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {trainers && trainers.length > 0 ? (
-                trainers.slice(0, 20).map((trainer) => (
+                trainers.slice(0, 20).map((trainer: TrainerWithWorkspace) => (
                   <tr key={trainer.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
