@@ -43,7 +43,7 @@ const BLACKLIST_PATTERNS = [
   /^(hiit|cardio|strength|yoga|pilates|crossfit)$/i,
 
   // Time blocking
-  /\b(blocked?|busy|unavailable|hold|do\s+not\s+book)\b/i,
+  /\b(block(ed)?|busy|unavailable|hold|do\s+not\s+book)\b/i,
   /\b(vacation|pto|out\s+of\s+office|ooo|holiday|time\s+off)\b/i,
   /\b(focus\s+time|deep\s+work|admin\s+time)\b/i,
 
@@ -72,14 +72,16 @@ export class ClientExtractionService {
       return null
     }
 
-    // Check blacklist patterns first
-    if (this.isBlacklistedPattern(title)) {
+    // Extract name from title first (removes prefixes like "Personal Training -")
+    const extractedName = this.extractNameFromTitle(title)
+    if (!extractedName) {
       return null
     }
 
-    // Extract name from title
-    const extractedName = this.extractNameFromTitle(title)
-    if (!extractedName) {
+    // Check blacklist patterns on BOTH original title and extracted name
+    // This allows "Personal Training - John Smith" (extracts to "John Smith")
+    // while still blocking "Personal errand" or pure "Training" events
+    if (this.isBlacklistedPattern(title) && this.isBlacklistedPattern(extractedName)) {
       return null
     }
 
