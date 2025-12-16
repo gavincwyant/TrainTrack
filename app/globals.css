@@ -34,6 +34,14 @@
   }
 }
 
+/* Override Tailwind's container and max-width for cross-browser consistency */
+.container {
+  max-width: 1280px !important;
+}
+.max-w-7xl {
+  max-width: 1280px !important;
+}
+
 /* Override Tailwind's oklch colors with consistent hex values for cross-browser consistency */
 .border-gray-200 {
   border-color: #e5e7eb !important;
