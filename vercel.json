@@ -1,12 +1,16 @@
 {
   "crons": [
     {
-      "path": "/api/cron/complete-appointments",
-      "schedule": "0 7 * * *"
+      "path": "/api/cron/sync-calendars",
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/generate-invoices",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/complete-appointments",
+      "schedule": "0 * * * *"
     }
   ]
 }
