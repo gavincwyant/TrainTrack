@@ -19,11 +19,11 @@ export async function GET(request: Request) {
     const error = searchParams.get("error")
 
     if (error) {
-      return NextResponse.redirect(`${baseUrl}/trainer/settings?error=${error}`)
+      return NextResponse.redirect(`${baseUrl}/trainer/dashboard?calendarError=${error}`)
     }
 
     if (!code) {
-      return NextResponse.redirect(`${baseUrl}/trainer/settings?error=NoCode`)
+      return NextResponse.redirect(`${baseUrl}/trainer/dashboard?calendarError=NoCode`)
     }
 
     // Exchange code for tokens
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     const { tokens } = await oauth2Client.getToken(code)
 
     if (!tokens.access_token || !tokens.refresh_token) {
-      return NextResponse.redirect(`${baseUrl}/trainer/settings?error=NoTokens`)
+      return NextResponse.redirect(`${baseUrl}/trainer/dashboard?calendarError=NoTokens`)
     }
 
     // Get user's email from Google (if available in tokens, otherwise use session email)
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     const workspaceId = session.user.workspaceId
 
     if (!workspaceId) {
-      return NextResponse.redirect(`${baseUrl}/trainer/settings?error=NoWorkspace`)
+      return NextResponse.redirect(`${baseUrl}/trainer/dashboard?calendarError=NoWorkspace`)
     }
 
     await prisma.trainerSettings.upsert({
@@ -79,11 +79,11 @@ export async function GET(request: Request) {
       },
     })
 
-    return NextResponse.redirect(`${baseUrl}/trainer/settings?success=CalendarConnected`)
+    return NextResponse.redirect(`${baseUrl}/trainer/dashboard?calendarSuccess=connected`)
   } catch (error) {
     console.error("Google OAuth callback error:", error)
     const url = new URL(request.url)
     const baseUrl = `${url.protocol}//${url.host}`
-    return NextResponse.redirect(`${baseUrl}/trainer/settings?error=CallbackFailed`)
+    return NextResponse.redirect(`${baseUrl}/trainer/dashboard?calendarError=CallbackFailed`)
   }
 }
