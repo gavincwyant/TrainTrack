@@ -1,7 +1,9 @@
+import { Suspense } from "react"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { Appointment, User, WorkoutSession } from "@prisma/client"
+import { CalendarToast } from "./_components/CalendarToast"
 
 type AppointmentWithClient = Appointment & {
   client: User
@@ -60,6 +62,11 @@ export default async function TrainerDashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Toast notifications */}
+      <Suspense fallback={null}>
+        <CalendarToast />
+      </Suspense>
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Welcome back, {session.user.name}!</h1>

@@ -1,18 +1,49 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 
-export function VideoPlayer({ videoSrc }: { videoSrc: string }) {
+type Props = {
+  videoSrc?: string      // For self-hosted video
+  vimeoId?: string       // For Vimeo embed
+  thumbnailSrc?: string  // Optional custom thumbnail
+}
+
+export function VideoPlayer({ videoSrc, vimeoId, thumbnailSrc }: Props) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasEnded, setHasEnded] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // Listen for Vimeo player events via postMessage
+  useEffect(() => {
+    if (!vimeoId || !isPlaying) return
+
+    const handleMessage = (event: MessageEvent) => {
+      // Vimeo sends messages from their domain
+      if (event.origin !== "https://player.vimeo.com") return
+
+      try {
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data
+        if (data.event === "ended") {
+          setIsPlaying(false)
+          setHasEnded(true)
+        }
+      } catch {
+        // Ignore non-JSON messages
+      }
+    }
+
+    window.addEventListener("message", handleMessage)
+    return () => window.removeEventListener("message", handleMessage)
+  }, [vimeoId, isPlaying])
 
   const handlePlayClick = () => {
+    setIsPlaying(true)
+    setHasEnded(false)
+
     if (videoRef.current) {
       videoRef.current.play()
-      setIsPlaying(true)
-      setHasEnded(false)
     }
   }
 
@@ -22,11 +53,12 @@ export function VideoPlayer({ videoSrc }: { videoSrc: string }) {
   }
 
   const handleReplay = () => {
+    setHasEnded(false)
+    setIsPlaying(true)
+
     if (videoRef.current) {
       videoRef.current.currentTime = 0
       videoRef.current.play()
-      setIsPlaying(true)
-      setHasEnded(false)
     }
   }
 
@@ -34,7 +66,20 @@ export function VideoPlayer({ videoSrc }: { videoSrc: string }) {
     <div className="relative aspect-video bg-gradient-to-br from-[var(--surface-secondary)] to-[var(--border)] rounded-3xl border-2 border-[var(--border)] shadow-2xl dark:shadow-black/40 overflow-hidden group">
       {!isPlaying && !hasEnded && (
         <>
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 dark:from-blue-400/10 dark:to-indigo-400/10"></div>
+          {/* Thumbnail image or gradient background */}
+          {thumbnailSrc ? (
+            <img
+              src={thumbnailSrc}
+              alt="Video thumbnail"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 dark:from-blue-400/10 dark:to-indigo-400/10"></div>
+          )}
+          {/* Overlay for better play button visibility on thumbnails */}
+          {thumbnailSrc && (
+            <div className="absolute inset-0 bg-black/20"></div>
+          )}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <button
               onClick={handlePlayClick}
@@ -85,16 +130,30 @@ export function VideoPlayer({ videoSrc }: { videoSrc: string }) {
         </div>
       )}
 
-      <video
-        ref={videoRef}
-        controls={isPlaying}
-        className={`w-full h-full object-cover ${isPlaying ? "visible" : "invisible"}`}
-        onEnded={handleVideoEnd}
-        preload="metadata"
-      >
-        <source src={videoSrc} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      {/* Vimeo iframe - only render when playing */}
+      {vimeoId && isPlaying && (
+        <iframe
+          ref={iframeRef}
+          src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&title=0&byline=0&portrait=0&api=1`}
+          className="absolute inset-0 w-full h-full"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+        />
+      )}
+
+      {/* Self-hosted video */}
+      {videoSrc && (
+        <video
+          ref={videoRef}
+          controls={isPlaying}
+          className={`w-full h-full object-cover ${isPlaying && !vimeoId ? "visible" : "invisible"}`}
+          onEnded={handleVideoEnd}
+          preload="metadata"
+        >
+          <source src={videoSrc} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      )}
     </div>
   )
 }
