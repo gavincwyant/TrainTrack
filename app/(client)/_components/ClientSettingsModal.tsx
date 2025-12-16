@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { useClientSettings } from "./useClientSettings"
 import { ProfileSettings } from "./settings/ProfileSettings"
 import { NotificationSettings } from "./settings/NotificationSettings"
@@ -16,6 +17,12 @@ type Category = "profile" | "groupSessions" | "notifications"
 export function ClientSettingsModal({ isOpen, onClose }: Props) {
   const [activeCategory, setActiveCategory] = useState<Category>("profile")
   const [showSuccess, setShowSuccess] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Wait for client-side mount before rendering portal
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const {
     settings,
@@ -66,9 +73,9 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
     return success
   }
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
@@ -219,4 +226,6 @@ export function ClientSettingsModal({ isOpen, onClose }: Props) {
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
