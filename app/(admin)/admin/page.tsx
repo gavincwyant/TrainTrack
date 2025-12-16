@@ -2,22 +2,20 @@ import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { requireSystemAdmin } from "@/lib/middleware/tenant"
 import { prisma } from "@/lib/db"
-import { Prisma } from "@prisma/client"
 
-type TrainerWithWorkspace = Prisma.UserGetPayload<{
-  include: {
-    workspace: {
-      include: {
-        _count: {
-          select: {
-            clientProfiles: true
-            pendingClientProfiles: true
-          }
-        }
-      }
+interface TrainerWithWorkspace {
+  id: string
+  fullName: string
+  email: string
+  createdAt: Date
+  workspace: {
+    name: string
+    _count?: {
+      clientProfiles: number
+      pendingClientProfiles: number
     }
-  }
-}>
+  } | null
+}
 
 async function getAdminData() {
   await requireSystemAdmin()
