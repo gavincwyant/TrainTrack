@@ -21,13 +21,19 @@ export class EmailService {
    * Send invoice email to client
    */
   async sendInvoiceEmail(invoice: InvoiceWithRelations): Promise<void> {
-    // NOTE: There's a known issue with Next.js 16 + Turbopack where SENDGRID_API_KEY
-    // doesn't load from .env despite SENDGRID_FROM_EMAIL loading fine.
-    // Using fallback until Next.js issue is resolved or we migrate to production.
-    const apiKey = process.env.SENDGRID_API_KEY || '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'
+    const apiKey = process.env.SENDGRID_API_KEY
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL
 
-    if (!apiKey || !apiKey.startsWith('SG.')) {
+    if (!apiKey) {
+      throw new Error('SENDGRID_API_KEY environment variable is not set')
+    }
+
+    if (!apiKey.startsWith('SG.')) {
       throw new Error('Invalid SendGrid API key - must start with "SG."')
+    }
+
+    if (!fromEmail) {
+      throw new Error('SENDGRID_FROM_EMAIL environment variable is not set')
     }
 
     sgMail.setApiKey(apiKey)
@@ -38,7 +44,7 @@ export class EmailService {
     const msg = {
       to: invoice.client.email,
       from: {
-        email: process.env.SENDGRID_FROM_EMAIL || "gavincwyant@gmail.com",
+        email: fromEmail,
         name: invoice.trainer.fullName,
       },
       replyTo: invoice.trainer.email, // Client can reply directly to trainer

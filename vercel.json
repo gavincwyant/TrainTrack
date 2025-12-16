@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/sync-calendars",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/cron/generate-invoices",
@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/complete-appointments",
-      "schedule": "0 * * * *"
+      "schedule": "0 7 * * *"
     }
   ]
 }
