@@ -342,7 +342,7 @@ export class CalendarSyncService {
             data: {
               startTime: new Date(event.start.dateTime),
               endTime: new Date(event.end.dateTime),
-              reason: `Google Calendar: ${event.summary}`,
+              reason: `${event.summary || 'Busy'} (via Google)`,
             },
           })
 
@@ -532,7 +532,7 @@ export class CalendarSyncService {
                   trainerId,
                   startTime: new Date(event.start.dateTime),
                   endTime: new Date(event.end.dateTime),
-                  reason: `Google Calendar: ${event.summary}`,
+                  reason: `${event.summary || 'Busy'} (via Google)`,
                   isRecurring: false,
                 },
               })
@@ -557,7 +557,7 @@ export class CalendarSyncService {
                   trainerId,
                   startTime: new Date(event.start.dateTime),
                   endTime: new Date(event.end.dateTime),
-                  reason: `Google Calendar: ${event.summary}`,
+                  reason: `${event.summary || 'Busy'} (via Google)`,
                   isRecurring: false,
                 },
               })
