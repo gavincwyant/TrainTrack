@@ -100,28 +100,28 @@ export function VideoPlayer({ videoSrc, vimeoId, thumbnailSrc }: Props) {
       )}
 
       {hasEnded && (
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/95 via-blue-700/95 to-indigo-800/95 dark:from-blue-700/95 dark:via-blue-800/95 dark:to-indigo-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
-          <h3 className="text-3xl sm:text-4xl font-bold text-white mb-4 text-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/95 via-blue-700/95 to-indigo-800/95 dark:from-blue-700/95 dark:via-blue-800/95 dark:to-indigo-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-8 animate-in fade-in duration-500">
+          <h3 className="text-lg sm:text-2xl md:text-4xl font-bold text-white mb-2 sm:mb-4 text-center">
             Ready to simplify your training business?
           </h3>
-          <p className="text-blue-100 dark:text-blue-50 text-lg mb-8 text-center max-w-2xl">
+          <p className="text-blue-100 dark:text-blue-50 text-sm sm:text-base md:text-lg mb-4 sm:mb-8 text-center max-w-2xl">
             Join our free beta and get 2–3 months of access with white-glove onboarding
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <Link
               href="/signup"
-              className="px-8 py-4 text-lg font-semibold text-blue-600 dark:text-blue-700 bg-white dark:bg-gray-50 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-100 transition-all duration-300 hover:shadow-2xl hover:scale-105 flex items-center gap-2"
+              className="px-4 py-2 sm:px-8 sm:py-4 text-sm sm:text-lg font-semibold text-blue-600 dark:text-blue-700 bg-white dark:bg-gray-50 rounded-lg sm:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-100 transition-all duration-300 hover:shadow-2xl hover:scale-105 flex items-center justify-center gap-2"
             >
               Get early access
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </Link>
             <button
               onClick={handleReplay}
-              className="px-8 py-4 text-lg font-semibold text-white border-2 border-white/30 dark:border-white/40 rounded-xl hover:bg-white/10 dark:hover:bg-white/15 transition-all duration-300 flex items-center gap-2"
+              className="px-4 py-2 sm:px-8 sm:py-4 text-sm sm:text-lg font-semibold text-white border-2 border-white/30 dark:border-white/40 rounded-lg sm:rounded-xl hover:bg-white/10 dark:hover:bg-white/15 transition-all duration-300 flex items-center justify-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Watch again
