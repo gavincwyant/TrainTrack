@@ -1,19 +1,22 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 
 export function CalendarToast() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null)
+  const [hasProcessed, setHasProcessed] = useState(false)
 
   useEffect(() => {
+    if (hasProcessed) return
+
     const success = searchParams.get("calendarSuccess")
     const error = searchParams.get("calendarError")
 
     if (success === "connected") {
       setToast({ type: "success", message: "Google Calendar connected successfully!" })
+      setHasProcessed(true)
     } else if (error) {
       const errorMessages: Record<string, string> = {
         NoCode: "Authorization was cancelled",
@@ -23,16 +26,14 @@ export function CalendarToast() {
         access_denied: "Calendar access was denied",
       }
       setToast({ type: "error", message: errorMessages[error] || `Calendar error: ${error}` })
+      setHasProcessed(true)
     }
 
-    // Clear the URL params after showing toast
-    if (success || error) {
-      const timeout = setTimeout(() => {
-        router.replace("/trainer/dashboard", { scroll: false })
-      }, 100)
-      return () => clearTimeout(timeout)
+    // Clean up URL without causing navigation (client-side only)
+    if ((success || error) && typeof window !== "undefined") {
+      window.history.replaceState({}, "", "/trainer/dashboard")
     }
-  }, [searchParams, router])
+  }, [searchParams, hasProcessed])
 
   useEffect(() => {
     if (toast) {
