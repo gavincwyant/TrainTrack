@@ -11,6 +11,7 @@ const approveProfileSchema = z.object({
   phone: z.string().optional().nullable(),
   billingFrequency: z.enum(["PER_SESSION", "MONTHLY"]),
   sessionRate: z.number(),
+  groupSessionRate: z.number().optional().nullable(),
   notes: z.string().optional().nullable(),
   autoInvoiceEnabled: z.boolean().optional().default(true),
 })
@@ -109,6 +110,7 @@ export async function POST(
             workspaceId,
             billingFrequency: data.billingFrequency,
             sessionRate: data.sessionRate,
+            groupSessionRate: data.groupSessionRate ?? null,
             notes: data.notes || null,
             autoInvoiceEnabled: data.autoInvoiceEnabled ?? true,
           },

@@ -28,7 +28,7 @@ export function InvoicingSettings({
 
       <div className="space-y-6">
         {/* Auto-invoicing toggle */}
-        <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-md">
+        <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Automatic Invoicing
@@ -37,12 +37,21 @@ export function InvoicingSettings({
               Automatically generate and send invoices to clients based on their billing frequency
             </p>
           </div>
-          <input
-            type="checkbox"
-            checked={settings?.autoInvoicingEnabled ?? true}
-            onChange={(e) => onToggleAutoInvoicing(e.target.checked)}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-          />
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings?.autoInvoicingEnabled ?? true}
+            onClick={() => onToggleAutoInvoicing(!(settings?.autoInvoicingEnabled ?? true))}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+              settings?.autoInvoicingEnabled ?? true ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                settings?.autoInvoicingEnabled ?? true ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
         </div>
 
         {/* Monthly invoice day */}

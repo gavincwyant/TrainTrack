@@ -56,7 +56,7 @@ export function CalendarSettings({
             </button>
           </div>
 
-          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-md">
+          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Auto-sync enabled
@@ -65,15 +65,24 @@ export function CalendarSettings({
                 Automatically sync appointments and blocked times with Google Calendar
               </p>
             </div>
-            <input
-              type="checkbox"
-              checked={settings.autoSyncEnabled}
-              onChange={(e) => onToggleAutoSync(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-            />
+            <button
+              type="button"
+              role="switch"
+              aria-checked={settings.autoSyncEnabled}
+              onClick={() => onToggleAutoSync(!settings.autoSyncEnabled)}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                settings.autoSyncEnabled ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  settings.autoSyncEnabled ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
           </div>
 
-          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-md">
+          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Auto-detect client profiles
@@ -82,13 +91,22 @@ export function CalendarSettings({
                 Automatically detect potential clients from calendar event names
               </p>
             </div>
-            <input
-              type="checkbox"
-              checked={settings.autoClientSyncEnabled || false}
-              onChange={(e) => onToggleClientSync(e.target.checked)}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={settings.autoClientSyncEnabled || false}
+              onClick={() => onToggleClientSync(!settings.autoClientSyncEnabled)}
               disabled={!settings.autoSyncEnabled}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 bg-white dark:bg-gray-800"
-            />
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed ${
+                settings.autoClientSyncEnabled ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  settings.autoClientSyncEnabled ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
           </div>
 
           {settings.lastSyncedAt && (

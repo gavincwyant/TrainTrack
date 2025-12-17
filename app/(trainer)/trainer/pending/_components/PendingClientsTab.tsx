@@ -21,6 +21,11 @@ type PendingClientProfile = {
   reviewedNotes: string | null
 }
 
+type TrainerDefaults = {
+  defaultIndividualSessionRate: number | null
+  defaultGroupSessionRate: number | null
+}
+
 type Props = {
   onCountChange?: (count: number) => void
 }
@@ -31,9 +36,11 @@ export function PendingClientsTab({ onCountChange }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [selectedProfile, setSelectedProfile] = useState<PendingClientProfile | null>(null)
+  const [trainerDefaults, setTrainerDefaults] = useState<TrainerDefaults | null>(null)
 
   useEffect(() => {
     fetchPendingProfiles()
+    fetchTrainerSettings()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -57,6 +64,23 @@ export function PendingClientsTab({ onCountChange }: Props) {
     }
   }
 
+  const fetchTrainerSettings = async () => {
+    try {
+      const response = await fetch("/api/trainer-settings")
+      const data = await response.json()
+
+      if (response.ok && data.settings) {
+        setTrainerDefaults({
+          defaultIndividualSessionRate: data.settings.defaultIndividualSessionRate,
+          defaultGroupSessionRate: data.settings.defaultGroupSessionRate,
+        })
+      }
+    } catch (err) {
+      // Silently fail - defaults will just be empty
+      console.error("Failed to fetch trainer settings:", err)
+    }
+  }
+
   const handleApprove = async (id: string) => {
     const profile = pendingProfiles.find((p) => p.id === id)
     if (!profile) return
@@ -70,6 +94,7 @@ export function PendingClientsTab({ onCountChange }: Props) {
     phone: string | null
     billingFrequency: "PER_SESSION" | "MONTHLY"
     sessionRate: number
+    groupSessionRate: number | null
     notes: string | null
     autoInvoiceEnabled: boolean
   }) => {
@@ -168,6 +193,7 @@ export function PendingClientsTab({ onCountChange }: Props) {
                   onApprove={handleApprove}
                   onReject={handleReject}
                   isProcessing={processingId === profile.id}
+                  trainerDefaults={trainerDefaults}
                 />
               ))}
             </div>
@@ -193,6 +219,7 @@ export function PendingClientsTab({ onCountChange }: Props) {
           isOpen={!!selectedProfile}
           onClose={() => setSelectedProfile(null)}
           onSubmit={handleApproveSubmit}
+          trainerDefaults={trainerDefaults}
         />
       )}
     </>

@@ -15,6 +15,11 @@ type PendingClientProfile = {
   reviewedNotes: string | null
 }
 
+type TrainerDefaults = {
+  defaultIndividualSessionRate: number | null
+  defaultGroupSessionRate: number | null
+} | null
+
 type Props = {
   profile: PendingClientProfile
   isOpen: boolean
@@ -25,35 +30,46 @@ type Props = {
     phone: string | null
     billingFrequency: "PER_SESSION" | "MONTHLY"
     sessionRate: number
+    groupSessionRate: number | null
     notes: string | null
     autoInvoiceEnabled: boolean
   }) => Promise<void>
+  trainerDefaults?: TrainerDefaults
 }
 
-export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props) {
+export function ApproveClientModal({ profile, isOpen, onClose, onSubmit, trainerDefaults }: Props) {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [billingFrequency, setBillingFrequency] = useState<"PER_SESSION" | "MONTHLY">("PER_SESSION")
   const [sessionRate, setSessionRate] = useState("")
+  const [groupSessionRate, setGroupSessionRate] = useState("")
   const [notes, setNotes] = useState("")
   const [autoInvoiceEnabled, setAutoInvoiceEnabled] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Initialize form with profile data
+  // Always use current trainer defaults for rates (they may have changed since profile was created)
   useEffect(() => {
     if (isOpen) {
       setFullName(profile.reviewedName || profile.extractedName)
       setEmail(profile.reviewedEmail || profile.extractedEmail || "")
       setPhone(profile.reviewedPhone || profile.extractedPhone || "")
       setBillingFrequency(profile.defaultBillingFrequency as "PER_SESSION" | "MONTHLY")
-      setSessionRate(profile.defaultSessionRate.toString())
+
+      // Always use current trainer defaults for rates
+      const individualRate = trainerDefaults?.defaultIndividualSessionRate || 0
+      setSessionRate(individualRate > 0 ? individualRate.toString() : "")
+
+      const groupRate = trainerDefaults?.defaultGroupSessionRate || 0
+      setGroupSessionRate(groupRate > 0 ? groupRate.toString() : "")
+
       setNotes(profile.reviewedNotes || "")
       setAutoInvoiceEnabled(true)
       setError(null)
     }
-  }, [isOpen, profile])
+  }, [isOpen, profile, trainerDefaults])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,7 +79,14 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
     try {
       const rate = parseFloat(sessionRate)
       if (isNaN(rate) || rate <= 0) {
-        setError("Session rate must be a positive number")
+        setError("Individual session rate must be a positive number")
+        setIsSubmitting(false)
+        return
+      }
+
+      const groupRate = groupSessionRate.trim() ? parseFloat(groupSessionRate) : null
+      if (groupRate !== null && (isNaN(groupRate) || groupRate < 0)) {
+        setError("Group session rate must be a positive number or empty")
         setIsSubmitting(false)
         return
       }
@@ -74,6 +97,7 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
         phone: phone.trim() || null,
         billingFrequency,
         sessionRate: rate,
+        groupSessionRate: groupRate,
         notes: notes.trim() || null,
         autoInvoiceEnabled,
       })
@@ -158,25 +182,25 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
             />
           </div>
 
+          <div>
+            <label htmlFor="billingFrequency" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Billing Frequency <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="billingFrequency"
+              value={billingFrequency}
+              onChange={(e) => setBillingFrequency(e.target.value as "PER_SESSION" | "MONTHLY")}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="PER_SESSION">Per Session</option>
+              <option value="MONTHLY">Monthly</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="billingFrequency" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Billing Frequency <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="billingFrequency"
-                value={billingFrequency}
-                onChange={(e) => setBillingFrequency(e.target.value as "PER_SESSION" | "MONTHLY")}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="PER_SESSION">Per Session</option>
-                <option value="MONTHLY">Monthly</option>
-              </select>
-            </div>
-
-            <div>
               <label htmlFor="sessionRate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Session Rate <span className="text-red-500">*</span>
+                Individual Session Rate <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500 dark:text-gray-400">$</span>
@@ -191,6 +215,35 @@ export function ApproveClientModal({ profile, isOpen, onClose, onSubmit }: Props
                   className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
+              {trainerDefaults?.defaultIndividualSessionRate && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Your default: ${Number(trainerDefaults.defaultIndividualSessionRate).toFixed(2)}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="groupSessionRate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Group Session Rate
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-gray-500 dark:text-gray-400">$</span>
+                <input
+                  type="number"
+                  id="groupSessionRate"
+                  value={groupSessionRate}
+                  onChange={(e) => setGroupSessionRate(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  placeholder="optional"
+                  className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              {trainerDefaults?.defaultGroupSessionRate && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Your default: ${Number(trainerDefaults.defaultGroupSessionRate).toFixed(2)}
+                </p>
+              )}
             </div>
           </div>
 
