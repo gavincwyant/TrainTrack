@@ -21,6 +21,7 @@ function LoginForm() {
   const registered = searchParams.get("registered")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const {
     register,
@@ -43,8 +44,12 @@ function LoginForm() {
 
       if (result?.error) {
         setError("Invalid email or password")
+        setIsLoading(false)
         return
       }
+
+      // Show redirecting state
+      setIsRedirecting(true)
 
       // Fetch session to get user role
       const response = await fetch("/api/auth/session")
@@ -59,11 +64,26 @@ function LoginForm() {
         router.push("/")
       }
       router.refresh()
+      // Don't reset loading state - keep showing loading UI until navigation completes
     } catch {
       setError("An error occurred during login")
-    } finally {
       setIsLoading(false)
+      setIsRedirecting(false)
     }
+  }
+
+  // Show full-screen loading when redirecting after successful login
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-[3px] border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
+            Signing you in...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (

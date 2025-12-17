@@ -50,7 +50,7 @@ export async function POST(
         trainerId: userId,
         startTime: pending.startTime,
         endTime: pending.endTime,
-        reason: `Google Calendar: ${pending.externalEventTitle}`,
+        reason: `${pending.externalEventTitle || 'Busy'} (via Google)`,
         isRecurring: false,
       },
     })
