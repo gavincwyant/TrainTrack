@@ -18,14 +18,20 @@ type PendingClientProfile = {
   reviewedEmail: string | null
 }
 
+type TrainerDefaults = {
+  defaultIndividualSessionRate: number | null
+  defaultGroupSessionRate: number | null
+} | null
+
 type Props = {
   profile: PendingClientProfile
   onApprove: (id: string) => void
   onReject: (id: string) => void
   isProcessing: boolean
+  trainerDefaults?: TrainerDefaults
 }
 
-export function PendingClientCard({ profile, onApprove, onReject, isProcessing }: Props) {
+export function PendingClientCard({ profile, onApprove, onReject, isProcessing, trainerDefaults }: Props) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const getConfidenceBadgeColor = (confidence: string) => {
@@ -135,7 +141,10 @@ export function PendingClientCard({ profile, onApprove, onReject, isProcessing }
                 />
               </svg>
               <span>
-                Default rate: ${profile.defaultSessionRate}/{profile.defaultBillingFrequency === "PER_SESSION" ? "session" : "month"}
+                Default rate: ${trainerDefaults?.defaultIndividualSessionRate ?? profile.defaultSessionRate}/session
+                {trainerDefaults?.defaultGroupSessionRate && (
+                  <>, ${trainerDefaults.defaultGroupSessionRate}/group</>
+                )}
               </span>
             </div>
 

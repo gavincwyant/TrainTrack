@@ -45,6 +45,7 @@ jobs:
 
       # External Services (Mock keys for testing)
       SENDGRID_API_KEY: SG.test_key_12345
+      SENDGRID_FROM_EMAIL: test@example.com
       GOOGLE_CLIENT_ID: test-google-client-id
       GOOGLE_CLIENT_SECRET: test-google-client-secret
 

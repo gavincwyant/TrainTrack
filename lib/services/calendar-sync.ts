@@ -17,6 +17,23 @@ export class CalendarSyncService {
   }
 
   /**
+   * Strip status prefixes (✓, ✗, ↻) from event titles
+   * These are added when appointments are marked complete/cancelled/rescheduled
+   */
+  private stripStatusPrefix(title: string): string {
+    // Common status prefixes used by our system
+    const prefixes = ["✓ ", "✗ ", "↻ ", "✓", "✗", "↻"]
+    let cleaned = title.trim()
+    for (const prefix of prefixes) {
+      if (cleaned.startsWith(prefix)) {
+        cleaned = cleaned.slice(prefix.length).trim()
+        break
+      }
+    }
+    return cleaned
+  }
+
+  /**
    * Smart client detection: Match Google Calendar event title to client names
    */
   private async findMatchingClient(
@@ -39,7 +56,9 @@ export class CalendarSyncService {
 
     if (clients.length === 0) return null
 
-    const titleLower = eventTitle.toLowerCase().trim()
+    // Strip status prefixes before matching (handles "✓ John Smith" → "John Smith")
+    const cleanedTitle = this.stripStatusPrefix(eventTitle)
+    const titleLower = cleanedTitle.toLowerCase().trim()
 
     // High confidence: ONLY exact full name match (no substring matching)
     // This prevents "Lisa B" from matching "Lisa Berzansky"
@@ -369,6 +388,54 @@ export class CalendarSyncService {
               })
               console.log(`  ✅ Updated existing appointment`)
             } else {
+              // Safeguard: Check if appointment already exists for this client at this time
+              // This prevents duplicates if mappings are somehow lost
+              const existingAppointment = await prisma.appointment.findFirst({
+                where: {
+                  trainerId,
+                  clientId: clientMatch.clientId,
+                  startTime: new Date(event.start.dateTime),
+                  endTime: new Date(event.end.dateTime),
+                },
+              })
+
+              if (existingAppointment) {
+                console.log(`  ⏭️ Appointment already exists for this client/time (${existingAppointment.id}), skipping creation`)
+                // Create/update mapping to link this event to existing appointment
+                if (existingEventMapping) {
+                  await prisma.calendarEventMapping.update({
+                    where: { id: existingEventMapping.id },
+                    data: {
+                      appointmentId: existingAppointment.id,
+                      blockedTimeId: null,
+                      lastSyncedAt: new Date(),
+                    },
+                  })
+                } else {
+                  await prisma.calendarEventMapping.upsert({
+                    where: {
+                      provider_externalEventId: {
+                        provider: "google",
+                        externalEventId: event.id!,
+                      },
+                    },
+                    update: {
+                      appointmentId: existingAppointment.id,
+                      lastSyncedAt: new Date(),
+                    },
+                    create: {
+                      workspaceId: settings.workspaceId,
+                      appointmentId: existingAppointment.id,
+                      provider: "google",
+                      externalEventId: event.id!,
+                      externalCalendarId: "primary",
+                      syncDirection: "inbound",
+                    },
+                  })
+                }
+                continue
+              }
+
               console.log(`  ✅ Auto-creating appointment (no approval needed)`)
 
               // High confidence match - auto-create appointment
