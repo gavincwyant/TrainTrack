@@ -42,6 +42,9 @@ export default function AppointmentModal({
   const [error, setError] = useState<string | null>(null)
   const [showPastConfirmation, setShowPastConfirmation] = useState(false)
   const [pendingSubmitData, setPendingSubmitData] = useState<AppointmentFormData | null>(null)
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [repeatWeeks, setRepeatWeeks] = useState(4)
+  const [repeatIndefinitely, setRepeatIndefinitely] = useState(false)
 
   const {
     register,
@@ -174,18 +177,43 @@ export default function AppointmentModal({
     setError(null)
 
     try {
-      // Create appointments for all selected clients
-      const appointmentPromises = selectedClients.map(client =>
-        fetch("/api/appointments", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clientId: client.id,
-            startTime: startDateTime.toISOString(),
-            endTime: endDateTime.toISOString(),
-          }),
-        })
-      )
+      // Generate dates for recurring appointments
+      const appointmentDates: { start: Date; end: Date }[] = []
+
+      if (isRecurring) {
+        // Use 52 weeks for indefinite, otherwise use the selected number
+        const weeksToCreate = repeatIndefinitely ? 52 : repeatWeeks
+
+        // Create appointments for each week
+        for (let week = 0; week < weeksToCreate; week++) {
+          const weekStart = new Date(startDateTime)
+          weekStart.setDate(weekStart.getDate() + (week * 7))
+          const weekEnd = new Date(endDateTime)
+          weekEnd.setDate(weekEnd.getDate() + (week * 7))
+          appointmentDates.push({ start: weekStart, end: weekEnd })
+        }
+      } else {
+        appointmentDates.push({ start: startDateTime, end: endDateTime })
+      }
+
+      // Create appointments for all selected clients × all dates
+      const appointmentPromises: Promise<Response>[] = []
+
+      for (const dateRange of appointmentDates) {
+        for (const client of selectedClients) {
+          appointmentPromises.push(
+            fetch("/api/appointments", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                clientId: client.id,
+                startTime: dateRange.start.toISOString(),
+                endTime: dateRange.end.toISOString(),
+              }),
+            })
+          )
+        }
+      }
 
       const results = await Promise.all(appointmentPromises)
       const failedResults = results.filter(r => !r.ok)
@@ -198,6 +226,9 @@ export default function AppointmentModal({
       setSelectedClients([])
       setShowPastConfirmation(false)
       setPendingSubmitData(null)
+      setIsRecurring(false)
+      setRepeatWeeks(4)
+      setRepeatIndefinitely(false)
       onSuccess()
       onClose()
     } catch (err) {
@@ -227,6 +258,9 @@ export default function AppointmentModal({
     setError(null)
     setShowPastConfirmation(false)
     setPendingSubmitData(null)
+    setIsRecurring(false)
+    setRepeatWeeks(4)
+    setRepeatIndefinitely(false)
     onClose()
   }
 
@@ -432,6 +466,85 @@ export default function AppointmentModal({
               </div>
             </div>
 
+            {/* Recurring Toggle */}
+            <div className="flex items-center justify-between min-h-[44px]">
+              <label className="block text-sm text-gray-700 dark:text-gray-300">
+                Repeat weekly
+              </label>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isRecurring}
+                onClick={() => setIsRecurring(!isRecurring)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                  isRecurring ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    isRecurring ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Recurring Options - only show when recurring is enabled */}
+            {isRecurring && (
+              <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                {/* Indefinite Toggle */}
+                <div className="flex items-center justify-between min-h-[44px]">
+                  <label className="block text-sm text-gray-700 dark:text-gray-300">
+                    Repeat indefinitely
+                  </label>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={repeatIndefinitely}
+                    onClick={() => setRepeatIndefinitely(!repeatIndefinitely)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                      repeatIndefinitely ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        repeatIndefinitely ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Weeks Selector - grayed out when indefinite */}
+                <div className={repeatIndefinitely ? "opacity-50 pointer-events-none" : ""}>
+                  <label htmlFor="repeatWeeks" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Number of weeks
+                  </label>
+                  <select
+                    id="repeatWeeks"
+                    value={repeatWeeks}
+                    onChange={(e) => setRepeatWeeks(parseInt(e.target.value))}
+                    disabled={repeatIndefinitely}
+                    className="mt-1 block w-full px-3 py-2 min-h-[44px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-base sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((weeks) => (
+                      <option key={weeks} value={weeks}>
+                        {weeks} {weeks === 1 ? "week" : "weeks"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Summary text */}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {selectedClients.length === 0
+                    ? "Select a client to schedule recurring appointments"
+                    : repeatIndefinitely
+                      ? `This will create 52 appointments${selectedClients.length > 1 ? ` for each of the ${selectedClients.length} clients` : ""} (${52 * selectedClients.length} total)`
+                      : `This will create ${repeatWeeks} appointment${repeatWeeks === 1 ? "" : "s"}${selectedClients.length > 1 ? ` for each of the ${selectedClients.length} clients` : ""} (${repeatWeeks * selectedClients.length} total)`
+                  }
+                </p>
+              </div>
+            )}
+
             {!showPastConfirmation && (
               <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
                 <button
@@ -448,9 +561,13 @@ export default function AppointmentModal({
                 >
                   {isLoading
                     ? "Scheduling..."
-                    : selectedClients.length > 1
-                      ? `Schedule Group Session (${selectedClients.length})`
-                      : "Schedule Appointment"}
+                    : isRecurring
+                      ? repeatIndefinitely
+                        ? `Schedule 52 Weeks`
+                        : `Schedule ${repeatWeeks * selectedClients.length} Appointment${repeatWeeks * selectedClients.length === 1 ? "" : "s"}`
+                      : selectedClients.length > 1
+                        ? `Schedule Group Session (${selectedClients.length})`
+                        : "Schedule Appointment"}
                 </button>
               </div>
             )}

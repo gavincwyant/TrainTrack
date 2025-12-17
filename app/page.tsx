@@ -52,7 +52,7 @@ export default function HomePage() {
                   <span className="relative z-10 flex flex-col items-center">
                     <span>Get early access</span>
                     <span className="text-sm font-normal text-blue-100 dark:text-blue-200 mt-1">
-                      Free for first 3–6 months
+                      Free for first 2–3 months
                     </span>
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 dark:from-blue-400 dark:to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -73,7 +73,7 @@ export default function HomePage() {
 
             {/* Video Demo */}
             <div id="demo" className="mt-20 sm:mt-24 max-w-5xl mx-auto scroll-mt-24">
-              <VideoPlayer videoSrc="/train_track_demo_v1.mp4" />
+              <VideoPlayer videoSrc={process.env.NEXT_PUBLIC_DEMO_VIDEO_URL || "/train_track_demo_v1.mp4"} />
             </div>
           </div>
         </section>
@@ -293,7 +293,7 @@ export default function HomePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h4 className="font-semibold text-[var(--text-primary)] mb-1">3–6 months free</h4>
+                    <h4 className="font-semibold text-[var(--text-primary)] mb-1">2–3 months free</h4>
                     <p className="text-sm text-[var(--text-secondary)]">No credit card required to start</p>
                   </div>
                   <div className="flex flex-col items-center text-center p-4">

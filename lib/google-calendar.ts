@@ -91,7 +91,12 @@ export class GoogleCalendarService {
     })
   }
 
-  async listEvents(trainerId: string, timeMin: string, timeMax: string) {
+  async listEvents(
+    trainerId: string,
+    timeMin: string,
+    timeMax: string,
+    options?: { showDeleted?: boolean }
+  ) {
     const calendar = await this.getCalendarClient(trainerId)
     const response = await calendar.events.list({
       calendarId: "primary",
@@ -99,6 +104,7 @@ export class GoogleCalendarService {
       timeMax,
       singleEvents: true,
       orderBy: "startTime",
+      showDeleted: options?.showDeleted ?? false,
     })
     return response.data.items || []
   }
