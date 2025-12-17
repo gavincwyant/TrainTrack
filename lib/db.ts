@@ -8,7 +8,17 @@ const globalForPrisma = globalThis as unknown as {
 
 const connectionString = process.env.DATABASE_URL
 
-const pool = new Pool({ connectionString })
+// For Supabase pooler (port 6543), use minimal pool size since pooler handles it
+// For direct connection or local, use normal pool
+const isPooler = connectionString?.includes(':6543') || connectionString?.includes('pooler.supabase.com')
+
+const pool = new Pool({
+  connectionString,
+  // When using Supabase pooler, limit client-side pool to avoid exhausting pooler connections
+  max: isPooler ? 1 : 10,
+  idleTimeoutMillis: isPooler ? 10000 : 30000,
+})
+
 const adapter = new PrismaPg(pool)
 
 export const prisma =
