@@ -105,7 +105,7 @@ export function VideoPlayer({ videoSrc, vimeoId, thumbnailSrc }: Props) {
             Ready to simplify your training business?
           </h3>
           <p className="text-blue-100 dark:text-blue-50 text-lg mb-8 text-center max-w-2xl">
-            Join our free beta and get 3–6 months of access with white-glove onboarding
+            Join our free beta and get 2–3 months of access with white-glove onboarding
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link

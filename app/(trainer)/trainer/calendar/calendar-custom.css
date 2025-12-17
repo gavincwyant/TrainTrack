@@ -31,31 +31,108 @@
   gap: 1rem;
 }
 
+/* Refined toolbar buttons - clean, professional aesthetic */
 .rbc-toolbar button {
-  padding: 0.625rem 1.25rem;
-  border: 1px solid rgb(229, 231, 235); /* gray-200 */
-  background: white;
-  color: rgb(17, 24, 39); /* gray-900 */
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  padding: 0.5rem 1rem;
+  border: 1px solid rgb(226, 232, 240); /* slate-200 */
+  background: linear-gradient(to bottom, rgb(255, 255, 255) 0%, rgb(248, 250, 252) 100%);
+  color: rgb(51, 65, 85); /* slate-700 */
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .rbc-toolbar button:hover {
-  background: rgb(249, 250, 251); /* gray-50 */
-  border-color: #3b82f6;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
-  transform: translateY(-1px);
+  background: linear-gradient(to bottom, rgb(255, 255, 255) 0%, rgb(241, 245, 249) 100%);
+  border-color: rgb(203, 213, 225); /* slate-300 */
+  color: rgb(30, 41, 59); /* slate-800 */
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-.rbc-toolbar button:active,
+.rbc-toolbar button:active {
+  background: linear-gradient(to bottom, rgb(241, 245, 249) 0%, rgb(248, 250, 252) 100%);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  transform: scale(0.98);
+}
+
+/* Active view button - refined blue with depth */
 .rbc-toolbar button.rbc-active {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(to bottom, rgb(59, 130, 246) 0%, rgb(37, 99, 235) 100%);
   color: white;
-  border-color: #2563eb;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  border-color: rgb(29, 78, 216);
+  box-shadow:
+    0 1px 3px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.rbc-toolbar button.rbc-active:hover {
+  background: linear-gradient(to bottom, rgb(96, 165, 250) 0%, rgb(59, 130, 246) 100%);
+  border-color: rgb(37, 99, 235);
+}
+
+/* Focus handling - mouse clicks should look like default state */
+.rbc-toolbar button:focus {
+  outline: none;
+}
+
+/* Reset mouse-click focus to default appearance (not keyboard) */
+.rbc-toolbar button:focus:not(:focus-visible) {
+  background: linear-gradient(to bottom, rgb(255, 255, 255) 0%, rgb(248, 250, 252) 100%);
+  color: rgb(51, 65, 85);
+  border-color: rgb(226, 232, 240);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: none;
+}
+
+/* Keep active state for view switcher even when focused */
+.rbc-toolbar button.rbc-active:focus:not(:focus-visible) {
+  background: linear-gradient(to bottom, rgb(59, 130, 246) 0%, rgb(37, 99, 235) 100%);
+  color: white;
+  border-color: rgb(29, 78, 216);
+  box-shadow:
+    0 1px 3px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Keyboard navigation focus ring */
+.rbc-toolbar button:focus-visible {
+  outline: 2px solid rgb(59, 130, 246);
+  outline-offset: 2px;
+}
+
+/* Button group styling - connected buttons */
+.rbc-btn-group {
+  display: inline-flex;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.rbc-btn-group button {
+  border-radius: 0;
+  margin: 0;
+  border-right-width: 0;
+}
+
+.rbc-btn-group button:first-child {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+.rbc-btn-group button:last-child {
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  border-right-width: 1px;
 }
 
 .rbc-toolbar-label {
@@ -884,15 +961,71 @@
     border: 1px solid rgba(75, 85, 99, 0.5) !important;
   }
 
-  /* Toolbar */
+  /* Toolbar - refined dark mode */
   .rbc-toolbar button {
-    background: rgb(17, 24, 39); /* gray-900 */
-    border-color: rgb(55, 65, 81); /* gray-700 */
-    color: rgb(243, 244, 246); /* gray-100 */
+    background: linear-gradient(to bottom, rgb(30, 41, 59) 0%, rgb(15, 23, 42) 100%);
+    border-color: rgb(51, 65, 85); /* slate-700 */
+    color: rgb(226, 232, 240); /* slate-200 */
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .rbc-toolbar button:hover {
-    background: rgb(31, 41, 55); /* gray-800 */
+    background: linear-gradient(to bottom, rgb(51, 65, 85) 0%, rgb(30, 41, 59) 100%);
+    border-color: rgb(71, 85, 105); /* slate-600 */
+    color: rgb(248, 250, 252); /* slate-50 */
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .rbc-toolbar button:active {
+    background: linear-gradient(to bottom, rgb(15, 23, 42) 0%, rgb(30, 41, 59) 100%);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  .rbc-toolbar button.rbc-active {
+    background: linear-gradient(to bottom, rgb(59, 130, 246) 0%, rgb(37, 99, 235) 100%);
+    border-color: rgb(37, 99, 235);
+    color: white;
+    box-shadow:
+      0 1px 3px rgba(37, 99, 235, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .rbc-toolbar button.rbc-active:hover {
+    background: linear-gradient(to bottom, rgb(96, 165, 250) 0%, rgb(59, 130, 246) 100%);
+  }
+
+  /* Reset mouse-click focus to default dark appearance */
+  .rbc-toolbar button:focus:not(:focus-visible) {
+    background: linear-gradient(to bottom, rgb(30, 41, 59) 0%, rgb(15, 23, 42) 100%);
+    color: rgb(226, 232, 240);
+    border-color: rgb(51, 65, 85);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transform: none;
+  }
+
+  /* Keep active state for view switcher even when focused */
+  .rbc-toolbar button.rbc-active:focus:not(:focus-visible) {
+    background: linear-gradient(to bottom, rgb(59, 130, 246) 0%, rgb(37, 99, 235) 100%);
+    color: white;
+    border-color: rgb(37, 99, 235);
+    box-shadow:
+      0 1px 3px rgba(37, 99, 235, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .rbc-toolbar button:focus-visible {
+    outline: 2px solid rgb(96, 165, 250);
+    outline-offset: 2px;
+  }
+
+  .rbc-btn-group {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .rbc-toolbar-label {

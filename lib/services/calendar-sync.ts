@@ -245,6 +245,75 @@ export class CalendarSyncService {
   }
 
   /**
+   * Handle a deleted event from Google Calendar
+   * Removes the corresponding blocked time or cancels the appointment
+   */
+  private async handleDeletedGoogleEvent(externalEventId: string) {
+    // Find the mapping for this event
+    const mapping = await prisma.calendarEventMapping.findUnique({
+      where: {
+        provider_externalEventId: {
+          provider: "google",
+          externalEventId,
+        },
+      },
+    })
+
+    if (!mapping) {
+      console.log(`  ⏭️ No mapping found for deleted event, nothing to clean up`)
+      return
+    }
+
+    // Only process inbound events (events that originated from Google)
+    // Don't delete Train-created appointments when their Google event is deleted
+    if (mapping.syncDirection === "outbound") {
+      console.log(`  ⏭️ Skipping outbound event deletion (Train-originated)`)
+      // Just remove the mapping so it can be re-synced if needed
+      await prisma.calendarEventMapping.delete({
+        where: { id: mapping.id },
+      })
+      return
+    }
+
+    // Handle blocked time deletion
+    if (mapping.blockedTimeId) {
+      console.log(`  🗑️ Deleting blocked time: ${mapping.blockedTimeId}`)
+      try {
+        await prisma.blockedTime.delete({
+          where: { id: mapping.blockedTimeId },
+        })
+        console.log(`  ✅ Blocked time deleted`)
+      } catch (error) {
+        console.log(`  ⚠️ Blocked time already deleted or not found`)
+      }
+    }
+
+    // Handle appointment deletion (cancel the appointment)
+    if (mapping.appointmentId) {
+      console.log(`  📅 Cancelling appointment: ${mapping.appointmentId}`)
+      try {
+        await prisma.appointment.update({
+          where: { id: mapping.appointmentId },
+          data: { status: "CANCELLED" },
+        })
+        console.log(`  ✅ Appointment cancelled`)
+      } catch (error) {
+        console.log(`  ⚠️ Appointment not found or already deleted`)
+      }
+    }
+
+    // Delete the mapping
+    try {
+      await prisma.calendarEventMapping.delete({
+        where: { id: mapping.id },
+      })
+      console.log(`  ✅ Calendar mapping deleted`)
+    } catch (error) {
+      console.log(`  ⚠️ Mapping already deleted`)
+    }
+  }
+
+  /**
    * Pull events from Google Calendar and create blocked times
    */
   async pullGoogleCalendarEvents(trainerId: string) {
@@ -276,13 +345,21 @@ export class CalendarSyncService {
       const googleEvents = await this.googleService.listEvents(
         trainerId,
         now.toISOString(),
-        threeMonthsLater.toISOString()
+        threeMonthsLater.toISOString(),
+        { showDeleted: true }
       )
 
-      console.log(`📋 Found ${googleEvents.length} Google Calendar events`)
+      console.log(`📋 Found ${googleEvents.length} Google Calendar events (including deleted)`)
 
       for (const event of googleEvents) {
-        console.log(`📌 Processing event: "${event.summary}" (${event.id})`)
+        console.log(`📌 Processing event: "${event.summary}" (${event.id}) [status: ${event.status}]`)
+
+        // Handle deleted/cancelled events from Google Calendar
+        if (event.status === "cancelled") {
+          console.log(`  🗑️ Event was deleted in Google Calendar`)
+          await this.handleDeletedGoogleEvent(event.id!)
+          continue
+        }
 
         // Skip all-day events and events without time
         if (!event.start?.dateTime || !event.end?.dateTime) {

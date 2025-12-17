@@ -39,6 +39,7 @@ export default function BlockTimeModal({
     formState: { errors },
     reset,
     setValue,
+    watch,
   } = useForm<BlockTimeFormData>({
     resolver: zodResolver(blockTimeSchema),
     defaultValues: {
@@ -251,16 +252,25 @@ export default function BlockTimeModal({
               />
             </div>
 
-            <div className="flex items-center min-h-[44px]">
-              <input
-                {...register("isRecurring")}
-                type="checkbox"
-                id="isRecurring"
-                className="h-5 w-5 text-blue-600 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 border-gray-300 dark:border-gray-600 rounded"
-              />
-              <label htmlFor="isRecurring" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+            <div className="flex items-center justify-between min-h-[44px]">
+              <label htmlFor="isRecurring" className="block text-sm text-gray-700 dark:text-gray-300">
                 Repeat weekly on this day
               </label>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={watch("isRecurring")}
+                onClick={() => setValue("isRecurring", !watch("isRecurring"))}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                  watch("isRecurring") ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    watch("isRecurring") ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
