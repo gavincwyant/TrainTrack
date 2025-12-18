@@ -18,6 +18,100 @@ type InvoiceWithRelations = Invoice & {
 
 export class EmailService {
   /**
+   * Send password reset email
+   */
+  async sendPasswordResetEmail(email: string, resetUrl: string): Promise<void> {
+    const apiKey = process.env.SENDGRID_API_KEY
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL
+
+    if (!apiKey) {
+      throw new Error('SENDGRID_API_KEY environment variable is not set')
+    }
+
+    if (!apiKey.startsWith('SG.')) {
+      throw new Error('Invalid SendGrid API key - must start with "SG."')
+    }
+
+    if (!fromEmail) {
+      throw new Error('SENDGRID_FROM_EMAIL environment variable is not set')
+    }
+
+    sgMail.setApiKey(apiKey)
+
+    const emailHtml = this.buildPasswordResetEmailHtml(resetUrl)
+    const emailText = this.buildPasswordResetEmailText(resetUrl)
+
+    const msg = {
+      to: email,
+      from: {
+        email: fromEmail,
+        name: 'TrainTrack',
+      },
+      subject: 'Reset your password',
+      text: emailText,
+      html: emailHtml,
+      trackingSettings: {
+        clickTracking: { enable: false },
+        openTracking: { enable: false },
+      },
+    }
+
+    try {
+      await sgMail.send(msg)
+      console.log(`✅ Password reset email sent to ${email}`)
+    } catch (error) {
+      console.error(`❌ Failed to send password reset email:`, error)
+      throw error
+    }
+  }
+
+  private buildPasswordResetEmailHtml(resetUrl: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Reset Your Password</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #3b82f6; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">Password Reset</h1>
+          </div>
+
+          <div style="background-color: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="margin: 0 0 20px 0;">You requested to reset your password. Click the button below to create a new password:</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600;">Reset Password</a>
+            </div>
+
+            <p style="margin: 20px 0 0 0; font-size: 14px; color: #6b7280;">This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+          </div>
+
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+            <p style="margin: 0; font-size: 12px; color: #9ca3af;">Powered by TrainTrack</p>
+          </div>
+        </body>
+      </html>
+    `
+  }
+
+  private buildPasswordResetEmailText(resetUrl: string): string {
+    return `
+PASSWORD RESET
+
+You requested to reset your password. Visit the link below to create a new password:
+
+${resetUrl}
+
+This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+
+---
+Powered by TrainTrack
+    `.trim()
+  }
+
+  /**
    * Send invoice email to client
    */
   async sendInvoiceEmail(invoice: InvoiceWithRelations): Promise<void> {
