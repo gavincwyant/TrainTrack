@@ -19,6 +19,7 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const registered = searchParams.get("registered")
+  const reset = searchParams.get("reset")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
@@ -110,6 +111,14 @@ function LoginForm() {
             </div>
           )}
 
+          {reset && (
+            <div className="rounded-md bg-green-50 dark:bg-green-950/30 p-4 border border-green-200 dark:border-green-800">
+              <div className="text-sm text-green-800 dark:text-green-300">
+                Password reset successfully! Please sign in with your new password.
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 border border-red-200 dark:border-red-800">
               <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
@@ -152,9 +161,9 @@ function LoginForm() {
 
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <a href="#" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
+              <Link href="/forgot-password" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                 Forgot your password?
-              </a>
+              </Link>
             </div>
           </div>
 
