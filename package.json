@@ -75,7 +75,7 @@
     "msw": "^2.12.4",
     "tailwindcss": "4.1.10",
     "typescript": "^5",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.16"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
