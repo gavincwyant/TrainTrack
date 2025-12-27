@@ -291,7 +291,7 @@ Powered by TrainTrack
   async sendContactFormEmail(name: string, email: string, message: string): Promise<void> {
     const apiKey = process.env.SENDGRID_API_KEY
     const fromEmail = process.env.SENDGRID_FROM_EMAIL
-    const contactEmail = process.env.CONTACT_EMAIL || fromEmail
+    const contactEmail = process.env.CONTACT_EMAIL || 'gavin@trytraintrack.net'
 
     if (!apiKey) {
       throw new Error('SENDGRID_API_KEY environment variable is not set')
