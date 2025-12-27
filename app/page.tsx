@@ -1,8 +1,15 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { TypingTitle } from "./_components/TypingTitle"
 import { VideoPlayer } from "./_components/VideoPlayer"
+import { ContactModal } from "@/components/ContactModal"
+
+const CAL_URL = process.env.NEXT_PUBLIC_CAL_URL || "https://cal.com/gavin-traintrack"
 
 export default function HomePage() {
+  const [isContactOpen, setIsContactOpen] = useState(false)
   return (
     <div className="min-h-screen flex flex-col bg-[var(--surface)]">
       {/* Header */}
@@ -11,18 +18,31 @@ export default function HomePage() {
           <Link href="/" className="text-2xl font-bold text-[var(--text-primary)]">
             TrainTrack
           </Link>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/login"
-              className="px-4 py-2 text-sm font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+              className="px-3 sm:px-4 py-2 text-sm font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
             >
               Login
             </Link>
+            <a
+              href={CAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-blue-600 dark:hover:text-blue-400 transition-all"
+              title="Book a call"
+            >
+              <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="hidden sm:inline">Book a Call</span>
+            </a>
             <Link
               href="/signup"
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-600/25"
+              className="px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-600/25"
             >
-              Get Early Access
+              <span className="hidden sm:inline">Get Early Access</span>
+              <span className="sm:hidden">Sign Up</span>
             </Link>
           </nav>
         </div>
@@ -68,6 +88,38 @@ export default function HomePage() {
                   </span>
                   <span className="font-medium text-lg">Watch demo</span>
                 </a>
+              </div>
+
+              {/* Secondary contact options */}
+              <div className="mt-10 pt-8 border-t border-[var(--border)]/50">
+                <p className="text-[var(--text-tertiary)] text-sm mb-4">
+                  Not ready to sign up? Let&apos;s chat first.
+                </p>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <a
+                    href={CAL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2.5 px-5 py-2.5 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-secondary)] rounded-xl border border-[var(--border)] hover:border-blue-500/50 hover:bg-blue-500/5 dark:hover:bg-blue-400/10 transition-all duration-200 hover:shadow-md"
+                  >
+                    <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Schedule a call
+                    <svg className="w-3.5 h-3.5 text-[var(--text-tertiary)] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                  <button
+                    onClick={() => setIsContactOpen(true)}
+                    className="group inline-flex items-center gap-2.5 px-5 py-2.5 text-sm font-medium text-[var(--text-primary)] bg-[var(--surface-secondary)] rounded-xl border border-[var(--border)] hover:border-blue-500/50 hover:bg-blue-500/5 dark:hover:bg-blue-400/10 transition-all duration-200 hover:shadow-md"
+                  >
+                    <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Send a message
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -343,11 +395,33 @@ export default function HomePage() {
                   </svg>
                 </span>
               </Link>
+
               <div className="mt-12 p-6 bg-white/10 dark:bg-white/15 backdrop-blur-md rounded-2xl max-w-2xl mx-auto border border-white/20 dark:border-white/25">
                 <p className="text-blue-50 dark:text-blue-100 text-lg leading-relaxed">
                   We&apos;re letting in a small group of trainers at a time so we can give real support
                   and keep improving the product with your feedback.
                 </p>
+                <div className="mt-5 pt-5 border-t border-white/10 flex flex-wrap gap-4 justify-center text-sm">
+                  <span className="text-blue-100/70">Have questions?</span>
+                  <a
+                    href={CAL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white font-medium hover:underline underline-offset-2 inline-flex items-center gap-1.5"
+                  >
+                    Book a call
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                  <span className="text-blue-100/50">or</span>
+                  <button
+                    onClick={() => setIsContactOpen(true)}
+                    className="text-white font-medium hover:underline underline-offset-2"
+                  >
+                    send a message
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -357,21 +431,35 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-[var(--surface-secondary)] border-t border-[var(--border)] py-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-[var(--text-secondary)] text-sm">
-              &copy; {new Date().getFullYear()} TrainTrack. All rights reserved.
-            </p>
-            <div className="flex gap-6">
-              <Link href="/login" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm transition-colors">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-3">
+              <span className="text-xl font-bold text-[var(--text-primary)]">TrainTrack</span>
+              <span className="text-[var(--text-tertiary)] text-sm">
+                &copy; {new Date().getFullYear()}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              <Link href="/login" className="px-3 py-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                 Login
               </Link>
-              <Link href="/signup" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm transition-colors">
+              <span className="text-[var(--border)]">·</span>
+              <Link href="/signup" className="px-3 py-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                 Get Started
               </Link>
+              <span className="text-[var(--border)]">·</span>
+              <button
+                onClick={() => setIsContactOpen(true)}
+                className="px-3 py-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Contact
+              </button>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Contact Modal */}
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </div>
   )
 }
