@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 
@@ -30,6 +31,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <SessionProvider>{children}</SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
