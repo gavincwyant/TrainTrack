@@ -1,0 +1,10 @@
+# TrainTrack robots.txt
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /trainer/
+Disallow: /client/
+Disallow: /admin/
+
+# Sitemap
+Sitemap: https://trytraintrack.net/sitemap.xml
