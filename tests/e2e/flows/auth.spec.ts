@@ -16,7 +16,7 @@ test.describe('Authentication Flow', () => {
 
     // Step 1: Navigate to signup
     await page.goto('/signup')
-    await expect(page.locator('h2')).toContainText('Create your free account')
+    await expect(page.locator('h2')).toContainText('Start for free')
 
     // Step 2: Fill out signup form (simplified: name, email, password)
     await page.fill('input[name="fullName"]', fullName)
