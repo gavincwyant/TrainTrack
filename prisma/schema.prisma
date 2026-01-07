@@ -45,16 +45,20 @@ model Workspace {
 model User {
   id           String    @id @default(uuid())
   email        String    @unique
-  passwordHash String    @map("password_hash")
+  passwordHash String?   @map("password_hash")
   role         Role
   workspaceId  String?   @map("workspace_id")
   workspace    Workspace? @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  fullName      String    @map("full_name")
-  phone         String?
-  profileImage  String?   @map("profile_image")
-  isSystemAdmin Boolean   @default(false) @map("is_system_admin")
-  isActive      Boolean   @default(true) @map("is_active")
+  fullName           String    @map("full_name")
+  phone              String?
+  profileImage       String?   @map("profile_image")
+  isSystemAdmin      Boolean   @default(false) @map("is_system_admin")
+  isActive           Boolean   @default(true) @map("is_active")
+  onboardingComplete Boolean   @default(false) @map("onboarding_complete")
+
+  // OAuth fields
+  googleId           String?   @unique @map("google_id")
 
   ownedWorkspaces        Workspace[]         @relation("TrainerWorkspace")
   clientProfile          ClientProfile?

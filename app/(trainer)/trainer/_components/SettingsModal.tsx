@@ -7,18 +7,33 @@ import { SchedulingSettings } from "./settings/SchedulingSettings"
 import { CalendarSettings } from "./settings/CalendarSettings"
 import { InvoicingSettings } from "./settings/InvoicingSettings"
 import { PricingSettings } from "./settings/PricingSettings"
+import { BusinessSettings } from "./settings/BusinessSettings"
 
 type Props = {
   isOpen: boolean
   onClose: () => void
 }
 
-type Category = "scheduling" | "calendar" | "pricing" | "invoicing"
+type Category = "business" | "scheduling" | "calendar" | "pricing" | "invoicing"
+
+type BusinessSettingsData = {
+  businessName: string | null
+  trainerName: string | null
+  trainerEmail: string | null
+  trainerPhone: string | null
+}
 
 export function SettingsModal({ isOpen, onClose }: Props) {
-  const [activeCategory, setActiveCategory] = useState<Category>("scheduling")
+  const [activeCategory, setActiveCategory] = useState<Category>("business")
   const [showSuccess, setShowSuccess] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettingsData>({
+    businessName: null,
+    trainerName: null,
+    trainerEmail: null,
+    trainerPhone: null,
+  })
+  const [isLoadingBusiness, setIsLoadingBusiness] = useState(false)
 
   // Wait for client-side mount before rendering portal
   useEffect(() => {
@@ -51,8 +66,64 @@ export function SettingsModal({ isOpen, onClose }: Props) {
   useEffect(() => {
     if (isOpen) {
       fetchSettings()
+      fetchBusinessSettings()
     }
   }, [isOpen, fetchSettings])
+
+  const fetchBusinessSettings = async () => {
+    setIsLoadingBusiness(true)
+    try {
+      const response = await fetch("/api/trainer-settings/business")
+      if (response.ok) {
+        const data = await response.json()
+        setBusinessSettings(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch business settings:", error)
+    } finally {
+      setIsLoadingBusiness(false)
+    }
+  }
+
+  const handleUpdateBusiness = async (data: { businessName: string }): Promise<boolean> => {
+    try {
+      const response = await fetch("/api/trainer-settings/business", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (response.ok) {
+        setBusinessSettings(prev => ({ ...prev, businessName: data.businessName }))
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error("Failed to update business name:", error)
+      return false
+    }
+  }
+
+  const handleUpdateProfile = async (data: { fullName: string; phone?: string }): Promise<boolean> => {
+    try {
+      const response = await fetch("/api/trainer-settings/business", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (response.ok) {
+        setBusinessSettings(prev => ({
+          ...prev,
+          trainerName: data.fullName,
+          trainerPhone: data.phone || null,
+        }))
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error("Failed to update profile:", error)
+      return false
+    }
+  }
 
   // Keyboard handler (Escape to close)
   useEffect(() => {
@@ -87,6 +158,15 @@ export function SettingsModal({ isOpen, onClose }: Props) {
   if (!isOpen || !mounted) return null
 
   const navItems: { key: Category; label: string; icon: React.ReactNode }[] = [
+    {
+      key: "business",
+      label: "Business",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+    },
     {
       key: "scheduling",
       label: "Scheduling",
@@ -249,6 +329,18 @@ export function SettingsModal({ isOpen, onClose }: Props) {
 
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto p-4 md:p-8">
+              {activeCategory === "business" && (
+                <BusinessSettings
+                  businessName={businessSettings.businessName}
+                  trainerName={businessSettings.trainerName}
+                  trainerEmail={businessSettings.trainerEmail}
+                  trainerPhone={businessSettings.trainerPhone}
+                  isLoading={isLoadingBusiness}
+                  onUpdateBusiness={(data) => handleSuccessfulUpdate(() => handleUpdateBusiness(data))}
+                  onUpdateProfile={(data) => handleSuccessfulUpdate(() => handleUpdateProfile(data))}
+                />
+              )}
+
               {activeCategory === "scheduling" && (
                 <SchedulingSettings
                   settings={settings}
