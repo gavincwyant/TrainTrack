@@ -308,14 +308,14 @@ describe('Multi-Month Prepaid Lifecycle', () => {
       monthlyInvoiceDay: 1,
     })
 
-    // Use some sessions
+    // Use some sessions (60 days ago to ensure they're outside "last month" billing period)
     for (let i = 1; i <= 2; i++) {
       const appointment = await createAppointment({
         trainerId: workspace.trainer.id,
         clientId: workspace.client.id,
         workspaceId: workspace.workspace.id,
-        startTime: new Date(Date.now() - 86400000 * 10 - 3600000 * i * 2),
-        endTime: new Date(Date.now() - 86400000 * 10 - 3600000 * (i * 2 - 1)),
+        startTime: new Date(Date.now() - 86400000 * 60 - 3600000 * i * 2),
+        endTime: new Date(Date.now() - 86400000 * 60 - 3600000 * (i * 2 - 1)),
         status: 'COMPLETED',
       })
 
