@@ -6,12 +6,16 @@ declare module "next-auth" {
       id: string
       role: string
       workspaceId: string | null
+      isSystemAdmin: boolean
+      onboardingComplete: boolean
     } & DefaultSession["user"]
   }
 
   interface User {
     role: string
     workspaceId: string | null
+    isSystemAdmin: boolean
+    onboardingComplete: boolean
   }
 }
 
@@ -20,5 +24,7 @@ declare module "next-auth/jwt" {
     role: string
     workspaceId: string | null
     userId: string
+    isSystemAdmin: boolean
+    onboardingComplete: boolean
   }
 }

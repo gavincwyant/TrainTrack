@@ -17,6 +17,11 @@ export default async function TrainerLayout({
     redirect("/dashboard")
   }
 
+  // Redirect to onboarding if not completed
+  if (!session.user.onboardingComplete) {
+    redirect("/onboarding")
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <TrainerHeader

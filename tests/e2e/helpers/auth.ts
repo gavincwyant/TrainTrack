@@ -109,33 +109,39 @@ export async function signupAsTrainer(page: Page, options?: {
   email?: string
   password?: string
   fullName?: string
-  workspaceName?: string
+  businessName?: string
 }) {
   const email = options?.email || faker.internet.email().toLowerCase()
   const password = options?.password || 'TestPassword123!'
   const fullName = options?.fullName || faker.person.fullName()
-  const workspaceName = options?.workspaceName || `${fullName}'s Training`
+  const businessName = options?.businessName || `${fullName}'s Personal Training`
 
+  // Step 1: Sign up (simplified form: name, email, password)
   await page.goto('/signup')
   await page.fill('input[name="fullName"]', fullName)
   await page.fill('input[name="email"]', email)
-  await page.fill('input[name="workspaceName"]', workspaceName)
   await page.fill('input[name="password"]', password)
-  await page.fill('input[name="confirmPassword"]', password)
   await page.click('button[type="submit"]')
 
   // Wait for redirect to login page
   await page.waitForURL('/login?registered=true', { timeout: 10000 })
 
-  // Now login automatically
+  // Step 2: Login
   await page.fill('input[name="email"]', email)
   await page.fill('input[name="password"]', password)
+  await page.click('button[type="submit"]')
+
+  // Step 3: Complete onboarding (new users go to /onboarding first)
+  await page.waitForURL('/onboarding', { timeout: 10000 })
+
+  // Business name should be pre-filled, but we can override it
+  await page.fill('input[name="businessName"]', businessName)
   await page.click('button[type="submit"]')
 
   // Wait for redirect to dashboard
   await page.waitForURL('/trainer/dashboard', { timeout: 10000 })
 
-  return { email, password, fullName, workspaceName }
+  return { email, password, fullName, businessName }
 }
 
 /**

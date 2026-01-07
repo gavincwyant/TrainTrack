@@ -8,8 +8,6 @@ const signupSchema = z.object({
   fullName: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(8),
-  workspaceName: z.string().min(2),
-  phone: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -32,6 +30,9 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await hash(data.password, 10)
 
+    // Generate default workspace name from user's name
+    const defaultWorkspaceName = `${data.fullName}'s Training`
+
     // Create user and workspace in a transaction
     const result = await prisma.$transaction(async (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends">) => {
       // Create the trainer user
@@ -40,16 +41,15 @@ export async function POST(request: NextRequest) {
           email: data.email,
           passwordHash,
           fullName: data.fullName,
-          phone: data.phone,
           role: "TRAINER",
-          // workspaceId will be set after creating workspace
+          onboardingComplete: false,
         },
       })
 
-      // Create workspace for the trainer
+      // Create workspace for the trainer with default name
       const workspace = await tx.workspace.create({
         data: {
-          name: data.workspaceName,
+          name: defaultWorkspaceName,
           trainerId: user.id,
         },
       })

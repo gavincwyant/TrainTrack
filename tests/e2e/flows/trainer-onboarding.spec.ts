@@ -66,7 +66,7 @@ test.describe('Trainer Onboarding Flow', () => {
     await page.click('button[type="submit"]')
 
     // Should show validation errors (check for at least one specific error)
-    await expect(page.locator('.text-red-600').first()).toBeVisible()
+    await expect(page.locator('.text-red-500').first()).toBeVisible()
   })
 
   test('should show error for duplicate email signup', async ({ page, context }) => {
@@ -81,9 +81,7 @@ test.describe('Trainer Onboarding Flow', () => {
     await page2.goto('http://localhost:3001/signup')
     await page2.fill('input[name="fullName"]', faker.person.fullName())
     await page2.fill('input[name="email"]', email)
-    await page2.fill('input[name="workspaceName"]', 'Test Workspace')
     await page2.fill('input[name="password"]', 'TestPassword123!')
-    await page2.fill('input[name="confirmPassword"]', 'TestPassword123!')
     await page2.click('button[type="submit"]')
 
     // Should stay on signup page (not redirect to login)
@@ -91,7 +89,7 @@ test.describe('Trainer Onboarding Flow', () => {
     await expect(page2).toHaveURL(/signup/)
 
     // Should show error message
-    await expect(page2.locator('.text-red-800, .text-red-600').first()).toBeVisible({ timeout: 5000 })
+    await expect(page2.locator('.text-red-500, .text-red-600').first()).toBeVisible({ timeout: 5000 })
 
     await page2.close()
   })
