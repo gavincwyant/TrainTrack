@@ -12,32 +12,37 @@ test.describe('Authentication Flow', () => {
     const email = faker.internet.email().toLowerCase()
     const password = 'TestPassword123!'
     const fullName = faker.person.fullName()
-    const workspaceName = `${fullName}'s Training`
+    const businessName = `${fullName}'s Personal Training`
 
     // Step 1: Navigate to signup
     await page.goto('/signup')
-    await expect(page.locator('h2')).toContainText('Create your trainer account')
+    await expect(page.locator('h2')).toContainText('Create your free account')
 
-    // Step 2: Fill out signup form
+    // Step 2: Fill out signup form (simplified: name, email, password)
     await page.fill('input[name="fullName"]', fullName)
     await page.fill('input[name="email"]', email)
-    await page.fill('input[name="workspaceName"]', workspaceName)
     await page.fill('input[name="password"]', password)
-    await page.fill('input[name="confirmPassword"]', password)
 
     // Step 3: Submit signup form
     await page.click('button[type="submit"]')
 
     // Step 4: Should redirect to login page with success message
     await page.waitForURL('/login?registered=true', { timeout: 10000 })
-    await expect(page.locator('text=Account created successfully')).toBeVisible()
+    await expect(page.locator('text=Account created')).toBeVisible()
 
     // Step 5: Login with new credentials
     await page.fill('input[name="email"]', email)
     await page.fill('input[name="password"]', password)
     await page.click('button[type="submit"]')
 
-    // Step 6: Should redirect to trainer dashboard
+    // Step 6: Should redirect to onboarding for new users
+    await page.waitForURL('/onboarding', { timeout: 10000 })
+
+    // Step 7: Complete onboarding with business name
+    await page.fill('input[name="businessName"]', businessName)
+    await page.click('button[type="submit"]')
+
+    // Step 8: Should redirect to trainer dashboard
     await page.waitForURL('/trainer/dashboard', { timeout: 10000 })
     await expect(page.locator('h1').first()).toContainText(/Welcome/i)
   })
@@ -59,7 +64,7 @@ test.describe('Authentication Flow', () => {
     // Try to submit without filling anything
     await page.click('button[type="submit"]')
 
-    // Should show validation errors
-    await expect(page.locator('.text-red-600')).toHaveCount(4) // At least 4 required fields
+    // Should show validation errors (3 required fields: name, email, password)
+    await expect(page.locator('.text-red-500')).toHaveCount(3, { timeout: 5000 })
   })
 })
