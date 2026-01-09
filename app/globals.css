@@ -43,26 +43,48 @@
 }
 
 /* Override Tailwind's oklch colors with consistent hex values for cross-browser consistency */
-.border-gray-200 {
-  border-color: #e5e7eb !important;
-}
-.border-gray-300 {
-  border-color: #d1d5db !important;
-}
-.border-gray-600 {
-  border-color: #4b5563 !important;
-}
-.border-gray-700 {
-  border-color: #374151 !important;
-}
-
-@media (prefers-color-scheme: dark) {
-  .dark\:border-gray-600 {
+/* Light mode border colors */
+@media (prefers-color-scheme: light) {
+  .border-gray-200 {
+    border-color: #e5e7eb !important;
+  }
+  .border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+  .border-gray-600 {
     border-color: #4b5563 !important;
   }
+  .border-gray-700 {
+    border-color: #374151 !important;
+  }
+}
+
+/* Dark mode border colors - support both media query and .dark class */
+@media (prefers-color-scheme: dark) {
+  .border-gray-200,
   .dark\:border-gray-700 {
     border-color: #374151 !important;
   }
+  .border-gray-300,
+  .dark\:border-gray-600 {
+    border-color: #4b5563 !important;
+  }
+  .border-gray-600 {
+    border-color: #4b5563 !important;
+  }
+  .border-gray-700 {
+    border-color: #374151 !important;
+  }
+}
+
+/* Fallback: .dark class on html for hydration edge cases */
+html.dark .border-gray-200,
+html.dark .dark\:border-gray-700 {
+  border-color: #374151 !important;
+}
+html.dark .border-gray-300,
+html.dark .dark\:border-gray-600 {
+  border-color: #4b5563 !important;
 }
 
 /* Explicit base styles for cross-environment consistency */
