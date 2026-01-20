@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/generate-invoices",
       "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/complete-appointments",
-      "schedule": "0 * * * *"
     }
   ]
 }
