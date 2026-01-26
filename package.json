@@ -70,7 +70,7 @@
     "@vitest/ui": "^4.0.15",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.0.10",
+    "eslint-config-next": "16.1.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "msw": "^2.12.4",
